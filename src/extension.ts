@@ -7,8 +7,10 @@ import {
 } from "./host/vscode-adapter.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
+import { wireCapabilityInfo } from "./host/handlers/capabilityInfo.js";
+import { registerCommandHandlers } from "./host/handlers/commands.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
-import { wireSessionsDomain } from "./host/handlers/sync.js";
+import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
 
 /**
  * Activation (todo 10): vscode-backed ServerManager + both webview view
@@ -21,6 +23,11 @@ import { wireSessionsDomain } from "./host/handlers/sync.js";
  * bridge starts here; its debounced `sessions` invalidation and the domain
  * handlers' post-mutation refresh both broadcast the session list to the
  * chat view (see sync.ts for the event-channel carrier contract).
+ *
+ * Todo-15 composition (owned by src/host/handlers/capabilityInfo.ts): the
+ * `capabilities.refresh` push seeds the webview pickers on every
+ * managed|attached transition (its header documents the resync-equivalent
+ * subscription), and `runCommand` executes slash commands from the palette.
  */
 
 function showServerError(title: string, error: ServerStartError): void {
@@ -51,12 +58,22 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   const sessionsDomain = wireSessionsDomain({ manager, logger, events: panel.chat });
   registerSessionHandlers(panel.registerHandler, sessionsDomain.deps);
+  const capabilityInfo = wireCapabilityInfo({
+    source: managerSessionSource(manager),
+    detector: manager.detector,
+    getState: () => manager.state,
+    onDidChangeState: (listener) => manager.onDidChangeState(listener),
+    logger,
+    events: panel.chat,
+  });
+  registerCommandHandlers(panel.registerHandler, capabilityInfo.deps);
 
   context.subscriptions.push(
     channel,
     {
       dispose: () => {
         sessionsDomain.dispose();
+        capabilityInfo.dispose();
       },
     },
     { dispose: () => config.dispose() },
