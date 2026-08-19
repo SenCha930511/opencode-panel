@@ -1,0 +1,23 @@
+{
+  // Webview-side type environment. The ROOT tsconfig excludes src/webview
+  // (host code is NodeNext for the extension host; webview code is ESM/DOM
+  // and is transformed by Vite, never by tsc). This config exists for editor
+  // IntelliSense and IDE diagnostics inside src/webview.
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}

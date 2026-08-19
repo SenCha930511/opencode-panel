@@ -12,8 +12,17 @@
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "verbatimModuleSyntax": true,
+    // NOTE(verbatimModuleSyntax removed, todo 2): this package has no
+    // "type": "module", so NodeNext classifies every .ts source as CJS and
+    // verbatimModuleSyntax rejects ALL ESM import/export syntax (TS1287/TS1295)
+    // in every source file. Emission is owned by esbuild (bundle → cjs), tsc
+    // only typechecks, so the flag is inapplicable here. "format cjs" output
+    // stays unchanged.
     "types": ["node", "vscode"]
   },
-  "include": ["src/**/*", "typings/**/*.d.ts"]
+  "include": ["src/**/*"],
+  // Webview code is ESM/DOM + JSX, type-configured and built exclusively by
+  // Vite (src/webview/tsconfig.json exists for editor IntelliSense only);
+  // the NodeNext host config must not try to compile it.
+  "exclude": ["node_modules", "src/webview"]
 }

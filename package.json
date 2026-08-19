@@ -212,6 +212,16 @@
       }
     }
   },
+  "scripts": {
+    "vscode:prepublish": "npm run build && npm run build:webview",
+    "build": "node esbuild.config.mjs --production",
+    "build:webview": "vite build --mode production src/webview",
+    "watch": "node esbuild.config.mjs --watch",
+    "watch:webview": "vite build --watch --mode development src/webview",
+    "package": "vsce package",
+    "test": "node -e \"console.log('integration tests (@vscode/test-electron) land in todo 24; use: npm run test:unit')\"",
+    "test:unit": "vitest run --passWithNoTests"
+  },
   "devDependencies": {
     "@opencode-ai/sdk": "^1.18.18",
     "@radix-ui/react-dialog": "^1.1.23",
