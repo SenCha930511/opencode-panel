@@ -1,0 +1,320 @@
+/**
+ * Shared bilingual string tables (en + zh-TW) for the opencode-panel UI.
+ *
+ * `STRING_IDS` enumerates every user-facing string id the webview (and any
+ * host-side surface consuming the same tables) may render. `en` and `zhTW`
+ * are typed `Record<StringId, string>`, so the TypeScript compiler proves at
+ * build time that BOTH tables carry exactly the same ids — a missing key in
+ * either table (or an id in a table that is not in the union) is a compile
+ * error. Runtime drift beyond the compiler's reach is guarded by
+ * scripts/check-i18n.mjs (table parity) and src/shared/__tests__/strings.test.ts.
+ *
+ * This module is intentionally self-contained (no imports): scripts/check-i18n.mjs
+ * loads it through esbuild + a data: URL so the parity check needs no build step.
+ */
+// allow: SIZE_OK — pure bilingual data tables (85 ids x 2 locales); a single
+// authority file is the todo-4 spec and keeps diff-per-locale review sane.
+
+export const STRING_IDS = [
+  // app shell
+  "app.loading",
+  "app.name",
+  // slash-command palette
+  "commands.empty",
+  "commands.title",
+  // composer
+  "composer.abort",
+  "composer.draftRestored",
+  "composer.placeholder",
+  "composer.send",
+  // shared chrome
+  "common.cancel",
+  "common.close",
+  "common.confirm",
+  // capability-driven degradation
+  "capability.hidden",
+  // todos/diffs dock
+  "dock.diffs.empty",
+  "dock.diffs.openDiff",
+  "dock.diffs.openFile",
+  "dock.diffs.title",
+  "dock.todos.empty",
+  "dock.todos.title",
+  // MCP status panel
+  "mcp.nativeOnly",
+  "mcp.omoNote",
+  "mcp.title",
+  // message list
+  "messages.collapseTool",
+  "messages.empty",
+  "messages.expandTool",
+  "messages.regenerate",
+  "messages.revert",
+  "messages.revertConfirm",
+  "messages.unrevert",
+  // permission approval cards
+  "permission.allowAlways",
+  "permission.allowOnce",
+  "permission.expired",
+  "permission.reject",
+  "permission.title",
+  // agent/model pickers
+  "picker.agent.customBadge",
+  "picker.agent.title",
+  "picker.model.title",
+  // question.asked cards
+  "question.submit",
+  "question.title",
+  "question.unavailable",
+  // server lifecycle status
+  "server.oldVersion",
+  "server.status.attached",
+  "server.status.lost",
+  "server.status.managed",
+  "server.status.probing",
+  "server.status.retry",
+  "server.status.stopped",
+  // sessions panel
+  "sessions.delete",
+  "sessions.deleteConfirm",
+  "sessions.empty",
+  "sessions.fork",
+  "sessions.new",
+  "sessions.rename",
+  "sessions.renamePrompt",
+  "sessions.searchPlaceholder",
+  "sessions.share",
+  "sessions.shareCopied",
+  "sessions.title",
+  "sessions.unshare",
+  // settings page
+  "settings.apply",
+  "settings.connectionFailed",
+  "settings.connectionOk",
+  "settings.field.autoStartServer",
+  "settings.field.binaryPath",
+  "settings.field.chatFontFamily",
+  "settings.field.chatFontSize",
+  "settings.field.debugLogs",
+  "settings.field.hostname",
+  "settings.field.minimumServerVersion",
+  "settings.field.port",
+  "settings.field.serverArgs",
+  "settings.field.serverPassword",
+  "settings.field.serverUrl",
+  "settings.revert",
+  "settings.saveFailed",
+  "settings.saved",
+  "settings.section.appearance",
+  "settings.section.capabilities",
+  "settings.section.diagnostics",
+  "settings.section.server",
+  "settings.testConnection",
+  "settings.title",
+  // generic tool-call card status chips
+  "tool.status.completed",
+  "tool.status.failed",
+  "tool.status.pending",
+  "tool.status.running",
+] as const;
+
+export type StringId = (typeof STRING_IDS)[number];
+
+/** Locales with a complete string table. Host maps vscode.env.language onto these. */
+export const SUPPORTED_LOCALES = ["en", "zh-TW"] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
+export const en: Record<StringId, string> = {
+  "app.loading": "Loading…",
+  "app.name": "OpenCode Panel",
+  "commands.empty": "No matching commands",
+  "commands.title": "Commands",
+  "composer.abort": "Stop generating",
+  "composer.draftRestored": "Unsent draft restored",
+  "composer.placeholder": "Ask opencode anything — Enter to send, Shift+Enter for a new line",
+  "composer.send": "Send",
+  "common.cancel": "Cancel",
+  "common.close": "Close",
+  "common.confirm": "Confirm",
+  "capability.hidden": "This feature is not supported by the connected server",
+  "dock.diffs.empty": "No file changes in this session",
+  "dock.diffs.openDiff": "Open diff",
+  "dock.diffs.openFile": "Open file",
+  "dock.diffs.title": "File changes",
+  "dock.todos.empty": "No todos yet",
+  "dock.todos.title": "Todos",
+  "mcp.nativeOnly": "Natively configured MCP servers only",
+  "mcp.omoNote": "oh-my-opencode detected: plugins may inject additional MCPs not listed here.",
+  "mcp.title": "MCP servers",
+  "messages.collapseTool": "Collapse tool call details",
+  "messages.empty": "No messages yet — send a prompt to begin.",
+  "messages.expandTool": "Expand tool call details",
+  "messages.regenerate": "Regenerate",
+  "messages.revert": "Revert to here",
+  "messages.revertConfirm": "Revert the session to this message? File changes made after this point will be undone.",
+  "messages.unrevert": "Restore reverted messages",
+  "permission.allowAlways": "Always allow",
+  "permission.allowOnce": "Allow once",
+  "permission.expired": "This permission request has expired",
+  "permission.reject": "Reject",
+  "permission.title": "Permission required",
+  "picker.agent.customBadge": "custom",
+  "picker.agent.title": "Select agent",
+  "picker.model.title": "Select model",
+  "question.submit": "Submit answer",
+  "question.title": "opencode is asking a question",
+  "question.unavailable": "The connected server does not support answering questions from the panel.",
+  "server.oldVersion": "The connected server is below the recommended version; some features are hidden.",
+  "server.status.attached": "Server running (attached)",
+  "server.status.lost": "Connection to the opencode server was lost",
+  "server.status.managed": "Server running (managed by this extension)",
+  "server.status.probing": "Connecting to server…",
+  "server.status.retry": "Retry",
+  "server.status.stopped": "Server stopped",
+  "sessions.delete": "Delete",
+  "sessions.deleteConfirm": "Delete this session? This cannot be undone.",
+  "sessions.empty": "No sessions yet — create one to start chatting.",
+  "sessions.fork": "Fork",
+  "sessions.new": "New Session",
+  "sessions.rename": "Rename",
+  "sessions.renamePrompt": "Enter a new session title",
+  "sessions.searchPlaceholder": "Search sessions…",
+  "sessions.share": "Share",
+  "sessions.shareCopied": "Share link copied to clipboard",
+  "sessions.title": "Sessions",
+  "sessions.unshare": "Stop sharing",
+  "settings.apply": "Apply",
+  "settings.connectionFailed": "Connection failed",
+  "settings.connectionOk": "Connection succeeded",
+  "settings.field.autoStartServer": "Auto-start server",
+  "settings.field.binaryPath": "opencode binary path",
+  "settings.field.chatFontFamily": "Chat font family",
+  "settings.field.chatFontSize": "Chat font size",
+  "settings.field.debugLogs": "Debug logs",
+  "settings.field.hostname": "Hostname",
+  "settings.field.minimumServerVersion": "Minimum server version",
+  "settings.field.port": "Port",
+  "settings.field.serverArgs": "Server startup arguments",
+  "settings.field.serverPassword": "Server password",
+  "settings.field.serverUrl": "Server URL",
+  "settings.revert": "Revert",
+  "settings.saveFailed": "Failed to save settings",
+  "settings.saved": "Settings saved",
+  "settings.section.appearance": "Appearance",
+  "settings.section.capabilities": "Capabilities",
+  "settings.section.diagnostics": "Diagnostics",
+  "settings.section.server": "Server",
+  "settings.testConnection": "Test connection",
+  "settings.title": "Settings",
+  "tool.status.completed": "Completed",
+  "tool.status.failed": "Failed",
+  "tool.status.pending": "Pending",
+  "tool.status.running": "Running",
+};
+
+/**
+ * Traditional Chinese (zh-TW) table. Tone follows VS Code's own zh-tw
+ * localization conventions (工作階段, 傳送, 權限, 模型, 設定, 偵錯).
+ */
+export const zhTW: Record<StringId, string> = {
+  "app.loading": "載入中…",
+  "app.name": "OpenCode Panel",
+  "commands.empty": "沒有符合的指令",
+  "commands.title": "指令",
+  "composer.abort": "停止產生",
+  "composer.draftRestored": "已還原未送出的草稿",
+  "composer.placeholder": "向 opencode 提問，Enter 傳送、Shift+Enter 換行",
+  "composer.send": "傳送",
+  "common.cancel": "取消",
+  "common.close": "關閉",
+  "common.confirm": "確認",
+  "capability.hidden": "連線的伺服器不支援此功能",
+  "dock.diffs.empty": "此工作階段尚無檔案變更",
+  "dock.diffs.openDiff": "開啟差異比對",
+  "dock.diffs.openFile": "開啟檔案",
+  "dock.diffs.title": "檔案變更",
+  "dock.todos.empty": "尚無待辦事項",
+  "dock.todos.title": "待辦事項",
+  "mcp.nativeOnly": "僅列出原生設定的 MCP 伺服器",
+  "mcp.omoNote": "已偵測到 oh-my-opencode：外掛程式可能注入未列於此處的其他 MCP。",
+  "mcp.title": "MCP 伺服器",
+  "messages.collapseTool": "摺疊工具呼叫詳細資訊",
+  "messages.empty": "尚無訊息，傳送提示以開始對話。",
+  "messages.expandTool": "展開工具呼叫詳細資訊",
+  "messages.regenerate": "重新產生",
+  "messages.revert": "還原至此處",
+  "messages.revertConfirm": "確定要將工作階段還原到此訊息嗎？此處之後的檔案變更將被復原。",
+  "messages.unrevert": "復原已還原的訊息",
+  "permission.allowAlways": "一律允許",
+  "permission.allowOnce": "允許一次",
+  "permission.expired": "此權限要求已過期",
+  "permission.reject": "拒絕",
+  "permission.title": "需要權限",
+  "picker.agent.customBadge": "自訂",
+  "picker.agent.title": "選擇代理",
+  "picker.model.title": "選擇模型",
+  "question.submit": "送出回答",
+  "question.title": "opencode 正在詢問問題",
+  "question.unavailable": "連線的伺服器不支援從面板回答問題。",
+  "server.oldVersion": "連線的伺服器版本低於建議版本，部分功能已隱藏。",
+  "server.status.attached": "伺服器執行中（已附加）",
+  "server.status.lost": "與 opencode 伺服器的連線已中斷",
+  "server.status.managed": "伺服器執行中（由此擴充功能管理）",
+  "server.status.probing": "正在連線到伺服器…",
+  "server.status.retry": "重試",
+  "server.status.stopped": "伺服器已停止",
+  "sessions.delete": "刪除",
+  "sessions.deleteConfirm": "確定要刪除此工作階段嗎？此操作無法復原。",
+  "sessions.empty": "尚無工作階段，請建立一個新的工作階段開始對話。",
+  "sessions.fork": "建立分支",
+  "sessions.new": "新增工作階段",
+  "sessions.rename": "重新命名",
+  "sessions.renamePrompt": "輸入新的工作階段標題",
+  "sessions.searchPlaceholder": "搜尋工作階段…",
+  "sessions.share": "分享",
+  "sessions.shareCopied": "已複製分享連結到剪貼簿",
+  "sessions.title": "工作階段",
+  "sessions.unshare": "停止分享",
+  "settings.apply": "套用",
+  "settings.connectionFailed": "連線失敗",
+  "settings.connectionOk": "連線成功",
+  "settings.field.autoStartServer": "自動啟動伺服器",
+  "settings.field.binaryPath": "opencode 執行檔路徑",
+  "settings.field.chatFontFamily": "聊天字型",
+  "settings.field.chatFontSize": "聊天字型大小",
+  "settings.field.debugLogs": "偵錯記錄",
+  "settings.field.hostname": "主機名稱",
+  "settings.field.minimumServerVersion": "最低伺服器版本",
+  "settings.field.port": "連接埠",
+  "settings.field.serverArgs": "伺服器啟動引數",
+  "settings.field.serverPassword": "伺服器密碼",
+  "settings.field.serverUrl": "伺服器 URL",
+  "settings.revert": "還原",
+  "settings.saveFailed": "設定儲存失敗",
+  "settings.saved": "設定已儲存",
+  "settings.section.appearance": "外觀",
+  "settings.section.capabilities": "功能偵測",
+  "settings.section.diagnostics": "診斷",
+  "settings.section.server": "伺服器",
+  "settings.testConnection": "測試連線",
+  "settings.title": "設定",
+  "tool.status.completed": "已完成",
+  "tool.status.failed": "失敗",
+  "tool.status.pending": "等待中",
+  "tool.status.running": "執行中",
+};
+
+const enFallback: Readonly<Record<string, string>> = en;
+
+/**
+ * The single translation entry point used by the webview `t()` binding:
+ * injected table hit -> English table hit -> the id itself. Never throws and
+ * never returns a blank string, so a drifting wire payload degrades to
+ * readable English (or a debuggable id) instead of crashing the UI.
+ */
+export function translateWithFallback(
+  table: Readonly<Record<string, string>>,
+  id: string,
+): string {
+  return table[id] ?? enFallback[id] ?? id;
+}
