@@ -7,6 +7,8 @@ import {
 } from "./host/vscode-adapter.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
+import { registerSessionHandlers } from "./host/handlers/sessions.js";
+import { wireSessionsDomain } from "./host/handlers/sync.js";
 
 /**
  * Activation (todo 10): vscode-backed ServerManager + both webview view
@@ -14,6 +16,11 @@ import { registerPanelViews } from "./providers/registration.js";
  * start/stop/restart drive the manager (failures surface as localized error
  * toasts), newSession forwards an event into the chat webview, and the
  * features owned by later todos get an info toast — never fake behavior.
+ *
+ * Todo-12 composition (owned by src/host/handlers/sync.ts): the SSE event
+ * bridge starts here; its debounced `sessions` invalidation and the domain
+ * handlers' post-mutation refresh both broadcast the session list to the
+ * chat view (see sync.ts for the event-channel carrier contract).
  */
 
 function showServerError(title: string, error: ServerStartError): void {
@@ -42,9 +49,16 @@ export function activate(context: vscode.ExtensionContext): void {
     manager,
     envLanguage: vscode.env.language,
   });
+  const sessionsDomain = wireSessionsDomain({ manager, logger, events: panel.chat });
+  registerSessionHandlers(panel.registerHandler, sessionsDomain.deps);
 
   context.subscriptions.push(
     channel,
+    {
+      dispose: () => {
+        sessionsDomain.dispose();
+      },
+    },
     { dispose: () => config.dispose() },
     { dispose: () => manager.dispose() },
     vscode.commands.registerCommand("opencodePanel.newSession", () => {

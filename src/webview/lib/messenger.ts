@@ -283,3 +283,23 @@ export function getWebviewMessenger(): WebviewMessenger {
   });
   return singleton;
 }
+
+/**
+ * Webview-state surface (todo 12 selection persistence; todos 14+ drafts):
+ * the SAME lazily-cached `acquireVsCodeApi()` handle this module owns, so
+ * feature code can read/replace persisted state without a second
+ * acquireVsCodeApi() call (forbidden — the runtime allows exactly one).
+ * The handle itself is still never exported or attached to `window`.
+ */
+export function getWebviewState(): {
+  readonly getState: () => unknown;
+  readonly setState: (state: unknown) => void;
+} {
+  const api = getVsCodeApi();
+  return {
+    getState: () => api.getState(),
+    setState: (state) => {
+      api.setState(state);
+    },
+  };
+}

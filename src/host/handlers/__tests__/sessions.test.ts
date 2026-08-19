@@ -1,0 +1,391 @@
+/**
+ * Sessions domain handlers acceptance suite (plan todo 12), run end-to-end
+ * through the todo-3 HostMessenger against the todo-5 mock server:
+ * - create ⇒ list (sync broadcast) contains the new session
+ * - rename persists on a second list
+ * - delete removes
+ * - share returns a share url string (and the broadcast flags `shared`)
+ * - fork returns a NEW id
+ * - unshare uses the SDK's DELETE verb and clears the share field
+ * - QA FAILURE: DELETE answered 500 ⇒ the handler surfaces an error reply
+ *   (posted to the webview, which rolls its optimistic update back and shows
+ *   an error toast — the webview half is covered in
+ *   src/webview/src/sessions/__tests__)) and the failure is logged.
+ */
+
+import { afterEach, describe, expect, it } from "vitest";
+import { PanelLogger, type OutputChannelLike } from "../../logger.js";
+import { HostMessenger, type HostPort } from "../../messenger.js";
+import { PanelSecrets, type SecretStorage } from "../../secrets.js";
+import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
+import type { ServerConnection } from "../../../server/ServerManager.js";
+import type { Capabilities } from "../../../server/capabilities.js";
+import {
+  isRecord,
+  type HostMessage,
+  type RequestEnvelope,
+  type SessionListPayload,
+  type StreamChunkPayload,
+} from "../../../shared/protocol.js";
+import { startMockServer, type MockServer } from "../../../test/mock-server/index.js";
+import {
+  createSessionService,
+  registerSessionHandlers,
+  staticSessionSource,
+  type SessionClientSource,
+} from "../sessions.js";
+import { SESSIONS_LIST_EVENT, SessionSync, type ViewEventSink } from "../sync.js";
+
+// ---------------------------------------------------------------------------
+// Test seams.
+
+class CapturingChannel implements OutputChannelLike {
+  readonly lines: string[] = [];
+  appendLine(line: string): void {
+    this.lines.push(line);
+  }
+  joined(): string {
+    return this.lines.join("\n");
+  }
+}
+
+/** SecretStorage fake: never holds credentials (mock server needs none). */
+class EmptySecrets implements SecretStorage {
+  get(): Promise<undefined> {
+    return Promise.resolve(undefined);
+  }
+  store(): Promise<void> {
+    return Promise.resolve();
+  }
+  delete(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
+const FAKE_CAPABILITIES: Capabilities = {
+  version: "0.0.0-test",
+  hasFork: true,
+  hasQuestion: true,
+  hasTodo: true,
+  hasShell: true,
+  agents: [],
+  commands: [],
+  mcpNative: [],
+  omoDetected: false,
+  omoMcpNote: false,
+};
+
+/** Records every bridge-bound event post (the sessionList broadcast carrier). */
+class RecordingEventSink implements ViewEventSink {
+  readonly events: Array<{ readonly type: string; readonly payload: unknown }> = [];
+  postEvent(type: string, payload: unknown): void {
+    this.events.push({ type, payload });
+  }
+  sessionLists(): SessionListPayload[] {
+    return this.events
+      .filter((event) => event.type === SESSIONS_LIST_EVENT)
+      .map((event) => event.payload as SessionListPayload);
+  }
+  lastSessionList(): SessionListPayload {
+    const lists = this.sessionLists();
+    const last = lists[lists.length - 1];
+    if (last === undefined) throw new Error("no session list broadcast recorded");
+    return last;
+  }
+}
+
+interface Harness {
+  readonly messenger: HostMessenger;
+  readonly sink: RecordingEventSink;
+  readonly channel: CapturingChannel;
+  readonly connection: ServerConnection;
+  post(type: RequestEnvelope["type"], payload: unknown): string;
+  replies(): StreamChunkPayload[];
+  nextReply(messageId: string): Promise<StreamChunkPayload>;
+}
+
+let messageCounter = 0;
+
+function createHarness(connection: ServerConnection): Harness {
+  const channel = new CapturingChannel();
+  const logger = new PanelLogger(channel, () => true);
+  const source = staticSessionSource(connection);
+  const service = createSessionService({ source, logger });
+  const sink = new RecordingEventSink();
+  const sync = new SessionSync({ service, sink, logger });
+
+  const posted: HostMessage[] = [];
+  const waiters = new Map<string, (payload: StreamChunkPayload) => void>();
+  let listener: (message: unknown) => void = () => {
+    throw new Error("message listener not wired");
+  };
+  const port: HostPort = {
+    postMessage: (message) => {
+      posted.push(message);
+      if (message.type === "streamChunk") {
+        const waiter = waiters.get(message.payload.messageId);
+        if (waiter !== undefined) {
+          waiters.delete(message.payload.messageId);
+          waiter(message.payload);
+        }
+      }
+    },
+    onMessage: (registered) => {
+      listener = registered;
+    },
+  };
+  const messenger = new HostMessenger(port);
+  registerSessionHandlers((type, handler) => messenger.register(type, handler), {
+    service,
+    sync,
+  });
+
+  return {
+    messenger,
+    sink,
+    channel,
+    connection,
+    post(type, payload) {
+      messageCounter += 1;
+      const messageId = `m-${messageCounter}`;
+      listener({ messageId, type, payload });
+      return messageId;
+    },
+    replies() {
+      return posted
+        .filter((message) => message.type === "streamChunk")
+        .map((message) => {
+          if (message.type !== "streamChunk") throw new Error("unreachable");
+          return message.payload;
+        });
+    },
+    nextReply(messageId) {
+      const existing = posted.find(
+        (message) => message.type === "streamChunk" && message.payload.messageId === messageId,
+      );
+      if (existing !== undefined && existing.type === "streamChunk") {
+        return Promise.resolve(existing.payload);
+      }
+      return new Promise<StreamChunkPayload>((resolve) => {
+        waiters.set(messageId, resolve);
+      });
+    },
+  };
+}
+
+function connectionFor(url: string, fetchImpl?: ProbeFetch): ServerConnection {
+  const panel = createPanelClient(url, {
+    secrets: new PanelSecrets(new EmptySecrets()),
+    logger: new PanelLogger(new CapturingChannel(), () => false),
+    ...(fetchImpl === undefined ? {} : { fetchImpl }),
+  });
+  return {
+    baseUrl: panel.baseUrl,
+    ownership: "attached",
+    client: panel.client,
+    probeFetch: panel.probeFetch,
+    capabilities: FAKE_CAPABILITIES,
+  };
+}
+
+function isSessionListPayload(value: unknown): value is SessionListPayload {
+  return isRecord(value) && Array.isArray(value.sessions);
+}
+
+// ---------------------------------------------------------------------------
+// Suite.
+
+let mock: MockServer | undefined;
+
+afterEach(async () => {
+  if (mock !== undefined) {
+    await mock.close();
+    mock = undefined;
+  }
+});
+
+describe("sessions domain handlers", () => {
+  it("create -> the sync broadcast list contains the new session", async () => {
+    mock = await startMockServer(0);
+    const harness = createHarness(connectionFor(mock.url));
+
+    const reply = await harness.nextReply(harness.post("createSession", { title: "Alpha session" }));
+    expect(reply.status).toBe("success");
+    expect(reply.done).toBe(true);
+    const content = reply.content;
+    expect(isRecord(content) && typeof content.id === "string").toBe(true);
+    if (!isRecord(content) || typeof content.id !== "string") throw new Error("no id in reply");
+
+    const list = harness.sink.lastSessionList();
+    expect(list.sessions.some((session) => session.id === content.id)).toBe(true);
+    expect(list.sessions.some((session) => session.title === "Alpha session")).toBe(true);
+  });
+
+  it("rename persists on a second list", async () => {
+    mock = await startMockServer(0);
+    const connection = connectionFor(mock.url);
+    const harness = createHarness(connection);
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "before rename" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+
+    const renamed = await harness.nextReply(harness.post("renameSession", { id, title: "after rename" }));
+    expect(renamed.status).toBe("success");
+
+    const list = harness.sink.lastSessionList();
+    const entry = list.sessions.find((session) => session.id === id);
+    expect(entry?.title).toBe("after rename");
+  });
+
+  it("delete removes the session", async () => {
+    mock = await startMockServer(0);
+    const harness = createHarness(connectionFor(mock.url));
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "to delete" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+
+    const deleted = await harness.nextReply(harness.post("deleteSession", { id }));
+    expect(deleted.status).toBe("success");
+
+    const list = harness.sink.lastSessionList();
+    expect(list.sessions.some((session) => session.id === id)).toBe(false);
+  });
+
+  it("share returns a share url string and flags the entry shared", async () => {
+    mock = await startMockServer(0);
+    const harness = createHarness(connectionFor(mock.url));
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "to share" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+
+    const shared = await harness.nextReply(harness.post("share", { id }));
+    expect(shared.status).toBe("success");
+    expect(isRecord(shared.content) && typeof shared.content.url === "string").toBe(true);
+    if (!isRecord(shared.content) || typeof shared.content.url !== "string") {
+      throw new Error("no share url in reply");
+    }
+    expect(shared.content.url.length).toBeGreaterThan(0);
+
+    const list = harness.sink.lastSessionList();
+    const entry = list.sessions.find((session) => session.id === id);
+    expect(entry && "shared" in entry && entry.shared === true).toBe(true);
+  });
+
+  it("fork returns a NEW id and the fork appears in the list", async () => {
+    mock = await startMockServer(0);
+    const harness = createHarness(connectionFor(mock.url));
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "to fork" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+
+    const forked = await harness.nextReply(harness.post("fork", { id }));
+    expect(forked.status).toBe("success");
+    if (!isRecord(forked.content) || typeof forked.content.id !== "string") {
+      throw new Error("no fork id in reply");
+    }
+    expect(forked.content.id).not.toBe(id);
+    const forkId = forked.content.id;
+
+    const list = harness.sink.lastSessionList();
+    expect(list.sessions.some((session) => session.id === forkId)).toBe(true);
+  });
+
+  it("unshare (SDK DELETE verb) clears the share field", async () => {
+    mock = await startMockServer(0);
+    const connection = connectionFor(mock.url);
+    const harness = createHarness(connection);
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "to unshare" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+
+    const shared = await harness.nextReply(harness.post("share", { id }));
+    expect(shared.status).toBe("success");
+
+    const unshared = await harness.nextReply(harness.post("unshare", { id }));
+    expect(unshared.status).toBe("success");
+
+    // Prove the DELETE cleared server state via a fresh GET through the same client.
+    const gotten = await connection.client.session.get({ path: { id } });
+    expect(gotten.error).toBeUndefined();
+    expect(gotten.data?.share).toBeUndefined();
+
+    const list = harness.sink.lastSessionList();
+    const entry = list.sessions.find((session) => session.id === id);
+    expect(entry && "shared" in entry && entry.shared === false).toBe(true);
+  });
+
+  it("QA failure: mock DELETE answers 500 -> error reply posted, nothing broadcast, warn logged", async () => {
+    mock = await startMockServer(0);
+    // Fetch-layer monkey patch: DELETE /session/:id answers 500; every other
+    // request flows to the real mock. This stands in for a scenario-driven
+    // 500 (the mock carries no such scenario; see evidence log).
+    const raw: ProbeFetch = (request) => globalThis.fetch(request);
+    const sabotaged: ProbeFetch = (request) => {
+      const url = new URL(request.url);
+      if (request.method === "DELETE" && /^\/session\/[^/]+$/.test(url.pathname)) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ name: "InternalError", data: { message: "boom" } }), {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return raw(request);
+    };
+    const harness = createHarness(connectionFor(mock.url, sabotaged));
+
+    const created = await harness.nextReply(harness.post("createSession", { title: "doomed delete" }));
+    if (!isRecord(created.content) || typeof created.content.id !== "string") {
+      throw new Error("create failed");
+    }
+    const id = created.content.id;
+    const broadcastsBefore = harness.sink.sessionLists().length;
+
+    const reply = await harness.nextReply(harness.post("deleteSession", { id }));
+    expect(reply.status).toBe("error");
+    expect(reply.done).toBe(true);
+    expect(typeof reply.content).toBe("string");
+    if (typeof reply.content !== "string") throw new Error("error reply carries no text");
+    expect(reply.content).toContain("SessionOperationError");
+    expect(reply.content).toContain("HTTP 500");
+
+    // The op failed, so no post-op refresh broadcast was attempted.
+    expect(harness.sink.sessionLists().length).toBe(broadcastsBefore);
+    // QA: the failure is logged (evidence: warn line names the operation).
+    expect(harness.channel.joined()).toContain("delete failed: boom (HTTP 500)");
+
+    // The session is still on the server (the UI rollback mirrors this truth).
+    const service = createSessionService({
+      source: staticSessionSource(connectionFor(mock.url)),
+      logger: new PanelLogger(new CapturingChannel(), () => false),
+    });
+    const sessions = await service.listSessions();
+    expect(sessions.some((session) => session.id === id)).toBe(true);
+  });
+
+  it("the broadcast payload is a protocol SessionListPayload", async () => {
+    mock = await startMockServer(0);
+    const harness = createHarness(connectionFor(mock.url));
+    await harness.nextReply(harness.post("createSession", { title: "shape check" }));
+    const lists = harness.sink.sessionLists();
+    expect(lists.length).toBeGreaterThan(0);
+    for (const payload of lists) {
+      expect(isSessionListPayload(payload)).toBe(true);
+    }
+  });
+});

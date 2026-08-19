@@ -3,6 +3,7 @@ import type { InitPayload } from "../../../shared/protocol.js";
 import { useStrings, StringsProvider } from "../../lib/i18n.js";
 import { getWebviewMessenger, type WebviewMessenger } from "../../lib/messenger.js";
 import { App } from "../App";
+import { SessionsPanel } from "../sessions/SessionsPanel";
 import { AppProvider } from "./context";
 import { ErrorBoundary } from "./ErrorBoundary";
 
@@ -59,7 +60,11 @@ export function AppRoot(): ReactNode {
         <LoadingSkeleton />
       ) : (
         <StringsProvider init={session.init}>
-          <AppProvider init={session.init} messenger={session.messenger}>
+          <AppProvider
+            init={session.init}
+            messenger={session.messenger}
+            slots={{ sessions: <SessionsPanel /> }}
+          >
             <App />
           </AppProvider>
         </StringsProvider>
