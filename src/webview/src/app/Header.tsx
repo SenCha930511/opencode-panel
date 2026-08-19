@@ -2,6 +2,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { ReactNode } from "react";
 import { useStrings } from "../../lib/i18n.js";
+import { McpPopover, OldServerBanner } from "../mcp/index.js";
 import { useApp, type ServerStatus } from "./context";
 
 /**
@@ -165,36 +166,42 @@ export function Header(): ReactNode {
   const { navigate, send } = useApp();
   const { t } = useStrings();
   return (
-    <header className="flex h-9 shrink-0 items-center gap-1 border-b border-border bg-panel-bg px-2">
-      <ServerStatusBadge />
-      {/*
-        Model/agent chips render here once honest values exist on the wire
-        (see module comment); the area stays empty rather than fabricating.
-      */}
-      <span className="flex-1" />
-      <button
-        type="button"
-        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg"
-        onClick={() => {
-          // T12 completes the flow (selection + list refresh); the request is
-          // the honest first step and failures already surface as toasts.
-          void send("createSession", {});
-        }}
-      >
-        <PlusIcon />
-        {t("sessions.new")}
-      </button>
-      <button
-        type="button"
-        aria-label={t("settings.title")}
-        className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
-        onClick={() => {
-          navigate("settings");
-        }}
-      >
-        <GearIcon />
-      </button>
-      <OverflowMenu />
-    </header>
+    <>
+      <header className="flex h-9 shrink-0 items-center gap-1 border-b border-border bg-panel-bg px-2">
+        <ServerStatusBadge />
+        {/*
+          Model/agent chips render here once honest values exist on the wire
+          (see module comment); the area stays empty rather than fabricating.
+        */}
+        <span className="flex-1" />
+        <button
+          type="button"
+          className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg"
+          onClick={() => {
+            // T12 completes the flow (selection + list refresh); the request is
+            // the honest first step and failures already surface as toasts.
+            void send("createSession", {});
+          }}
+        >
+          <PlusIcon />
+          {t("sessions.new")}
+        </button>
+        {/* Todo-20: MCP status popover (self-attaches its stores on mount). */}
+        <McpPopover />
+        <button
+          type="button"
+          aria-label={t("settings.title")}
+          className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
+          onClick={() => {
+            navigate("settings");
+          }}
+        >
+          <GearIcon />
+        </button>
+        <OverflowMenu />
+      </header>
+      {/* Todo-20: passive below-floor warning; renders null when not flagged. */}
+      <OldServerBanner />
+    </>
   );
 }

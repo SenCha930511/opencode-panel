@@ -16,6 +16,7 @@ import {
 } from "./host/handlers/attachments.js";
 import { wireCapabilityInfo } from "./host/handlers/capabilityInfo.js";
 import { registerCommandHandlers } from "./host/handlers/commands.js";
+import { wireMcpInfo } from "./host/handlers/mcpInfo.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
 
@@ -35,6 +36,10 @@ import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.j
  * `capabilities.refresh` push seeds the webview pickers on every
  * managed|attached transition (its header documents the resync-equivalent
  * subscription), and `runCommand` executes slash commands from the palette.
+ *
+ * Todo-20 composition (owned by src/host/handlers/mcpInfo.ts): the
+ * `mcp.status` push seeds the webview MCP panel and the capability-flag
+ * overlay on the same transitions, riding the todo-15 wiring shape.
  */
 
 function showServerError(title: string, error: ServerStartError): void {
@@ -83,6 +88,14 @@ export function activate(context: vscode.ExtensionContext): void {
     logger,
     workspaceFindFiles: editorAccess.workspaceFindFiles,
   });
+  const mcpInfo = wireMcpInfo({
+    source: managerSessionSource(manager),
+    detector: manager.detector,
+    getState: () => manager.state,
+    onDidChangeState: (listener) => manager.onDidChangeState(listener),
+    logger,
+    events: panel.chat,
+  });
 
   context.subscriptions.push(
     channel,
@@ -90,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): void {
       dispose: () => {
         sessionsDomain.dispose();
         capabilityInfo.dispose();
+        mcpInfo.dispose();
       },
     },
     { dispose: () => config.dispose() },
