@@ -1,12 +1,19 @@
 import * as vscode from "vscode";
 import {
   createVscodeConfigAccessor,
+  createVscodeEditorAccess,
   createVscodeLogger,
   createVscodeSecrets,
   createVscodeServerManager,
 } from "./host/vscode-adapter.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
+import {
+  ATTACHMENTS_ADD_EVENT,
+  buildFilePush,
+  buildSelectionPush,
+  registerAttachmentHandlers,
+} from "./host/handlers/attachments.js";
 import { wireCapabilityInfo } from "./host/handlers/capabilityInfo.js";
 import { registerCommandHandlers } from "./host/handlers/commands.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
@@ -67,6 +74,15 @@ export function activate(context: vscode.ExtensionContext): void {
     events: panel.chat,
   });
   registerCommandHandlers(panel.registerHandler, capabilityInfo.deps);
+  // Todo-17: attachments domain (searchFiles handler) + editor context seam.
+  // Composed chips ride the `event` channel as ATTACHMENTS_ADD_EVENT — the
+  // sessions.list push pattern; the host holds no pending-attachment state.
+  const editorAccess = createVscodeEditorAccess();
+  registerAttachmentHandlers(panel.registerHandler, {
+    source: managerSessionSource(manager),
+    logger,
+    workspaceFindFiles: editorAccess.workspaceFindFiles,
+  });
 
   context.subscriptions.push(
     channel,
@@ -104,8 +120,22 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand("opencodePanel.openTui", comingLater),
-    vscode.commands.registerCommand("opencodePanel.attachSelection", comingLater),
-    vscode.commands.registerCommand("opencodePanel.attachFile", comingLater),
+    vscode.commands.registerCommand("opencodePanel.attachSelection", () => {
+      const result = buildSelectionPush(editorAccess.selection());
+      if (!result.ok) {
+        void vscode.window.showInformationMessage(`OpenCode Panel: ${result.message}`);
+        return;
+      }
+      panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
+    }),
+    vscode.commands.registerCommand("opencodePanel.attachFile", (contextArg?: unknown) => {
+      const result = buildFilePush(editorAccess.filePath(contextArg));
+      if (!result.ok) {
+        void vscode.window.showInformationMessage(`OpenCode Panel: ${result.message}`);
+        return;
+      }
+      panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
+    }),
   );
   logger.info("opencode-panel activated");
 }

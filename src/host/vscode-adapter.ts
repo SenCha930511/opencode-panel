@@ -15,6 +15,7 @@ import {
 } from "./config.js";
 import { PanelLogger } from "./logger.js";
 import { PanelSecrets } from "./secrets.js";
+import { SEARCH_RESULT_LIMIT, type EditorSelectionSnapshot } from "./handlers/attachments.js";
 import {
   ServerManager,
   type ChildExit,
@@ -103,6 +104,60 @@ export function createNodeSpawner(): ChildSpawner {
       exited,
       spawnFailed,
     };
+  };
+}
+
+/**
+ * Todo-17 editor seam for the attachments domain. `selection()` snapshots
+ * the active editor's selection; `filePath()` resolves an attachable file
+ * from an explorer/editor context arg (a `vscode.Uri`-shaped value) or the
+ * active editor; `workspaceFindFiles()` is the plan-mandated last-resort
+ * fallback for `searchFiles` when the server exposes no find route. Only
+ * `file:`-scheme documents are ever reported — untitled/notebook editors
+ * have no server-readable path and yield undefined.
+ */
+export interface EditorAccess {
+  readonly selection: () => EditorSelectionSnapshot | undefined;
+  readonly filePath: { (contextArg?: unknown): string | undefined };
+  readonly workspaceFindFiles: { (query: string): Promise<readonly string[]> };
+}
+
+export function createVscodeEditorAccess(): EditorAccess {
+  return {
+    selection: () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor === undefined || editor.document.uri.scheme !== "file") return undefined;
+      const selection = editor.selection;
+      return {
+        path: editor.document.uri.fsPath,
+        language: editor.document.languageId,
+        startLine: selection.start.line,
+        endLine: selection.end.line,
+        text: editor.document.getText(selection),
+      };
+    },
+    filePath: (contextArg) => {
+      if (
+        typeof contextArg === "object" &&
+        contextArg !== null &&
+        "fsPath" in contextArg &&
+        typeof (contextArg as { fsPath?: unknown }).fsPath === "string"
+      ) {
+        const uri = contextArg as vscode.Uri;
+        return uri.scheme === "file" ? uri.fsPath : undefined;
+      }
+      const editor = vscode.window.activeTextEditor;
+      if (editor === undefined || editor.document.uri.scheme !== "file") return undefined;
+      return editor.document.uri.fsPath;
+    },
+    workspaceFindFiles: async (query) => {
+      // Glob meta in the query must not become a pattern operator — it would
+      // both break the search and widen it beyond the user's intent.
+      const escaped = query.replace(/[{}\[\]\\]/g, "\\$&").replace(/\*/g, "");
+      if (escaped.length === 0) return [];
+      const uris = await vscode.workspace.findFiles(`**/*${escaped}*`, undefined, SEARCH_RESULT_LIMIT, undefined);
+      return uris.map((uri) => uri.fsPath);
+    },
   };
 }
 
