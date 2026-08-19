@@ -44,7 +44,7 @@ export function MessageListBody(props: { readonly messages: readonly MessageVM[]
 
 /** T14 contract: re-render with each store snapshot (busy state, etc). */
 export function useChatStore(store: MessageStore): ChatStoreState {
-  return useSyncExternalStore(store.subscribe, store.getState);
+  return useSyncExternalStore(store.subscribe, store.getState, store.getState);
 }
 
 export function MessageList(props: MessageListProps) {

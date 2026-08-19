@@ -13,6 +13,7 @@
  * in src/host/handlers/sync.ts for the plan owner.
  */
 
+import { isRecord } from "../../../shared/protocol.js";
 import { getWebviewState } from "../../lib/messenger.js";
 
 export interface SessionsPersistedShape {
@@ -33,7 +34,12 @@ function isShape(value: unknown): value is SessionsPersistedShape {
   return typeof record.filter === "string";
 }
 
-/** Production value: vscode.setState-backed, or undefined outside a webview. */
+/**
+ * Production value: vscode.setState-backed, or undefined outside a webview.
+ * `save` MERGES into the existing top-level state (post-todo-14): the same
+ * state object also carries the composer's namespaced drafts key, and a
+ * wholesale replace here would clobber them.
+ */
 export function createWebviewPersistence(): SessionsPersistence | undefined {
   const state = getWebviewState();
   return {
@@ -42,7 +48,9 @@ export function createWebviewPersistence(): SessionsPersistence | undefined {
       return isShape(value) ? value : undefined;
     },
     save: (shape) => {
-      state.setState(shape);
+      const value = state.getState();
+      const base = isRecord(value) ? value : {};
+      state.setState({ ...base, ...shape });
     },
   };
 }

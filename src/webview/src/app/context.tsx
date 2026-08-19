@@ -85,6 +85,12 @@ export interface AppContextValue {
   readonly toasts: readonly ToastItem[];
   dismissToast(id: string): void;
   /**
+   * Push a toast from feature code that talks to the messenger directly
+   * (todo 14's composer catches its own failures to decide draft retention,
+   * so it cannot rely on `send()`'s implicit error toast).
+   */
+  pushToast(level: ToastLevel, text: string): void;
+  /**
    * Fire a host request; a rejected request becomes an error toast (carrying
    * the host's technical message) and resolves to null instead of throwing,
    * so UI handlers never need their own try/catch.
@@ -183,10 +189,11 @@ export function AppProvider(props: {
       serverStatus: serverLost ? "lost" : deriveServerStatus(init.server),
       toasts,
       dismissToast,
+      pushToast,
       send,
       slots: props.slots ?? {},
     }),
-    [init, messenger, route, serverLost, toasts, dismissToast, send, props.slots],
+    [init, messenger, route, serverLost, toasts, dismissToast, pushToast, send, props.slots],
   );
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;

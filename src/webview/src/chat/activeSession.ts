@@ -40,7 +40,7 @@ export function subscribeActiveSession(listener: Listener): () => void {
 }
 
 export function useActiveSession(): string | undefined {
-  return useSyncExternalStore(subscribeActiveSession, getActiveSession);
+  return useSyncExternalStore(subscribeActiveSession, getActiveSession, getActiveSession);
 }
 
 /**
