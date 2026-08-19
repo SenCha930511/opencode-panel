@@ -1,0 +1,245 @@
+{
+  "name": "opencode-panel",
+  "displayName": "OpenCode Panel",
+  "description": "Sidebar chat panel for your locally installed opencode",
+  "version": "0.1.0",
+  "publisher": "SenCha930511",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "main": "./dist/extension.js",
+  "l10n": "./l10n",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SenCha930511/opencode-panel.git"
+  },
+  "categories": [
+    "Chat",
+    "Other"
+  ],
+  "enabledApiProposals": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "opencodePanel",
+          "title": "%opencodePanel.viewsContainer.opencodePanel%",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "opencodePanel": [
+        {
+          "id": "opencodePanel.chatView",
+          "name": "%opencodePanel.views.chatView%",
+          "type": "webview"
+        },
+        {
+          "id": "opencodePanel.sessionsView",
+          "name": "%opencodePanel.views.sessionsView%",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "opencodePanel.newSession",
+        "title": "%opencodePanel.commands.newSession%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(add)"
+      },
+      {
+        "command": "opencodePanel.openSettings",
+        "title": "%opencodePanel.commands.openSettings%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "opencodePanel.startServer",
+        "title": "%opencodePanel.commands.startServer%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(play)"
+      },
+      {
+        "command": "opencodePanel.stopServer",
+        "title": "%opencodePanel.commands.stopServer%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "opencodePanel.restartServer",
+        "title": "%opencodePanel.commands.restartServer%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "opencodePanel.openTui",
+        "title": "%opencodePanel.commands.openTui%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "opencodePanel.attachSelection",
+        "title": "%opencodePanel.commands.attachSelection%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(selection)"
+      },
+      {
+        "command": "opencodePanel.attachFile",
+        "title": "%opencodePanel.commands.attachFile%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(file)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "opencodePanel.newSession",
+          "when": "view == opencodePanel.chatView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "opencodePanel.openSettings",
+          "when": "view == opencodePanel.chatView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "opencodePanel.startServer",
+          "when": "view == opencodePanel.chatView",
+          "group": "1_server@1"
+        },
+        {
+          "command": "opencodePanel.stopServer",
+          "when": "view == opencodePanel.chatView",
+          "group": "1_server@2"
+        },
+        {
+          "command": "opencodePanel.restartServer",
+          "when": "view == opencodePanel.chatView",
+          "group": "1_server@3"
+        },
+        {
+          "command": "opencodePanel.openTui",
+          "when": "view == opencodePanel.chatView",
+          "group": "1_server@4"
+        },
+        {
+          "command": "opencodePanel.newSession",
+          "when": "view == opencodePanel.sessionsView",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "opencodePanel.attachSelection",
+          "when": "editorHasSelection",
+          "group": "opencodePanel@1"
+        },
+        {
+          "command": "opencodePanel.attachFile",
+          "group": "opencodePanel@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "%opencodePanel.configuration.title%",
+      "properties": {
+        "opencodePanel.serverUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%opencodePanel.config.serverUrl.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.port": {
+          "type": "number",
+          "default": 4096,
+          "markdownDescription": "%opencodePanel.config.port.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.hostname": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "markdownDescription": "%opencodePanel.config.hostname.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.binaryPath": {
+          "type": "string",
+          "default": "opencode",
+          "markdownDescription": "%opencodePanel.config.binaryPath.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.serverArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "%opencodePanel.config.serverArgs.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.autoStartServer": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%opencodePanel.config.autoStartServer.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.minimumServerVersion": {
+          "type": "string",
+          "default": "0.0.0",
+          "markdownDescription": "%opencodePanel.config.minimumServerVersion.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.debugLogs": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%opencodePanel.config.debugLogs.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.chatFontFamily": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%opencodePanel.config.chatFontFamily.markdownDescription%",
+          "scope": "resource"
+        },
+        "opencodePanel.chatFontSize": {
+          "type": "number",
+          "default": 0,
+          "markdownDescription": "%opencodePanel.config.chatFontSize.markdownDescription%",
+          "scope": "resource"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@opencode-ai/sdk": "^1.18.18",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
+    "@radix-ui/react-scroll-area": "^1.2.18",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-tooltip": "^1.2.16",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/vscode": "^1.125.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.9.2",
+    "dompurify": "^3.4.14",
+    "esbuild": "^0.28.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "react-virtuoso": "^4.18.12",
+    "rehype-highlight": "^7.0.2",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.11"
+  }
+}
