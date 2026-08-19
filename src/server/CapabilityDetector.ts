@@ -1,0 +1,277 @@
+/**
+ * Runtime capability detection for a connected opencode server (plan todo 7),
+ * plus the public API map for its consumers.
+ *
+ * PUBLIC API SURFACE (module map):
+ * - `./clientFactory.js`: `createPanelClient(baseUrl, deps)` →
+ *   `{ client, probeFetch }`, `AuthRequiredError`, `ProbeFetch` — todo 8
+ *   (ServerManager) creates clients; todo 9 (SSE bridge) reuses `probeFetch`.
+ * - `./capabilities.js` (re-exported below): `Capabilities`, `AgentSummary`,
+ *   `CommandSummary`, `McpNativeStatus`, `FeatureVisibility`, `guard()`,
+ *   `toWire()` (todo-3 init payload mapping), `CORE_AGENT_NAMES`.
+ * - this module: `createCapabilityDetector(options)` → `detect(client,
+ *   baseUrl)` (cached per baseUrl) + `invalidate(baseUrl)` — todo 9 calls
+ *   `invalidate` on `server.connected`, then re-detects.
+ * - `./docProbe.js`: `probeDoc()`, `probeHealth()`, `extractSpecPaths()` —
+ *   the raw read-only probes; `extractSpecPaths` is re-exported here for the
+ *   capability-matrix tests (todo 23), along with `isBelowMinimumVersion()`
+ *   (`./versionFloor.js`) and the pure `resolveOmoSignal()` (`./omoSignals.js`).
+ *
+ * PRODUCTION WIRING (todo 8): pass `panel.probeFetch` as `probeFetch` so the
+ * health/doc probes share the client's auth recovery; the default
+ * `globalThis.fetch` only fits unauthenticated servers.
+ *
+ * Detection contract (UNSUPPORTED-FEATURE RULE): `detect` NEVER throws and
+ * NEVER POSTs. Every probe degrades independently — a 404 or schema mismatch
+ * just drops the matching bit, and callers hide features via `guard()`
+ * (todo 20) + one toast instead of crashing.
+ */
+
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import type { OpencodeClient } from "@opencode-ai/sdk";
+import type { PanelLogger } from "../host/logger.js";
+import type { ProbeFetch } from "./clientFactory.js";
+import type {
+  AgentSummary,
+  Capabilities,
+  CommandSummary,
+  McpNativeStatus,
+} from "./capabilities.js";
+import { probeDoc, probeHealth, type DocProbeResult } from "./docProbe.js";
+import { resolveOmoSignal, type DetectorFs } from "./omoSignals.js";
+import { isBelowMinimumVersion } from "./versionFloor.js";
+
+export {
+  CORE_AGENT_NAMES,
+  guard,
+  isCoreAgentName,
+  toWire,
+} from "./capabilities.js";
+export type {
+  AgentSummary,
+  Capabilities,
+  CommandSummary,
+  FeatureVisibility,
+  McpNativeStatus,
+} from "./capabilities.js";
+export { extractSpecPaths } from "./docProbe.js";
+export type { DocProbeResult } from "./docProbe.js";
+export { resolveOmoSignal } from "./omoSignals.js";
+export type { DetectorFs, OmoSignal, OmoSignalInput } from "./omoSignals.js";
+export { isBelowMinimumVersion } from "./versionFloor.js";
+
+const nodeFs: DetectorFs = { exists: (path) => existsSync(path) };
+
+export interface CapabilityDetectorOptions {
+  readonly logger: PanelLogger;
+  /** From todo-6 config `opencodePanel.minimumServerVersion` ("0.0.0" = warn-only). */
+  readonly minimumServerVersion: string;
+  /**
+   * Fetch for the raw /global/health and /doc probes. Pass the panel
+   * client's `probeFetch` so authed servers probe correctly; defaults to
+   * `globalThis.fetch`.
+   */
+  readonly probeFetch?: ProbeFetch;
+  /** Workspace root for the OMO config-file signal (todo 8 passes the folder). */
+  readonly workspaceDir?: string;
+  /** Home directory for `~/.config/opencode/omo.jsonc`; defaults to `os.homedir()`. */
+  readonly homeDir?: string;
+  readonly fs?: DetectorFs;
+  /** Test seam: appended to `/doc` as query (the todo-5 mock's `raw=1` JSON mode). */
+  readonly docQuery?: string;
+}
+
+export interface CapabilityDetector {
+  /** Best-effort probe of one server; cached per baseUrl until invalidated. */
+  detect(client: OpencodeClient, baseUrl: string): Promise<Capabilities>;
+  /** Drop the cached result (todo 9 calls this on `server.connected`). */
+  invalidate(baseUrl: string): void;
+}
+
+export function createCapabilityDetector(options: CapabilityDetectorOptions): CapabilityDetector {
+  const cache = new Map<string, Promise<Capabilities>>();
+  return {
+    detect(client, baseUrl) {
+      const cached = cache.get(baseUrl);
+      if (cached !== undefined) return cached;
+      const pending = runDetection(client, baseUrl, options);
+      cache.set(baseUrl, pending);
+      return pending;
+    },
+    invalidate(baseUrl) {
+      cache.delete(baseUrl);
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Route-presence → feature flags. Tolerant to the template style (`{id}`
+// vs `:id`) by matching a single non-slash segment between `session` and the
+// leaf. The question reply route shape is the mock's documented assumption.
+
+const FORK_PATH = /^\/session\/[^/]+\/fork$/;
+const TODO_PATH = /^\/session\/[^/]+\/todo$/;
+const SHELL_PATH = /^\/session\/[^/]+\/shell$/;
+const QUESTION_PATH = /^\/session\/[^/]+\/questions?(?:\/|$)/;
+
+interface RouteFlags {
+  readonly hasFork: boolean;
+  readonly hasQuestion: boolean;
+  readonly hasTodo: boolean;
+  readonly hasShell: boolean;
+}
+
+function assertNever(value: never): never {
+  throw new Error(`unreachable doc probe kind: ${String(value)}`);
+}
+
+/**
+ * Map a doc probe outcome onto route flags. Fallback GET probes cannot prove
+ * POST-only routes (fork/question/shell) — those stay hidden per the
+ * ambiguity rule (see docProbe.ts).
+ */
+function routeFlags(doc: DocProbeResult): RouteFlags {
+  switch (doc.kind) {
+    case "spec":
+      return {
+        hasFork: doc.paths.some((path) => FORK_PATH.test(path)),
+        hasQuestion: doc.paths.some((path) => QUESTION_PATH.test(path)),
+        hasTodo: doc.paths.some((path) => TODO_PATH.test(path)),
+        hasShell: doc.paths.some((path) => SHELL_PATH.test(path)),
+      };
+    case "fallback":
+      return { hasFork: false, hasQuestion: false, hasTodo: doc.todoPresent, hasShell: false };
+    default:
+      return assertNever(doc);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Boundary parsers (unknown → typed summaries; unknown shapes just drop entries).
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toAgentSummaries(payload: unknown): AgentSummary[] {
+  if (!Array.isArray(payload)) return [];
+  const agents: AgentSummary[] = [];
+  for (const item of payload) {
+    if (!isRecord(item) || typeof item.name !== "string" || item.name.length === 0) continue;
+    agents.push({
+      name: item.name,
+      ...(typeof item.mode === "string" ? { mode: item.mode } : {}),
+      builtIn: item.builtIn === true,
+    });
+  }
+  return agents;
+}
+
+function toCommandSummaries(payload: unknown): CommandSummary[] {
+  if (!Array.isArray(payload)) return [];
+  const commands: CommandSummary[] = [];
+  for (const item of payload) {
+    if (!isRecord(item) || typeof item.name !== "string" || item.name.length === 0) continue;
+    commands.push({
+      name: item.name,
+      ...(typeof item.description === "string" ? { description: item.description } : {}),
+    });
+  }
+  return commands;
+}
+
+function toMcpNativeStatus(payload: unknown): McpNativeStatus[] {
+  if (!isRecord(payload)) return [];
+  const entries: McpNativeStatus[] = [];
+  for (const [name, value] of Object.entries(payload)) {
+    const status = isRecord(value) && typeof value.status === "string" ? value.status : "unknown";
+    entries.push({ name, status });
+  }
+  return entries;
+}
+
+// ---------------------------------------------------------------------------
+// Detection pipeline.
+
+async function runDetection(
+  client: OpencodeClient,
+  baseUrl: string,
+  options: CapabilityDetectorOptions,
+): Promise<Capabilities> {
+  const { logger } = options;
+  const fetchImpl = options.probeFetch ?? ((request: Request) => globalThis.fetch(request));
+
+  const health = await probeHealth(fetchImpl, baseUrl);
+  const doc = await probeDoc(fetchImpl, baseUrl, options.docQuery);
+  const flags = routeFlags(doc);
+
+  // Ancillary read-only GETs; each degrades to empty independently (a 404 on
+  // an old server or an unexpected payload must not sink detection).
+  const empty = <T>(label: string) => (error: unknown): readonly T[] => {
+    logger.debug(`capability probe '${label}' failed: ${errorSummary(error)}`);
+    return [];
+  };
+  const [agents, commands, mcpNative] = await Promise.all([
+    client
+      .app.agents()
+      .then((result) => toAgentSummaries(result.data))
+      .catch(empty<AgentSummary>("agents")),
+    client.command
+      .list()
+      .then((result) => toCommandSummaries(result.data))
+      .catch(empty<CommandSummary>("commands")),
+    client.mcp
+      .status()
+      .then((result) => toMcpNativeStatus(result.data))
+      .catch(empty<McpNativeStatus>("mcp")),
+  ]);
+  // The plan requires a /config probe; its payload belongs to todo 13's model
+  // dropdown, so detection only records that the route answered.
+  await client.config
+    .get()
+    .then(() => logger.debug("capability probe 'config' ok"))
+    .catch((error: unknown) => logger.debug(`capability probe 'config' failed: ${errorSummary(error)}`));
+
+  const omoSignal = resolveOmoSignal({
+    fs: options.fs ?? nodeFs,
+    ...(options.workspaceDir === undefined ? {} : { workspaceDir: options.workspaceDir }),
+    homeDir: options.homeDir ?? homedir(),
+    specPaths: doc.kind === "spec" ? doc.paths : undefined,
+    agentNames: agents.map((agent) => agent.name),
+  });
+  const omoDetected = omoSignal !== "none";
+
+  const belowFloor =
+    health.version !== "" && isBelowMinimumVersion(health.version, options.minimumServerVersion);
+  if (belowFloor) {
+    logger.warn(
+      `opencode server version ${health.version} is below minimumServerVersion ` +
+        `${options.minimumServerVersion}; running with best-effort capabilities`,
+    );
+  }
+
+  const docSource = doc.kind === "spec" ? `spec-${doc.source}` : "fallback";
+  logger.info(
+    `capabilities for ${baseUrl}: version=${health.version || "?"} ` +
+      `floor=${options.minimumServerVersion} oldServer=${belowFloor} fork=${flags.hasFork} ` +
+      `question=${flags.hasQuestion} todo=${flags.hasTodo} shell=${flags.hasShell} ` +
+      `agents=${agents.length} commands=${commands.length} mcp=${mcpNative.length} ` +
+      `omoDetected=${omoDetected} (signal=${omoSignal}, doc=${docSource})`,
+  );
+
+  return {
+    version: health.version,
+    ...flags,
+    agents,
+    commands,
+    mcpNative,
+    omoDetected,
+    omoMcpNote: omoDetected,
+    ...(belowFloor ? { oldServer: true } : {}),
+  };
+}
+
+function errorSummary(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+}
