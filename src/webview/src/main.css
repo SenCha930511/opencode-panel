@@ -1,7 +1,6 @@
 @import "tailwindcss";
+@import "./styles/theme.css";
 
-/* Minimal host-theme bridge; the full token map lands with the app shell
-   (todo 11, styles/theme.css). */
 html,
 body,
 #root {
@@ -13,6 +12,6 @@ body {
   padding: 0;
   font-family: var(--vscode-font-family, system-ui, sans-serif);
   font-size: var(--vscode-font-size, 13px);
-  color: var(--vscode-foreground);
-  background: var(--vscode-sideBar-background, transparent);
+  color: var(--fg);
+  background: var(--bg);
 }
