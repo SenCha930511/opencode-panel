@@ -97,6 +97,12 @@
         "title": "%opencodePanel.commands.exportTranscript%",
         "category": "%opencodePanel.category%",
         "icon": "$(export)"
+      },
+      {
+        "command": "opencodePanel.openLogs",
+        "title": "%opencodePanel.commands.openLogs%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(output)"
       }
     ],
     "menus": {

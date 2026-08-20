@@ -12,6 +12,7 @@
   "opencodePanel.commands.attachSelection": "Attach Selection to Chat",
   "opencodePanel.commands.attachFile": "Attach File to Chat",
   "opencodePanel.commands.exportTranscript": "Export Session Transcript",
+  "opencodePanel.commands.openLogs": "Open Logs",
   "opencodePanel.configuration.title": "OpenCode Panel",
   "opencodePanel.config.serverUrl.markdownDescription": "Full URL of an already-running opencode server (e.g. `http://127.0.0.1:4096`). When empty, the extension derives the endpoint from `opencodePanel.hostname` and `opencodePanel.port` and may spawn its own managed server.",
   "opencodePanel.config.port.markdownDescription": "Port for the opencode server the extension connects to (and spawns, when `opencodePanel.autoStartServer` is enabled). Ignored when `opencodePanel.serverUrl` is set.",

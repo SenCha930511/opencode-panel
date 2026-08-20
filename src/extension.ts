@@ -9,6 +9,12 @@ import {
   createVscodeServerManager,
   createVscodeSettingsSurface,
 } from "./host/vscode-adapter.js";
+import {
+  createVscodeStatusBarController,
+  createVscodeTuiTerminalFactory,
+} from "./host/vscode-adapter-ide.js";
+import { STATUS_BAR_MENU_COMMAND_ID } from "./host/statusBar.js";
+import { TuiLauncher } from "./host/tui.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
 import {
@@ -198,8 +204,36 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   });
 
+  // Todo-22: status bar item mirroring the manager lifecycle (+ quickpick
+  // menu routing to the manifest commands) and the TUI escape hatch — one
+  // reused "OpenCode TUI" terminal per workspace, `binaryPath attach <url>`
+  // with SecretStorage credentials injected into the terminal env, and a
+  // one-step fallback to the plain binary when `attach` exits non-zero.
+  const tui = new TuiLauncher({
+    getState: () => manager.state,
+    config: () => config.read(),
+    secrets,
+    factory: createVscodeTuiTerminalFactory(),
+    logger,
+    info: (message) => {
+      void vscode.window.showInformationMessage(message);
+    },
+    t: (text) => vscode.l10n.t(text),
+  });
+  const statusBar = createVscodeStatusBarController({
+    getState: () => manager.state,
+    onDidChangeState: (listener) => manager.onDidChangeState(listener),
+    t: (text) => vscode.l10n.t(text),
+  });
+
   context.subscriptions.push(
     channel,
+    statusBar,
+    tui,
+    vscode.commands.registerCommand(STATUS_BAR_MENU_COMMAND_ID, () => statusBar.showMenu()),
+    vscode.commands.registerCommand("opencodePanel.openLogs", () => {
+      channel.show();
+    }),
     vscode.workspace.registerTextDocumentContentProvider(
       DOCK_DIFF_SCHEME,
       dockSurface.contentProvider,
@@ -244,7 +278,7 @@ export function activate(context: vscode.ExtensionContext): void {
         showServerError(vscode.l10n.t("Failed to restart the opencode server"), result.error);
       }
     }),
-    vscode.commands.registerCommand("opencodePanel.openTui", comingLater),
+    vscode.commands.registerCommand("opencodePanel.openTui", () => tui.open()),
     vscode.commands.registerCommand("opencodePanel.attachSelection", () => {
       const result = buildSelectionPush(editorAccess.selection());
       if (!result.ok) {

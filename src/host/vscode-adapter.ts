@@ -1,8 +1,9 @@
 /**
  * Thin seam between the pure host modules (config / secrets / logger) and
- * the real `vscode` API surface. This is the ONLY file under `src/host/`
- * that resolves the extension-host `vscode` module at runtime, so unit
- * tests (which run under node + vitest) never touch it.
+ * the real `vscode` API surface. Together with `./vscode-adapter-ide.ts`
+ * (todo-22 IDE surfaces) it resolves the extension-host `vscode` module
+ * at runtime, so unit tests (which run under node + vitest) never touch
+ * either file.
  *
  * The factories below are wired by `extension.ts` at activation time.
  */
