@@ -44,6 +44,20 @@ export interface ViewProviderDeps {
   readonly logger: PanelLogger;
 }
 
+/**
+ * Todo-24 transport seam (dev builds only; the `_test` property itself is
+ * defined only inside the `__DEV__` branch, so production bundles erase it).
+ * `getPostedMessages` replays every host→webview post; `receiveFromWebview`
+ * feeds one envelope through the REAL per-view HostMessenger dispatch (see
+ * HostMessenger.handleIncoming); `hasResolvedView` reports view resolution
+ * so the harness orders focus → ready deterministically.
+ */
+export interface DevProviderTestHooks {
+  getPostedMessages(): readonly HostMessage[];
+  hasResolvedView(): boolean;
+  receiveFromWebview(message: unknown): void;
+}
+
 function assertNever(value: never): never {
   throw new Error(`unreachable server state: ${JSON.stringify(value)}`);
 }
@@ -64,11 +78,20 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
     if (__DEV__) {
       // REVIEW ADVISORY (binding): todo-24 transport inspector; production
       // builds erase this whole branch, so no `_test` literal survives.
+      const hooks: DevProviderTestHooks = {
+        getPostedMessages: (): readonly HostMessage[] => [...this.posted],
+        hasResolvedView: (): boolean => this.view !== undefined,
+        receiveFromWebview: (message: unknown): void => {
+          const messenger = this.messenger;
+          if (messenger === undefined) {
+            throw new Error("todo-24 harness: no resolved webview view to receive through");
+          }
+          messenger.handleIncoming(message);
+        },
+      };
       Object.defineProperty(this, "_test", {
         configurable: true,
-        value: {
-          getPostedMessages: (): readonly HostMessage[] => [...this.posted],
-        },
+        value: hooks,
       });
     }
   }

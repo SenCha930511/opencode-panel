@@ -18,7 +18,8 @@
     // in every source file. Emission is owned by esbuild (bundle → cjs), tsc
     // only typechecks, so the flag is inapplicable here. "format cjs" output
     // stays unchanged.
-    "types": ["node", "vscode"]
+    // mocha: de-scoped ambient BDD globals for the todo-24 suite under src/test/.
+    "types": ["node", "vscode", "mocha"]
   },
   "include": ["src/**/*"],
   // Webview code is ESM/DOM + JSX, type-configured and built exclusively by

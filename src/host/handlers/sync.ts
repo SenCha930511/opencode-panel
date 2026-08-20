@@ -249,13 +249,40 @@ export function wireSessionsDomain(deps: SessionsWiringDeps): SessionsWiring {
     logger,
     ...(deps.bridgeTiming === undefined ? {} : { timing: deps.bridgeTiming }),
   });
-  bridge.start();
+  // Activation-order fix (todo 24): the bridge's subscribe loop exits
+  // PERMANENTLY when started while the manager is not yet alive (its
+  // isServerAlive gate runs before the first attempt), and start() is a
+  // one-shot (idempotent no-ops afterwards). wireSessionsDomain runs at
+  // activation — long before any managed|attached transition — so defer the
+  // start to the first alive transition; an already-alive manager starts
+  // immediately. (A later dead→alive REVIVE still needs a fresh bridge —
+  // documented pre-existing gap; the bridge itself exits on server loss.)
+  let started = false;
+  let startSubscription: Disposable | undefined;
+  const startOnce = (): void => {
+    if (started) return;
+    started = true;
+    bridge.start();
+  };
+  if (isAlive(manager)) {
+    startOnce();
+  } else {
+    startSubscription = manager.onDidChangeState(() => {
+      if (!isAlive(manager)) return;
+      startSubscription?.dispose();
+      startSubscription = undefined;
+      startOnce();
+    });
+  }
 
   return {
     deps: { service, sync: sessionSync },
     hub,
     bridge,
-    dispose: () => bridge.dispose(),
+    dispose: () => {
+      startSubscription?.dispose();
+      bridge.dispose();
+    },
   };
 }
 

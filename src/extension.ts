@@ -18,6 +18,15 @@ import { TuiLauncher } from "./host/tui.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
 import {
+  applyTestServerOverride,
+  exposeTestAttach,
+  type PanelActivationTestApi,
+} from "./host/testSeam.js";
+import {
+  registerAnswerHandlers,
+  createAnswerService,
+} from "./host/handlers/answers.js";
+import {
   ATTACHMENTS_ADD_EVENT,
   buildFilePush,
   buildSelectionPush,
@@ -36,6 +45,7 @@ import {
   createMessageOpsService,
   registerMessageOpsHandlers,
 } from "./host/handlers/messageOps.js";
+import { registerPromptHandlers } from "./host/handlers/prompt.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { registerSettingsHandlers } from "./host/handlers/settings.js";
 import { createHealthProbe } from "./host/handlers/settingsProbe.js";
@@ -85,8 +95,16 @@ function comingLater(): void {
   );
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const config = createVscodeConfigAccessor();
+// Todo-24 env-test seam (additive; spec in ./host/testSeam.ts): the harness
+// pins OPENCODE_PANEL_TEST_PORT, activation attaches to the pre-started mock,
+// and the test-API surface returns; production activation is unchanged.
+export function activate(
+  context: vscode.ExtensionContext,
+): PanelActivationTestApi | undefined {
+  const config = applyTestServerOverride(
+    createVscodeConfigAccessor(),
+    process.env.OPENCODE_PANEL_TEST_PORT ?? "",
+  );
   const { logger, channel } = createVscodeLogger(() => config.read().debugLogs);
   const secrets = createVscodeSecrets(context);
   const manager = createVscodeServerManager({ config, secrets, logger });
@@ -98,6 +116,18 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   const sessionsDomain = wireSessionsDomain({ manager, logger, events: panel.chat });
   registerSessionHandlers(panel.registerHandler, sessionsDomain.deps);
+  // Todo-24 activation gap fix: the todo-14 prompt handlers (sendPrompt /
+  // abort) and todo-16 answer handlers (answerPermission / answerQuestion)
+  // shipped with unit tests but were never composed here — sendPrompt from a
+  // real webview hit UnknownMessageTypeError. Register both on the same
+  // manager-backed source the sessions domain uses.
+  registerPromptHandlers(panel.registerHandler, {
+    source: managerSessionSource(manager),
+    logger,
+  });
+  registerAnswerHandlers(panel.registerHandler, {
+    service: createAnswerService({ source: managerSessionSource(manager), logger }),
+  });
   const capabilityInfo = wireCapabilityInfo({
     source: managerSessionSource(manager),
     detector: manager.detector,
@@ -300,6 +330,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
   );
   logger.info("opencode-panel activated");
+  return exposeTestAttach(process.env.OPENCODE_PANEL_TEST_PORT ?? "", manager, panel);
 }
 
 export function deactivate(): void {}

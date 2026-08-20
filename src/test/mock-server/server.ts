@@ -65,6 +65,16 @@ export class MockHttpServer {
     const write = openSse(req, res);
     this.sseClients.add(write);
     req.on("close", () => this.sseClients.delete(write));
+    // Fidelity fix (todo 24): the real server greets EVERY /event
+    // subscription with its own `server.connected` — the todo-9 bridge only
+    // dispatches queued events after seeing it. The greeting is
+    // per-subscription, so it bypasses the all-clients broadcast of emit().
+    const greeting: BusEvent = {
+      id: `evt_${++this.eventCounter}`,
+      type: "server.connected",
+      properties: {},
+    };
+    write(`data: ${JSON.stringify(greeting)}\n\n`);
   }
 
   /** Session lookup shared by every /session/:id route; 404s like the real API. */

@@ -56,3 +56,7 @@ esac
 # installed: self-test @ creation
 # removal: true
 # end
+
+# installed: npm i -D @vscode/test-electron mocha @types/mocha @ 2026-08-20
+# removal: npm rm -D @vscode/test-electron mocha @types/mocha
+# end

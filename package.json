@@ -231,7 +231,7 @@
     "watch": "node esbuild.config.mjs --watch",
     "watch:webview": "vite build --watch --mode development src/webview",
     "package": "vsce package",
-    "test": "node -e \"console.log('integration tests (@vscode/test-electron) land in todo 24; use: npm run test:unit')\"",
+    "test": "node esbuild.config.mjs --test && node dist/test/runTest.js",
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
@@ -243,6 +243,7 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/vite": "^4.3.3",
     "@types/dompurify": "^3.0.5",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -252,6 +253,7 @@
     "@vscode/vsce": "^3.9.2",
     "dompurify": "^3.4.14",
     "esbuild": "^0.28.2",
+    "mocha": "^11.8.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",

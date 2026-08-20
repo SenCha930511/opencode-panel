@@ -66,8 +66,16 @@ export class HostMessenger {
     this.inflight.clear();
   }
 
-  /** Throws synchronously on malformed envelopes and unknown message types. */
-  private handleIncoming(message: unknown): void {
+  /**
+   * Dispatch one inbound webview envelope. Throws synchronously on malformed
+   * envelopes and unknown message types.
+   *
+   * Public for the todo-24 transport seam: the integration harness's dev-only
+   * `_test.receiveFromWebview` feeds test envelopes through this SAME
+   * dispatch the real `webview.onDidReceiveMessage` listener drives, so the
+   * suite exercises the real messenger/handler chain end-to-end.
+   */
+  handleIncoming(message: unknown): void {
     const request = parseRequestEnvelope(message);
     const handler = this.handlers.get(request.type);
     if (handler === undefined) {

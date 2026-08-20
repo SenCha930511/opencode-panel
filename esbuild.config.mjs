@@ -2,6 +2,28 @@ import * as esbuild from "esbuild";
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
+const test = process.argv.includes("--test");
+
+// Todo-24 integration-test bundles: the DEV extension (with the todo-10/24
+// `_test` recorder) + the @vscode/test-electron harness. outbase "src"
+// yields dist/extension.js, dist/test/runTest.js, dist/test/suite/index.js.
+if (test) {
+  await esbuild.build({
+    entryPoints: ["src/extension.ts", "src/test/runTest.ts", "src/test/suite/index.ts"],
+    bundle: true,
+    outdir: "dist",
+    outbase: "src",
+    external: ["vscode", "mocha", "@vscode/test-electron"],
+    format: "cjs",
+    platform: "node",
+    target: "node20",
+    sourcemap: true,
+    minify: false,
+    define: { __DEV__: "true" },
+    logLevel: "info",
+  });
+  process.exit(0);
+}
 
 // Emits the `[watch] build started|finished` markers the built-in
 // `$esbuild-watch` problem matcher keys on (tasks.json watch task).
