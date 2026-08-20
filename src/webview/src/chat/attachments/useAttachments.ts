@@ -27,7 +27,7 @@ import {
 
 export function useAttachments(
   options: {
-    readonly events?: Parameters<typeof createAttachmentsController>[0]["events"];
+    readonly events?: NonNullable<Parameters<typeof createAttachmentsController>[0]>["events"];
     readonly idgen?: () => string;
   } = {},
 ): AttachmentsController {
