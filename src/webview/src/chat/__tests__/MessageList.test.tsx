@@ -166,6 +166,28 @@ describe("MessageList rendering", () => {
     expect(html).toContain('data-role="user"');
   });
 
+  it("re-binds when a full sync arrives for a different selected session", () => {
+    // Given: the store is bound to session A with its messages
+    const store = new MessageStore();
+    store.applyFullSync(SESSION, basicChatMessages());
+    expect(store.getState().sessionId).toBe(SESSION);
+
+    // When: the user selects another session and the host pushes its sync
+    const other = basicChatMessages().map((raw, index) => ({
+      ...(raw as Record<string, unknown>),
+      info: {
+        ...((raw as { info: Record<string, unknown> }).info),
+        id: `other_${index}`,
+        sessionID: "ses_other",
+      },
+    }));
+    store.applyFullSync("ses_other", other);
+
+    // Then: the chat follows the authoritative selection, never stranded
+    expect(store.getState().sessionId).toBe("ses_other");
+    expect(store.getState().messages.length).toBeGreaterThan(0);
+  });
+
   it("renders an unknown tool name (skill_mcp) without special-casing", () => {
     const store = new MessageStore();
     store.applyFullSync(SESSION, [skillMcpToolMessage()]);

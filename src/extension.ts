@@ -56,6 +56,9 @@ import { registerSettingsHandlers } from "./host/handlers/settings.js";
 import { createHealthProbe } from "./host/handlers/settingsProbe.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
 import { createPanelClient } from "./server/clientFactory.js";
+import { buildWebviewHtml } from "./providers/html.js";
+import { createInitPayloadBuilder } from "./providers/initPayload.js";
+import { HostMessenger, type HostPort } from "./host/messenger.js";
 import {
   createExportTranscriptCommand,
   exportTranscript,
@@ -278,6 +281,78 @@ export function activate(
     t: (text) => vscode.l10n.t(text),
   });
 
+  const initPayloadBuilder = createInitPayloadBuilder({
+    envLanguage: vscode.env.language,
+    config,
+    manager,
+  });
+
+  let settingsPanel: vscode.WebviewPanel | undefined;
+
+  const openSettingsTab = async (): Promise<void> => {
+    if (settingsPanel !== undefined) {
+      settingsPanel.reveal(vscode.ViewColumn.Active);
+      return;
+    }
+
+    settingsPanel = vscode.window.createWebviewPanel(
+      "opencodePanel.settings",
+      "OpenCode Panel Settings",
+      vscode.ViewColumn.Active,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "media")],
+      },
+    );
+
+    const mediaRoot = vscode.Uri.joinPath(context.extensionUri, "media");
+    settingsPanel.webview.html = buildWebviewHtml({
+      cspSource: settingsPanel.webview.cspSource,
+      scriptUri: settingsPanel.webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, "webview", "main.js")).toString(),
+      styleUri: settingsPanel.webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, "webview", "main.css")).toString(),
+      dev: false,
+      viewKind: "settings",
+    });
+
+    const port: HostPort = {
+      postMessage: (msg) => {
+        void settingsPanel?.webview.postMessage(msg);
+      },
+      onMessage: (listener) => {
+        settingsPanel?.webview.onDidReceiveMessage(listener);
+      },
+    };
+    const messenger = new HostMessenger(port);
+    panel.handlers.applyInto(messenger);
+
+    messenger.register("ready", async () => {
+      const payload = await initPayloadBuilder();
+      settingsPanel?.webview.postMessage({ type: "init", payload });
+      return null;
+    });
+
+    messenger.register("closeSettingsTab" as any, async () => {
+      settingsPanel?.dispose();
+      return null;
+    });
+
+    settingsPanel.onDidDispose(() => {
+      messenger.dispose();
+      settingsPanel = undefined;
+    });
+  };
+
+  panel.registerHandler("openSettingsTab" as any, async () => {
+    void openSettingsTab();
+    return null;
+  });
+
+  panel.registerHandler("closeSettingsTab" as any, async () => {
+    settingsPanel?.dispose();
+    return null;
+  });
+
   context.subscriptions.push(
     channel,
     statusBar,
@@ -313,7 +388,7 @@ export function activate(
       panel.chat.postEvent("command.newSession", null);
     }),
     vscode.commands.registerCommand("opencodePanel.openSettings", () => {
-      panel.chat.postEvent("command.openSettings", null);
+      void openSettingsTab();
     }),
     vscode.commands.registerCommand("opencodePanel.startServer", async () => {
       const result = await manager.start();

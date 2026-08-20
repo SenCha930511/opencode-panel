@@ -44,6 +44,7 @@ import {
   baseNameOfPath,
   chipFromPath,
   extractMentionQuery,
+  replaceMentionToken,
   sensitivePathReason,
   stripMentionToken,
   urlFromServerPath,
@@ -172,6 +173,15 @@ describe("extractMentionQuery", () => {
     if (mention === undefined) throw new Error("mention not found");
     expect(stripMentionToken(text, mention)).toBe("please check  for this");
     expect(mention.start).toBe(13);
+  });
+
+  it("replaceMentionToken replaces the token with @path and trailing space", () => {
+    const text = "please check @app for this";
+    const mention = extractMentionQuery(text, 17);
+    if (mention === undefined) throw new Error("mention not found");
+    const { newText, newCaret } = replaceMentionToken(text, mention, "src/app.ts");
+    expect(newText).toBe("please check @src/app.ts  for this");
+    expect(newCaret).toBe(25);
   });
 });
 

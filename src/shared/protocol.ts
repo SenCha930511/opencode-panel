@@ -105,6 +105,8 @@ export interface FromWebviewProtocol {
   readonly selectSession: { readonly sessionId: string };
   readonly listSessions: Record<string, never>;
   readonly getCapabilities: Record<string, never>;
+  readonly openSettingsTab: Record<string, never>;
+  readonly closeSettingsTab: Record<string, never>;
 }
 
 /** The value each request resolves to in its terminal `done:true` envelope. */
@@ -137,6 +139,8 @@ export interface FromWebviewResponse {
   readonly listSessions: SessionListPayload;
   /** The capabilities.refresh payload, or null when nothing is connected/readable. */
   readonly getCapabilities: CapabilitiesRefreshPayload | null;
+  readonly openSettingsTab: null;
+  readonly closeSettingsTab: null;
 }
 
 // ---------------------------------------------------------------------------
@@ -269,6 +273,10 @@ export const FROM_WEBVIEW_MESSAGE_TYPES = [
   "setSecret",
   "searchFiles",
   "selectSession",
+  "listSessions",
+  "getCapabilities",
+  "openSettingsTab",
+  "closeSettingsTab",
 ] as const;
 
 export type FromWebviewMessageType = (typeof FROM_WEBVIEW_MESSAGE_TYPES)[number];

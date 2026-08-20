@@ -40,7 +40,7 @@ import {
   setTextareaValue,
 } from "./domGlue.js";
 import { ImageAttachmentError } from "./images.js";
-import { extractMentionQuery, stripMentionToken } from "./logic.js";
+import { extractMentionQuery, replaceMentionToken } from "./logic.js";
 import { MentionPalette } from "./MentionPalette.js";
 import { createMentionSearch } from "./search.js";
 
@@ -200,17 +200,23 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
 
   const handlePick = useCallback(
     (path: string): void => {
-      props.controller.addPath(path);
       if (textarea !== null) {
         const active = extractMentionQuery(textarea.value, textarea.selectionStart);
         if (active !== undefined) {
-          setTextareaValue(textarea, stripMentionToken(textarea.value, active), active.start);
+          const { newText, newCaret } = replaceMentionToken(textarea.value, active, path);
+          setTextareaValue(textarea, newText, newCaret);
+        } else {
+          const current = textarea.value;
+          const prefix = current.length > 0 && !current.endsWith(" ") ? " " : "";
+          const insert = `${prefix}@${path} `;
+          setTextareaValue(textarea, `${current}${insert}`, current.length + insert.length);
         }
+        textarea.focus();
       }
       setSignal(undefined);
       search.cancel();
     },
-    [props.controller, search, textarea],
+    [search, textarea],
   );
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);

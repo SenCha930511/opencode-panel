@@ -239,7 +239,7 @@ export function Composer(props: ComposerProps): ReactNode {
 
         {/* Row 1 (Actions): Attachments '+' on left, Stop/Send on right */}
         <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
-          <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar py-0.5">
+          <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-visible py-0.5">
             {props.extras}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -272,7 +272,7 @@ export function Composer(props: ComposerProps): ReactNode {
 
         {/* Row 2 (Pickers): Agent & Model */}
         {props.pickers && (
-          <div data-oc-composer-pickers className="mt-1.5 flex items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar pt-1.5 border-t border-card-border/30">
+          <div data-oc-composer-pickers className="mt-1.5 flex items-center gap-1.5 min-w-0 overflow-visible pt-1.5 border-t border-card-border/30">
             {props.pickers}
           </div>
         )}

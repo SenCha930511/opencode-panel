@@ -242,7 +242,9 @@ export function Header(): ReactNode {
                   className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
                   onClick={() => {
                     setSessionsOpen(false);
-                    navigate("settings");
+                    void send("openSettingsTab" as any, {}).catch(() => {
+                      navigate("settings");
+                    });
                   }}
                 >
                   <GearIcon />

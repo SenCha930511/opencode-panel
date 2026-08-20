@@ -32,8 +32,8 @@ import { randomBytes } from "node:crypto";
 export const DEV_SERVER_ORIGIN = "http://localhost:5173";
 export const DEV_SERVER_WS_ORIGIN = "ws://localhost:5173";
 
-/** Which contributed view a shell hosts (todo-1 two-view topology). */
-export type PanelViewKind = "chat" | "sessions";
+/** Which contributed view a shell hosts (todo-1 two-view topology + settings tab). */
+export type PanelViewKind = "chat" | "sessions" | "settings";
 
 export interface WebviewShellInput {
   /** `webview.cspSource` — the only non-'none' origin production CSP trusts. */

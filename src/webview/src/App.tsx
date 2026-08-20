@@ -204,6 +204,14 @@ export function App(): ReactNode {
       </div>
     );
   }
+  if (currentViewKind() === "settings") {
+    return (
+      <div className="flex h-full flex-col bg-bg text-fg overflow-hidden" style={style}>
+        <SettingsPage />
+        <ToastViewport />
+      </div>
+    );
+  }
   return (
     <div className="flex h-full flex-col bg-bg text-fg" style={style}>
       <Header />

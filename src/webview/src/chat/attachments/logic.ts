@@ -107,6 +107,18 @@ export function stripMentionToken(text: string, mention: MentionQuery): string {
   return text.slice(0, mention.start) + text.slice(mention.end);
 }
 
+/** Replace a mention token in the text with `@path ` and position caret right after the space. */
+export function replaceMentionToken(
+  text: string,
+  mention: MentionQuery,
+  replacementPath: string,
+): { readonly newText: string; readonly newCaret: number } {
+  const insert = `@${replacementPath} `;
+  const newText = text.slice(0, mention.start) + insert + text.slice(mention.end);
+  const newCaret = mention.start + insert.length;
+  return { newText, newCaret };
+}
+
 // ---------------------------------------------------------------------------
 // Chip factory for server-reported paths.
 // ---------------------------------------------------------------------------

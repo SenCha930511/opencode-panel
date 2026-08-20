@@ -173,6 +173,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
             type="button"
             className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
             onClick={() => {
+              void send("closeSettingsTab" as any, {}).catch(() => {});
               navigate("chat");
             }}
           >

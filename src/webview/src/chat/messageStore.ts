@@ -101,7 +101,10 @@ export class MessageStore {
 
   /** `messages.sync` full payload: verbatim replacement + tail reconciliation. */
   applyFullSync(sessionId: string, payload: unknown): void {
-    if (this.state.sessionId === undefined) this.setSession(sessionId);
+    // Full sync is the host's authoritative snapshot for the SELECTED session
+    // — always re-bind. (Prev: only bound when sessionless, so any second
+    // session's sync was dropped and the chat was stranded on the first one.)
+    this.setSession(sessionId);
     if (!this.targetsSession(sessionId)) return;
     const messages = parseMessageList(payload).map((message) => {
       return this.reconcileMessage(message);

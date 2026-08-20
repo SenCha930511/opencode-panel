@@ -11,8 +11,10 @@
  * the sessions branch.
  */
 
-export type PanelViewKind = "chat" | "sessions";
+export type PanelViewKind = "chat" | "sessions" | "settings";
 
 export function currentViewKind(): PanelViewKind {
-  return globalThis.__OPENCODE_PANEL_VIEW__ === "sessions" ? "sessions" : "chat";
+  if (globalThis.__OPENCODE_PANEL_VIEW__ === "sessions") return "sessions";
+  if (globalThis.__OPENCODE_PANEL_VIEW__ === "settings") return "settings";
+  return "chat";
 }
