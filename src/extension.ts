@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import {
   createVscodeConfigAccessor,
+  createVscodeDockSurface,
   createVscodeEditorAccess,
   createVscodeLogger,
   createVscodeSecrets,
@@ -16,6 +17,12 @@ import {
 } from "./host/handlers/attachments.js";
 import { wireCapabilityInfo } from "./host/handlers/capabilityInfo.js";
 import { registerCommandHandlers } from "./host/handlers/commands.js";
+import {
+  createDockService,
+  DOCK_DIFF_SCHEME,
+  DockSync,
+  registerDockHandlers,
+} from "./host/handlers/dock.js";
 import { wireMcpInfo } from "./host/handlers/mcpInfo.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
@@ -88,6 +95,27 @@ export function activate(context: vscode.ExtensionContext): void {
     logger,
     workspaceFindFiles: editorAccess.workspaceFindFiles,
   });
+  // Todo-18: todos/diffs dock — openDiff/openFile handlers, poll-sync riding
+  // the todo-12 InvalidationHub (todos+sessions kinds), one-shot capability
+  // guards, and the read-only opencode-panel-diff:// document provider that
+  // backs native vscode.diff previews.
+  const dockSurface = createVscodeDockSurface();
+  const dockService = createDockService({
+    source: managerSessionSource(manager),
+    renderer: dockSurface.renderer,
+    opener: dockSurface.opener,
+    logger,
+  });
+  registerDockHandlers(panel.registerHandler, { service: dockService });
+  const dockSync = new DockSync({
+    source: managerSessionSource(manager),
+    sink: panel.chat,
+    logger,
+  });
+  const dockInvalidation = sessionsDomain.hub.add(dockSync.invalidate);
+  const dockCapabilityReset = manager.onDidChangeState((state) => {
+    if (state.kind === "managed" || state.kind === "attached") dockSync.reset();
+  });
   const mcpInfo = wireMcpInfo({
     source: managerSessionSource(manager),
     detector: manager.detector,
@@ -99,11 +127,21 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     channel,
+    vscode.workspace.registerTextDocumentContentProvider(
+      DOCK_DIFF_SCHEME,
+      dockSurface.contentProvider,
+    ),
     {
       dispose: () => {
         sessionsDomain.dispose();
         capabilityInfo.dispose();
         mcpInfo.dispose();
+      },
+    },
+    {
+      dispose: () => {
+        dockInvalidation.dispose();
+        dockCapabilityReset.dispose();
       },
     },
     { dispose: () => config.dispose() },

@@ -17,6 +17,15 @@ import { PanelLogger } from "./logger.js";
 import { PanelSecrets } from "./secrets.js";
 import { SEARCH_RESULT_LIMIT, type EditorSelectionSnapshot } from "./handlers/attachments.js";
 import {
+  createDiffContentProvider,
+  createDiffRenderer,
+  createFileOpener,
+  DiffDocumentStore,
+  type DiffContentProviderLike,
+  type DockDiffRenderer,
+  type DockFileOpener,
+} from "./handlers/dock.js";
+import {
   ServerManager,
   type ChildExit,
   type ChildSpawner,
@@ -178,4 +187,41 @@ export function createVscodeServerManager(deps: {
     workspaceFolder: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
     env: () => process.env,
   });
+}
+
+/**
+ * Todo-18 dock surface (todos + session diffs): the vscode-backed halves of
+ * `./handlers/dock.ts` — the read-only `opencode-panel-diff://` in-memory
+ * document store/provider, the native `vscode.diff` renderer, and the
+ * workspace file opener. The caller registers the provider at activation:
+ *
+ *   vscode.workspace.registerTextDocumentContentProvider(
+ *     DOCK_DIFF_SCHEME, surface.contentProvider)
+ *
+ * Diff snapshots never touch the disk; the store's cap bounds memory.
+ */
+export interface VscodeDockSurface {
+  readonly store: DiffDocumentStore;
+  readonly contentProvider: DiffContentProviderLike;
+  readonly renderer: DockDiffRenderer;
+  readonly opener: DockFileOpener;
+}
+
+export function createVscodeDockSurface(): VscodeDockSurface {
+  const store = new DiffDocumentStore();
+  return {
+    store,
+    contentProvider: createDiffContentProvider(store),
+    renderer: createDiffRenderer<vscode.Uri>({
+      store,
+      parseUri: (value) => vscode.Uri.parse(value),
+      executeCommand: (command, ...args) => vscode.commands.executeCommand(command, ...args),
+    }),
+    opener: createFileOpener<vscode.Uri, vscode.TextDocument>({
+      workspaceFolder: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+      fileUri: (fsPath) => vscode.Uri.file(fsPath),
+      openDocument: (uri) => vscode.workspace.openTextDocument(uri),
+      showDocument: (document) => vscode.window.showTextDocument(document),
+    }),
+  };
 }
