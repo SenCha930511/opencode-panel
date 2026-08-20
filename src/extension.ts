@@ -355,6 +355,17 @@ export function activate(
     ),
   );
   logger.info("opencode-panel activated");
+
+  if (config.read().autoStartServer) {
+    void manager.start().then((result) => {
+      if (result.ok) {
+        logger.info(`auto-connected server: ${result.baseUrl} (${result.state})`);
+      } else {
+        logger.warn(`auto-start server on activation: ${result.error.message}`);
+      }
+    });
+  }
+
   return exposeTestAttach(process.env.OPENCODE_PANEL_TEST_PORT ?? "", manager, panel);
 }
 

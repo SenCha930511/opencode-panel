@@ -107,7 +107,7 @@ function CodexCloudWatermark(): ReactNode {
           />
         </svg>
       </div>
-      <span className="text-[11px] font-medium text-muted-fg/70 tracking-wider uppercase">OpenCode</span>
+      <span className="text-[11px] font-medium text-muted-fg/70 tracking-wider uppercase">OpenCode Panel</span>
     </div>
   );
 }

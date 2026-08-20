@@ -1,7 +1,7 @@
 {
   "opencodePanel.category": "OpenCode Panel",
-  "opencodePanel.viewsContainer.opencodePanel": "OpenCode",
-  "opencodePanel.views.chatView": "對話",
+  "opencodePanel.viewsContainer.opencodePanel": "OpenCode Panel",
+  "opencodePanel.views.chatView": "OpenCode Panel",
   "opencodePanel.views.sessionsView": "工作階段",
   "opencodePanel.commands.newSession": "新增工作階段",
   "opencodePanel.commands.openSettings": "開啟設定",
