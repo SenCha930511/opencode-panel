@@ -42,14 +42,16 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
   const iconKind = toolIconKind(part.tool);
   return (
     <details className="my-2 overflow-hidden rounded-xl border border-card-border bg-card-bg/60 text-xs shadow-2xs transition-all">
-      <summary className="flex cursor-pointer select-none items-center gap-2.5 px-3 py-2 font-medium text-fg transition-colors hover:bg-hover-bg/60">
+      <summary className="flex cursor-pointer select-none items-center gap-2 px-3 py-2 font-medium text-fg transition-colors hover:bg-hover-bg/60">
         <ToolIcon kind={iconKind} />
-        <span className="font-semibold break-all text-fg">{part.tool}</span>
-        {part.title !== undefined && part.title !== part.tool ? (
-          <span className="truncate text-muted-fg text-[11px]">{part.title}</span>
-        ) : null}
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+          <span className="font-semibold truncate text-fg">{part.tool}</span>
+          {part.title !== undefined && part.title !== part.tool ? (
+            <span className="truncate text-muted-fg text-[11px]">{part.title}</span>
+          ) : null}
+        </div>
         <span
-          className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider leading-none shadow-2xs ${STATUS_CLASS[part.status]}`}
+          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider leading-none shadow-2xs ${STATUS_CLASS[part.status]}`}
         >
           {t(STATUS_LABEL[part.status])}
         </span>

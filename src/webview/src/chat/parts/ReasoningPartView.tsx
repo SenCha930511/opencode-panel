@@ -32,8 +32,8 @@ export function ReasoningPartView(props: { readonly part: Extract<PartVM, { kind
     <details className="my-1.5 overflow-hidden rounded-xl border border-card-border bg-card-bg/50 text-xs shadow-2xs transition-all">
       <summary className="flex cursor-pointer select-none items-center gap-1.5 px-3 py-2 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg font-medium">
         <BrainIcon />
-        <span className="not-italic font-semibold text-fg/90">{t("messages.thinking")}</span>
-        <span className="truncate opacity-70 italic font-normal text-[11px]">{snippet(props.part.text)}</span>
+        <span className="not-italic font-semibold text-fg/90 shrink-0">{t("messages.thinking")}</span>
+        <span className="truncate opacity-70 italic font-normal text-[11px] min-w-0 flex-1">{snippet(props.part.text)}</span>
       </summary>
       <div className="border-t border-card-border/60 bg-bg/30 px-3.5 py-2.5 font-mono text-[11px] leading-relaxed text-muted-fg">
         <Markdown text={props.part.text} className="leading-relaxed break-words" />

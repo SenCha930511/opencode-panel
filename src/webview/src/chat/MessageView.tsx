@@ -57,7 +57,7 @@ export function MessageView(props: {
     <article
       data-role={message.role}
       data-in-flight={message.inFlight}
-      className={`group relative my-2 transition-all ${
+      className={`group relative my-2 min-w-0 max-w-full overflow-hidden transition-all ${
         isUser
           ? "rounded-2xl rounded-tr-xs border border-card-border bg-user-msg-bg/80 px-3.5 py-2.5 shadow-2xs"
           : "px-2.5 py-1 text-fg"
@@ -67,7 +67,7 @@ export function MessageView(props: {
         <span className={`h-1.5 w-1.5 rounded-full ${isUser ? "bg-accent" : "bg-ok"}`} />
         <span>{message.role}</span>
       </div>
-      <div className="mt-1 space-y-1.5">
+      <div className="mt-1 space-y-1.5 min-w-0 max-w-full overflow-hidden">
         {message.parts.map((part) => (
           <PartView key={part.id} part={part} />
         ))}

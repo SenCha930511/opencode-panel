@@ -6,7 +6,7 @@ import { DeleteSessionDialog, RenameSessionDialog } from "./sessionDialogs.js";
 import { CheckIcon, KebabIcon, LinkIcon, PlusIcon } from "./icons.js";
 import { SessionErrorBanner, SessionListSkeleton } from "./feedback.js";
 import { createShareLink } from "./sessionOps.js";
-import type { SessionsStore } from "./sessionsStore.js";
+import { getSharedSessionsStore, type SessionsStore } from "./sessionsStore.js";
 import { formatRelativeTime } from "./time.js";
 import { useNow } from "./useNow.js";
 
@@ -35,6 +35,15 @@ interface RowMenuHandlers {
   onFork(): void;
 }
 
+function SearchIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-muted-fg">
+      <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10 10l3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SessionRow(props: {
   readonly entry: SessionEntry;
   readonly selected: boolean;
@@ -50,20 +59,20 @@ function SessionRow(props: {
   return (
     <li className="group relative my-0.5">
       <div
-        className={`flex items-center gap-1 rounded-lg border transition-all ${
+        className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition-all ${
           props.selected
-            ? "border-focus-ring/40 bg-active-bg text-fg shadow-2xs"
-            : "border-transparent hover:border-card-border hover:bg-hover-bg/70 text-muted-fg hover:text-fg"
+            ? "bg-active-bg text-fg font-medium"
+            : "hover:bg-hover-bg/70 text-fg/90 hover:text-fg"
         }`}
       >
         <button
           type="button"
-          className="flex min-w-0 flex-1 flex-col gap-0.5 px-2.5 py-2 text-start"
+          className="flex min-w-0 flex-1 items-center justify-between gap-3 text-start cursor-pointer"
           onClick={props.onSelect}
           aria-current={props.selected ? "true" : undefined}
         >
-          <span className="flex items-center gap-1.5">
-            <span className="truncate text-xs font-medium text-fg">{entry.title}</span>
+          <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+            <span className="truncate text-xs font-medium">{entry.title}</span>
             {entry.shared ? (
               <span className="shrink-0 text-muted-fg" aria-label={SHARED_BADGE_LABEL}>
                 <LinkIcon />
@@ -75,13 +84,15 @@ function SessionRow(props: {
               </span>
             ) : null}
           </span>
-          {relative === "" ? null : <span className="text-[10px] text-muted-fg font-normal">{relative}</span>}
+          {relative === "" ? null : (
+            <span className="shrink-0 text-xs text-muted-fg font-normal">{relative}</span>
+          )}
         </button>
         <DropdownMenu.Root modal={false}>
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="shrink-0 rounded-md p-1.5 text-muted-fg opacity-0 transition-opacity hover:bg-hover-bg hover:text-fg focus:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="shrink-0 rounded-md p-1 text-muted-fg opacity-0 transition-opacity hover:bg-hover-bg hover:text-fg focus:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
               aria-label={t("sessions.title")}
               onClick={(event) => {
                 event.stopPropagation();
@@ -123,6 +134,64 @@ function SessionRow(props: {
   );
 }
 
+export function RecentSessionsTop(props?: {
+  readonly store?: SessionsStore;
+  readonly onViewAll?: () => void;
+}): ReactNode {
+  const { locale, t } = useStrings();
+  const store = props?.store ?? getSharedSessionsStore();
+  const snapshot = useSyncExternalStore(
+    store ? store.subscribe : () => () => {},
+    store ? store.getSnapshot : () => null,
+    store ? store.getSnapshot : () => null,
+  );
+  const now = useNow();
+  if (!store || !snapshot) return null;
+  const visible = store.visibleSessions();
+  if (visible.length === 0) return null;
+
+  const recent = visible.slice(0, 3);
+  return (
+    <div className="w-full px-3.5 pt-2 pb-1 text-xs">
+      <div className="flex flex-col gap-0.5">
+        {recent.map((entry) => {
+          const relative = formatRelativeTime(entry.updatedAt, now, locale);
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-start transition-colors hover:bg-hover-bg/70 group cursor-pointer"
+              onClick={() => {
+                store.select(entry.id);
+              }}
+            >
+              <span className="truncate text-xs font-medium text-fg/90 group-hover:text-fg">{entry.title}</span>
+              {relative ? (
+                <span className="shrink-0 text-xs text-muted-fg font-normal">{relative}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="mt-1 px-2.5 py-1 text-[11px] font-normal text-muted-fg hover:text-fg transition-colors cursor-pointer"
+        onClick={() => {
+          if (props?.onViewAll) {
+            props.onViewAll();
+          } else {
+            // default toggle
+            const btn = document.querySelector('[aria-label="Session history"]') as HTMLButtonElement | null;
+            btn?.click();
+          }
+        }}
+      >
+        檢視全部({visible.length})
+      </button>
+    </div>
+  );
+}
+
 export function SessionList(props: { readonly store: SessionsStore }): ReactNode {
   const { t, locale } = useStrings();
   const snapshot = useSyncExternalStore(
@@ -136,30 +205,30 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
   const visible = props.store.visibleSessions();
 
   return (
-    <div className="flex h-full min-w-0 flex-col bg-panel-bg/30">
-      <div className="flex items-center gap-1.5 border-b border-card-border/50 bg-panel-bg/40 p-2.5 backdrop-blur-sm">
-        <input
-          type="search"
-          className="min-w-0 flex-1 rounded-lg border border-card-border bg-input-card-bg px-2.5 py-1.5 text-xs text-fg outline-none transition-all placeholder:text-muted-fg/70 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30"
-          placeholder={t("sessions.searchPlaceholder")}
-          value={snapshot.filter}
-          onChange={(event) => {
-            props.store.setFilter(event.target.value);
-          }}
-        />
-        <button
-          type="button"
-          className="flex shrink-0 items-center gap-1 rounded-lg bg-accent px-2.5 py-1.5 text-xs font-medium text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95"
-          aria-label={t("sessions.new")}
-          onClick={() => {
-            void props.store.createSession(undefined).catch(() => {
-              return undefined;
-            });
-          }}
-        >
-          <PlusIcon />
-          <span className="hidden sm:inline">{t("sessions.new")}</span>
-        </button>
+    <div className="flex h-full min-w-0 flex-col bg-panel-bg/95 backdrop-blur-xl">
+      <div className="p-3 pb-1.5">
+        <div className="relative flex items-center">
+          <span className="pointer-events-none absolute left-3 flex items-center">
+            <SearchIcon />
+          </span>
+          <input
+            type="search"
+            className="w-full rounded-xl border border-card-border bg-input-card-bg pl-8 pr-3 py-1.5 text-xs text-fg outline-none transition-all placeholder:text-muted-fg focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30"
+            placeholder={t("sessions.searchPlaceholder")}
+            value={snapshot.filter}
+            onChange={(event) => {
+              props.store.setFilter(event.target.value);
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between px-1 pt-2 pb-0.5 text-[11px] font-medium text-muted-fg">
+          <span className="flex items-center gap-1 cursor-default">
+            <span>{t("sessions.title")}</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="m2 3.5 3 3 3-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
       </div>
 
       {snapshot.status === "error" && snapshot.errorMessage !== null ? (
@@ -171,13 +240,13 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
         />
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1">
         {snapshot.status === "loading" ? (
           <SessionListSkeleton />
         ) : visible.length === 0 ? (
           <p className="px-3 py-2 text-xs text-muted-fg">{t("sessions.empty")}</p>
         ) : (
-          <ul className="flex flex-col gap-0.5 px-2">
+          <ul className="flex flex-col gap-0.5">
             {visible.map((entry) => (
               <SessionRow
                 key={entry.id}

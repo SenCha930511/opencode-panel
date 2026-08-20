@@ -78,39 +78,36 @@ function SparkleIcon(): ReactNode {
   );
 }
 
-const WELCOME_CARDS: ReadonlyArray<{
-  readonly glyph: string;
-  readonly title: StringId;
-  readonly desc: StringId;
-}> = [
-  { glyph: "⚡", title: "welcome.explain", desc: "welcome.explainDesc" },
-  { glyph: "🐞", title: "welcome.findBugs", desc: "welcome.findBugsDesc" },
-  { glyph: "✨", title: "welcome.refactor", desc: "welcome.refactorDesc" },
-  { glyph: "📝", title: "welcome.unitTests", desc: "welcome.unitTestsDesc" },
-];
+import { RecentSessionsTop } from "../sessions/SessionList.js";
+
+function CodexCloudWatermark(): ReactNode {
+  return (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-muted-fg/20">
+      <path
+        d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.5 13.5l1.5 1.5-1.5 1.5M12.5 16.5h3"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function WelcomeHero(props: { readonly emptyLabel: string }): ReactNode {
-  const { t } = useStrings();
   return (
-    <div className="flex min-h-full flex-col items-center justify-center p-6 text-center">
-      <div className="mb-3.5 flex h-12 w-12 items-center justify-center rounded-2xl border border-card-border bg-card-bg shadow-md backdrop-blur-md">
-        <SparkleIcon />
-      </div>
-      <h2 className="text-sm font-semibold tracking-tight text-fg">{t("welcome.title")}</h2>
-      <p className="mt-1 text-xs text-muted-fg max-w-xs">{props.emptyLabel}</p>
-
-      <div className="mt-6 grid w-full max-w-sm grid-cols-1 gap-2 text-start sm:grid-cols-2">
-        {WELCOME_CARDS.map((card) => (
-          <div
-            key={card.title}
-            className="group rounded-lg border border-card-border bg-card-bg/60 p-2.5 shadow-xs transition-all hover:border-focus-ring/60 hover:bg-hover-bg"
-          >
-            <div className="flex items-center gap-1.5 text-xs font-medium text-fg">
-              <span aria-hidden="true">{card.glyph}</span> {t(card.title)}
-            </div>
-            <p className="mt-0.5 text-[11px] leading-tight text-muted-fg">{t(card.desc)}</p>
-          </div>
-        ))}
+    <div className="flex min-h-full flex-col justify-between py-1 text-fg">
+      <span className="sr-only">{props.emptyLabel}</span>
+      <RecentSessionsTop />
+      <div className="flex flex-1 items-center justify-center py-16">
+        <CodexCloudWatermark />
       </div>
     </div>
   );

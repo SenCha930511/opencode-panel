@@ -65,3 +65,96 @@ body {
     animation: none !important;
   }
 }
+
+/* Markdown typography and wrapping */
+.prose-oc {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.prose-oc p {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.55;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.prose-oc p:first-child {
+  margin-top: 0;
+}
+
+.prose-oc p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-oc pre {
+  margin: 0.5rem 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--oc-input-card-bg);
+  border: 1px solid var(--oc-card-border);
+  overflow-x: auto;
+  max-width: 100%;
+  font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.85em;
+  line-height: 1.45;
+}
+
+.prose-oc code {
+  font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.88em;
+  padding: 0.125rem 0.3rem;
+  border-radius: 0.25rem;
+  background: var(--hover-bg);
+  word-break: break-all;
+}
+
+.prose-oc pre code {
+  padding: 0;
+  background: transparent;
+  word-break: normal;
+  white-space: pre;
+}
+
+.prose-oc ul,
+.prose-oc ol {
+  margin: 0.35rem 0;
+  padding-left: 1.25rem;
+}
+
+.prose-oc li {
+  margin: 0.15rem 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.prose-oc blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--focus-ring);
+  color: var(--muted-fg);
+}
+
+.prose-oc table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.prose-oc th,
+.prose-oc td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.prose-oc hr {
+  margin: 0.75rem 0;
+  border: 0;
+  border-top: 1px solid var(--oc-card-border);
+}

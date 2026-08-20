@@ -37,7 +37,7 @@ const rehypePlugins: PluggableList = [
 
 export function Markdown(props: { readonly text: string; readonly className?: string }) {
   return (
-    <div className={props.className ?? "leading-relaxed break-words"}>
+    <div className={`prose-oc min-w-0 max-w-full break-words [overflow-wrap:anywhere] ${props.className ?? "leading-relaxed"}`}>
       <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
         {props.text}
       </ReactMarkdown>

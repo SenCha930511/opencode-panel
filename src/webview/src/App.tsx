@@ -88,7 +88,7 @@ function SessionsDrawer(): ReactNode {
         type="button"
         aria-label={t("sessions.closeHistory")}
         tabIndex={-1}
-        className={`absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-xs transition-opacity duration-200 ${
+        className={`absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-xs transition-opacity duration-200 ${
           sessionsOpen ? "opacity-100" : "opacity-0"
         }`}
         onClick={() => setSessionsOpen(false)}
@@ -97,21 +97,10 @@ function SessionsDrawer(): ReactNode {
         data-oc-slot="sessions"
         role="dialog"
         aria-label={t("sessions.historyTitle")}
-        className={`relative z-50 flex h-full w-72 max-w-[85vw] shrink-0 flex-col border-e border-card-border bg-panel-bg shadow-2xl transition-transform duration-200 ease-out ${
-          sessionsOpen ? "" : "-translate-x-full"
+        className={`relative z-50 flex h-auto max-h-[82vh] w-full shrink-0 flex-col border-b border-card-border bg-panel-bg shadow-2xl transition-all duration-200 ease-out ${
+          sessionsOpen ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
-          <span className="text-xs font-semibold tracking-wide text-fg">{t("sessions.historyTitle")}</span>
-          <button
-            type="button"
-            aria-label={t("sessions.closeHistory")}
-            className="rounded-md p-1 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg"
-            onClick={() => setSessionsOpen(false)}
-          >
-            <CloseIcon />
-          </button>
-        </div>
         <div className="min-h-0 flex-1 overflow-y-auto">{slots.sessions ?? <DefaultSessionsSlot />}</div>
       </aside>
     </div>

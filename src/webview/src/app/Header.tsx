@@ -207,67 +207,84 @@ function OverflowMenu(): ReactNode {
   );
 }
 
+function EditPenIcon(): ReactNode {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2.5v-2.5L11.5 2.5z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Header(): ReactNode {
   const { navigate, send, setSessionsOpen } = useApp();
   const { t } = useStrings();
   return (
     <>
-      <header className="flex h-10 shrink-0 items-center gap-1 border-b border-border bg-panel-bg/80 px-2.5 backdrop-blur-md">
-        <SessionsHistoryButton />
-        <ServerStatusBadge />
-        <span className="flex-1" />
-        <Tooltip.Provider delayDuration={300}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button
-                type="button"
-                aria-label={t("sessions.new")}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg"
-                onClick={() => {
-                  void send("createSession", {});
-                }}
-              >
-                <PlusIcon />
-                <span className="hidden sm:inline">{t("sessions.new")}</span>
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                sideOffset={4}
-                className="z-50 rounded-md border border-card-border bg-panel-bg px-2 py-1 text-xs text-fg shadow-xl backdrop-blur-md"
-              >
-                {t("sessions.new")}
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-        <McpPopover />
-        <Tooltip.Provider delayDuration={300}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button
-                type="button"
-                aria-label={t("settings.title")}
-                className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg"
-                onClick={() => {
-                  setSessionsOpen(false);
-                  navigate("settings");
-                }}
-              >
-                <GearIcon />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                sideOffset={4}
-                className="z-50 rounded-md border border-card-border bg-panel-bg px-2 py-1 text-xs text-fg shadow-xl backdrop-blur-md"
-              >
-                {t("settings.title")}
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-        <OverflowMenu />
+      <header className="flex h-10 shrink-0 items-center justify-between border-b border-border/70 bg-panel-bg/80 px-3 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-fg tracking-tight">{t("sessions.title")}</span>
+          <ServerStatusBadge />
+        </div>
+        <div className="flex items-center gap-1">
+          <SessionsHistoryButton />
+          <Tooltip.Provider delayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("settings.title")}
+                  className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
+                  onClick={() => {
+                    setSessionsOpen(false);
+                    navigate("settings");
+                  }}
+                >
+                  <GearIcon />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  sideOffset={4}
+                  className="z-50 rounded-md border border-card-border bg-panel-bg px-2 py-1 text-xs text-fg shadow-xl backdrop-blur-md"
+                >
+                  {t("settings.title")}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+          <Tooltip.Provider delayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("sessions.new")}
+                  className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
+                  onClick={() => {
+                    void send("createSession", {});
+                  }}
+                >
+                  <EditPenIcon />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  sideOffset={4}
+                  className="z-50 rounded-md border border-card-border bg-panel-bg px-2 py-1 text-xs text-fg shadow-xl backdrop-blur-md"
+                >
+                  {t("sessions.new")}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+          <McpPopover />
+          <OverflowMenu />
+        </div>
       </header>
       <OldServerBanner />
     </>

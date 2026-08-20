@@ -155,7 +155,7 @@ export function ChatPickers(): ReactNode {
     });
 
   return (
-    <div data-oc="chat-pickers" className="flex flex-wrap items-center gap-1 px-2 pb-1">
+    <div data-oc="chat-pickers" className="flex flex-wrap items-center gap-1 min-w-0">
       <AgentPicker
         agents={snapshot.agents}
         {...(selection.agent === undefined ? {} : { value: selection.agent })}

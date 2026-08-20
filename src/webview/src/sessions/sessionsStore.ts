@@ -266,3 +266,16 @@ export class SessionsStore {
     }
   }
 }
+
+let sharedSessionsStore: SessionsStore | null = null;
+
+export function getSharedSessionsStore(deps?: SessionsStoreDeps): SessionsStore | null {
+  if (sharedSessionsStore === null && deps !== undefined) {
+    sharedSessionsStore = new SessionsStore(deps);
+  }
+  return sharedSessionsStore;
+}
+
+export function setSharedSessionsStore(store: SessionsStore | null): void {
+  sharedSessionsStore = store;
+}

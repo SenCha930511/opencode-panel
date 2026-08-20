@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",

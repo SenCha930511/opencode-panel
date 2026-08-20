@@ -3,7 +3,7 @@ import { getWebviewMessenger } from "../../lib/messenger.js";
 import { setActiveSession } from "../chat/activeSession.js";
 import { attachNewSessionCommand } from "./newSessionCommand.js";
 import { createWebviewPersistence } from "./persistence.js";
-import { SessionsStore } from "./sessionsStore.js";
+import { setSharedSessionsStore, SessionsStore } from "./sessionsStore.js";
 import { SessionList } from "./SessionList.js";
 
 /**
@@ -39,6 +39,7 @@ export function SessionsPanel(): ReactNode {
       messenger: getWebviewMessenger(),
       persistence: createWebviewPersistence(),
     });
+    setSharedSessionsStore(created);
     return created;
   });
 
