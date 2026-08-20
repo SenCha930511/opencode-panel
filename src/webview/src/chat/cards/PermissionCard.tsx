@@ -3,18 +3,13 @@ import type { PermissionResponse } from "../../../../shared/protocol.js";
 import { useStrings } from "../../../lib/i18n.js";
 import type { PermissionCardVM } from "./cardTypes.js";
 
-const secondaryButtonClass =
-  "rounded border border-border px-2 py-1 text-xs text-fg hover:bg-hover-bg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent";
-const primaryButtonClass =
-  "rounded bg-accent px-2 py-1 text-xs text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50";
-
 function LockIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M4.5 7V5.5a3.5 3.5 0 1 1 7 0V7m-8 0h9A.5.5 0 0 1 13 7.5v6.001a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.5a.5.5 0 0 1 .5-.5Z"
         stroke="currentColor"
-        strokeWidth="1.2"
+        strokeWidth="1.3"
       />
       <circle cx="8" cy="10.5" r="1.1" fill="currentColor" />
     </svg>
@@ -42,10 +37,10 @@ export interface PermissionReplyButtonsProps {
 export function PermissionReplyButtons(props: PermissionReplyButtonsProps): ReactElement {
   const { busy, labels } = props;
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
+    <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-card-border/40 pt-2.5">
       <button
         type="button"
-        className={secondaryButtonClass}
+        className="rounded-xl border border-card-border/80 bg-card-bg px-3 py-1.5 text-xs font-medium text-fg hover:bg-hover-bg active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         disabled={busy}
         onClick={() => props.onReply("once")}
       >
@@ -53,7 +48,7 @@ export function PermissionReplyButtons(props: PermissionReplyButtonsProps): Reac
       </button>
       <button
         type="button"
-        className={primaryButtonClass}
+        className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg shadow-sm hover:bg-accent-hover active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         disabled={busy}
         onClick={() => props.onReply("always")}
       >
@@ -61,7 +56,7 @@ export function PermissionReplyButtons(props: PermissionReplyButtonsProps): Reac
       </button>
       <button
         type="button"
-        className={`${secondaryButtonClass} text-err`}
+        className="rounded-xl border border-err/40 bg-err/10 px-3 py-1.5 text-xs font-medium text-err hover:bg-err/20 active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         disabled={busy}
         onClick={() => props.onReply("reject")}
       >
@@ -92,33 +87,41 @@ export function PermissionCard(props: PermissionCardProps) {
   const expired = card.status === "expired";
 
   return (
-    <div className="rounded border border-border bg-panel-bg px-3 py-2 text-xs text-fg">
-      <div className="flex items-start gap-2">
-        <LockIcon />
+    <div className="my-2 rounded-2xl border border-warn/40 bg-panel-bg/95 p-3.5 shadow-xl backdrop-blur-xl ring-1 ring-black/10 text-xs text-fg transition-all">
+      <div className="flex items-start gap-2.5">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-warn/15 text-warn shadow-2xs">
+          <LockIcon />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{t("permission.title")}</span>
-            <code className="rounded bg-hover-bg px-1 font-mono text-[0.92em] break-all">
-              {card.permission}
-            </code>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 truncate min-w-0">
+              <span className="font-semibold text-sm text-fg tracking-tight">{t("permission.title")}</span>
+              <code className="rounded-md bg-hover-bg/80 border border-card-border px-1.5 py-0.5 font-mono text-[11px] text-fg/90">
+                {card.permission}
+              </code>
+            </div>
+            {expired ? (
+              <button
+                type="button"
+                className="rounded-xl border border-card-border/80 bg-card-bg px-2.5 py-1 text-xs font-medium text-muted-fg hover:bg-hover-bg hover:text-fg cursor-pointer transition-colors"
+                onClick={props.onDismiss}
+              >
+                {t("common.close")}
+              </button>
+            ) : null}
           </div>
           {card.purpose !== undefined && card.purpose !== card.permission ? (
-            <div className="mt-1 truncate text-muted-fg">{card.purpose}</div>
+            <div className="mt-1.5 text-xs text-muted-fg leading-relaxed">{card.purpose}</div>
           ) : null}
           {card.patterns.length > 0 ? (
-            <pre className="mt-1 overflow-x-auto rounded bg-input-bg p-1.5 text-[0.92em]">
+            <pre className="mt-2 overflow-x-auto rounded-xl border border-card-border bg-input-card-bg p-2 font-mono text-[11px] text-fg/90 leading-normal">
               {card.patterns.join("\n")}
             </pre>
           ) : null}
         </div>
-        {expired ? (
-          <button type="button" className={secondaryButtonClass} onClick={props.onDismiss}>
-            {t("common.close")}
-          </button>
-        ) : null}
       </div>
       {expired ? (
-        <div className="mt-2 text-muted-fg">{t("permission.expired")}</div>
+        <div className="mt-2.5 text-muted-fg text-xs">{t("permission.expired")}</div>
       ) : (
         <PermissionReplyButtons
           busy={busy}

@@ -51,23 +51,18 @@ export function MessageView(props: {
 }) {
   const { message } = props;
   const isUser = message.role === "user";
-  const roleClass = ROLE_CLASS[message.role] ?? "text-muted-fg";
   
   return (
     <article
       data-role={message.role}
       data-in-flight={message.inFlight}
-      className={`group relative my-2 min-w-0 max-w-full overflow-hidden transition-all ${
+      className={`group relative my-2.5 text-sm transition-all ${
         isUser
-          ? "rounded-2xl rounded-tr-xs border border-card-border bg-user-msg-bg/80 px-3.5 py-2.5 shadow-2xs"
-          : "px-2.5 py-1 text-fg"
+          ? "ml-auto max-w-[90%] rounded-2xl rounded-tr-xs border border-card-border/80 bg-user-msg-bg/90 px-3.5 py-2.5 shadow-2xs"
+          : "w-full py-1 text-fg"
       }`}
     >
-      <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider ${roleClass}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${isUser ? "bg-accent" : "bg-ok"}`} />
-        <span>{message.role}</span>
-      </div>
-      <div className="mt-1 space-y-1.5 min-w-0 max-w-full overflow-hidden">
+      <div className="space-y-2 min-w-0 max-w-full overflow-hidden text-sm">
         {message.parts.map((part) => (
           <PartView key={part.id} part={part} />
         ))}

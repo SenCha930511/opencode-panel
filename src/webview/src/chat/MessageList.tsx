@@ -14,8 +14,8 @@
  * ./events, ./chatContext. The AutoScrollPark behavior lives in ./autoScroll.
  */
 
-import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { Virtuoso } from "react-virtuoso";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { useStrings } from "../../lib/i18n.js";
 import { getWebviewMessenger } from "../../lib/messenger.js";
 import { AutoScrollPark } from "./autoScroll.js";
@@ -125,10 +125,26 @@ function WelcomeHero(props: { readonly emptyLabel: string }): ReactNode {
   );
 }
 
+function ScrollDownIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 3v10M3.5 8.5L8 13l4.5-4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function MessageList(props: MessageListProps) {
   const { t } = useStrings();
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
   const park = useRef(new AutoScrollPark());
+  const virtuosoRef = useRef<VirtuosoHandle | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
   const state = useChatStore(store);
   const activeSessionId = useActiveSession();
 
@@ -145,23 +161,65 @@ export function MessageList(props: MessageListProps) {
     });
   }, [props.source, store]);
 
+  // Proactively keep pinned to bottom during streaming / delta arrival
+  useEffect(() => {
+    if (park.current.isPinned && state.messages.length > 0) {
+      const isStreaming = state.status === "busy" || state.messages.some((m) => m.inFlight);
+      const frame = requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({
+          index: state.messages.length - 1,
+          align: "end",
+          behavior: isStreaming ? "auto" : "smooth",
+        });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [state.messages, state.status]);
+
+  const scrollToBottom = () => {
+    park.current.onAtBottomChange(true);
+    setAtBottom(true);
+    virtuosoRef.current?.scrollToIndex({
+      index: state.messages.length - 1,
+      align: "end",
+      behavior: "smooth",
+    });
+  };
+
   const body =
     state.messages.length === 0 ? (
       <WelcomeHero emptyLabel={t("messages.empty")} />
     ) : (
       <Virtuoso
+        ref={virtuosoRef}
         data={state.messages}
-        className="h-full"
+        className="h-full px-2.5"
+        atBottomThreshold={80}
         followOutput={park.current.followFor}
-        atBottomStateChange={(atBottom: boolean) => park.current.onAtBottomChange(atBottom)}
+        atBottomStateChange={(isBottom: boolean) => {
+          setAtBottom(isBottom);
+          park.current.onAtBottomChange(isBottom);
+        }}
         itemContent={(_index, message) => <MessageView message={message} store={store} />}
       />
     );
 
   return (
     <ChatActionsProvider actions={props.actions ?? defaultActionsFallback}>
-      <div className="flex h-full flex-col overflow-y-auto text-fg">
+      <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden text-fg">
         {body}
+        {!atBottom && state.messages.length > 0 && (
+          <button
+            type="button"
+            data-scroll-bottom
+            title="捲動至最新訊息"
+            aria-label="Scroll to bottom"
+            className="absolute bottom-3 right-4 z-30 flex h-7 w-7 items-center justify-center rounded-full border border-card-border/80 bg-panel-bg/90 text-fg shadow-xl backdrop-blur-md transition-all hover:bg-hover-bg hover:scale-110 active:scale-95 cursor-pointer ring-1 ring-black/10"
+            onClick={scrollToBottom}
+          >
+            <ScrollDownIcon />
+          </button>
+        )}
       </div>
     </ChatActionsProvider>
   );

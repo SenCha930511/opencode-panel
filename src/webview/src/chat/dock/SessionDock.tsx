@@ -112,17 +112,20 @@ function FileIcon(): ReactNode {
 export function TodosPanel(props: { readonly todos: readonly DockTodoVM[] }): ReactNode {
   const { t } = useStrings();
   if (props.todos.length === 0) {
-    return <p className="px-2 py-1.5 text-xs text-muted-fg">{t("dock.todos.empty")}</p>;
+    return <p className="px-2.5 py-1.5 text-xs text-muted-fg">{t("dock.todos.empty")}</p>;
   }
   return (
-    <ul className="flex flex-col gap-0.5 px-2 pb-1">
+    <ul className="flex flex-col gap-1 px-1 pb-1">
       {props.todos.map((todo) => (
-        <li key={todo.id} className="flex items-start gap-1.5 text-xs">
+        <li
+          key={todo.id}
+          className="flex items-start gap-2 rounded-lg border border-card-border/40 bg-card-bg/40 px-2.5 py-1.5 text-xs"
+        >
           <span
             aria-hidden="true"
-            className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${todoDotClass(todo.status)}`}
+            className={`mt-1 h-2 w-2 shrink-0 rounded-full ${todoDotClass(todo.status)}`}
           />
-          <span className={todoDone(todo.status) ? "text-muted-fg line-through" : undefined}>
+          <span className={`flex-1 text-fg/90 ${todoDone(todo.status) ? "text-muted-fg line-through" : ""}`}>
             {todo.content}
           </span>
         </li>
@@ -138,10 +141,10 @@ export function DiffsPanel(props: {
 }): ReactNode {
   const { t } = useStrings();
   if (props.diffs.length === 0) {
-    return <p className="px-2 py-1.5 text-xs text-muted-fg">{t("dock.diffs.empty")}</p>;
+    return <p className="px-2.5 py-1.5 text-xs text-muted-fg">{t("dock.diffs.empty")}</p>;
   }
   return (
-    <ul className="flex flex-col gap-0.5 px-2 pb-1">
+    <ul className="flex flex-col gap-1 px-1 pb-1">
       {props.diffs.map((diff) => (
         <DiffFileRow
           key={diff.file}
@@ -170,33 +173,36 @@ export function DiffFileRow(props: {
 }): ReactNode {
   const { diff } = props;
   return (
-    <li className="flex items-center gap-1 text-xs">
+    <li className="flex items-center justify-between gap-2 rounded-xl border border-card-border/60 bg-card-bg/60 px-2.5 py-1.5 text-xs transition-colors hover:bg-hover-bg/80">
       <button
         type="button"
         data-diff-file={diff.file}
         title={diff.file}
         aria-label={props.openDiffLabel}
         disabled={props.sessionId === undefined}
-        className="min-w-0 flex-1 truncate rounded px-1 py-0.5 text-start hover:bg-hover-bg disabled:opacity-50"
+        className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-start font-medium text-fg/90 hover:text-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         onClick={() => {
           if (props.sessionId === undefined) return;
           props.actions.openDiff({ sessionId: props.sessionId });
         }}
       >
-        {diff.file}
+        <span className="shrink-0 text-muted-fg"><FileIcon /></span>
+        <span className="truncate">{diff.file}</span>
       </button>
-      <span className="shrink-0 text-ok">+{diff.additions}</span>
-      <span className="shrink-0 text-err">−{diff.deletions}</span>
-      <button
-        type="button"
-        data-open-file={diff.file}
-        title={diff.file}
-        aria-label={props.openFileLabel}
-        className="shrink-0 rounded p-0.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
-        onClick={() => props.actions.openFile(diff.file)}
-      >
-        <FileIcon />
-      </button>
+      <div className="flex shrink-0 items-center gap-1.5 font-mono text-[11px]">
+        <span className="shrink-0 text-ok">+{diff.additions}</span>
+        <span className="shrink-0 text-err">−{diff.deletions}</span>
+        <button
+          type="button"
+          data-open-file={diff.file}
+          title={diff.file}
+          aria-label={props.openFileLabel}
+          className="rounded p-1 text-muted-fg hover:bg-hover-bg hover:text-fg cursor-pointer transition-colors"
+          onClick={() => props.actions.openFile(diff.file)}
+        >
+          <FileIcon />
+        </button>
+      </div>
     </li>
   );
 }
@@ -262,7 +268,7 @@ export function SessionDock(props: SessionDockProps): ReactNode {
       <button
         type="button"
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-xs text-muted-fg transition-colors hover:bg-hover-bg/60 hover:text-fg"
+        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-xs text-muted-fg transition-colors hover:bg-hover-bg/60 hover:text-fg cursor-pointer"
         onClick={toggle}
       >
         <div className="flex items-center gap-1.5 min-w-0">

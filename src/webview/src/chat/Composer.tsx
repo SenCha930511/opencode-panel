@@ -247,7 +247,7 @@ export function Composer(props: ComposerProps): ReactNode {
         <textarea
           ref={textareaRef}
           rows={1}
-          className="max-h-40 min-h-8 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-xs sm:text-sm text-fg outline-none placeholder:text-muted-fg/60 disabled:cursor-not-allowed disabled:opacity-50"
+          className="max-h-40 min-h-8 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-sm sm:text-base text-fg outline-none placeholder:text-muted-fg/60 disabled:cursor-not-allowed disabled:opacity-50"
           value={text}
           placeholder={t(placeholderForStatus(status))}
           disabled={inputDisabled}

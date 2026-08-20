@@ -11,16 +11,16 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--vscode-font-family, system-ui, sans-serif);
-  font-size: var(--vscode-font-size, 13px);
+  font-size: var(--vscode-font-size, 14px);
   color: var(--fg);
   background: var(--bg);
   overflow-x: hidden;
 }
 
-/* Antigravity / Codex styled thin sleek scrollbars */
+/* Antigravity styled sleek responsive scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -28,12 +28,21 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--vscode-scrollbarSlider-background, rgba(128, 128, 128, 0.2));
-  border-radius: 4px;
+  background: var(--vscode-scrollbarSlider-background, rgba(150, 150, 150, 0.28));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(128, 128, 128, 0.4));
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(150, 150, 150, 0.55));
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground, rgba(150, 150, 150, 0.75));
 }
 
 @keyframes pulse-subtle {
@@ -71,12 +80,14 @@ body {
   word-break: break-word;
   overflow-wrap: anywhere;
   max-width: 100%;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .prose-oc p {
-  margin-top: 0.35rem;
-  margin-bottom: 0.35rem;
-  line-height: 1.55;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.6;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
