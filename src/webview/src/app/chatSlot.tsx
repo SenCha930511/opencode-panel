@@ -32,6 +32,8 @@
  * - T19 session menu: header row of this section (its documented "chat
  *   header overflow" mount). The per-message hover menu mounts inside
  *   chat/MessageView.tsx (the T19 documented site).
+ * - FIX-D usage strip: `chat/usage` aggregates assistant `info.tokens` over
+ *   the same store and renders in the toolbar; hidden when no usage data.
  * - T20 MCP: already mounted by app/Header.tsx (McpPopover + OldServerBanner)
  *   — nothing to do here.
  *
@@ -46,9 +48,11 @@ import { AttachmentsExtras, useAttachments } from "../chat/attachments/index.js"
 import { ChatCardsDock } from "../chat/cards/ChatCardsDock.js";
 import { Composer } from "../chat/Composer.js";
 import { SessionDock } from "../chat/dock/SessionDock.js";
-import { MessageList } from "../chat/MessageList.js";
+import { MessageList, useChatStore } from "../chat/MessageList.js";
 import { MessageStore } from "../chat/messageStore.js";
 import { SessionMenu } from "../chat/messageOps/SessionMenu.js";
+import { sumAssistantUsage } from "../chat/usage/usageMath.js";
+import { UsageStrip } from "../chat/usage/UsageStrip.js";
 import { useActiveSession } from "../chat/activeSession.js";
 import { useComposerPickers } from "../chat/pickers/composerIntegration.js";
 import { useApp, type AppSlots } from "./context.js";
@@ -99,6 +103,9 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
   const sessionId = useActiveSession();
   const flags = useCapabilityFlags();
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
+  // FIX-D: the toolbar strip aggregates the SHARED todo-13 store (the one
+  // the list + composer render), so the totals are exactly what is on screen.
+  const usage = sumAssistantUsage(useChatStore(store).messages);
   return (
     <div data-oc-chat className="flex min-h-0 min-w-0 flex-1">
       <div className="flex min-w-0 flex-1 flex-col">
@@ -106,7 +113,9 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
           data-oc-chat-toolbar
           className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-0.5"
         >
-          <span className="flex-1 truncate">{/* FIX-D: UsageStrip mounts here. */}</span>
+          <span className="flex min-w-0 flex-1 items-center">
+            <UsageStrip usage={usage} />
+          </span>
           <SessionMenu sessionId={sessionId} />
         </div>
         <ProductionChatSection store={store} />

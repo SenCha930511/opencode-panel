@@ -159,6 +159,10 @@ shows a live status line; password field round-trips through SecretStorage
       revert→confirm→unrevert op handlers hit the right endpoints.
 - [x] Attachment-size contract: an 11 MB image is rejected with a size toast
       before sending (host test evidence, T17 log).
+- [x] Token usage strip: `chat/usage` suites green (aggregation math,
+      hidden-when-empty, SSR sentinel labels) plus the production-composition
+      regression guard inside the full `npx vitest run`; evidence
+      `.omo/evidence/fix-wave-composition.log`.
 
 Manual eyeball (user): `/` opens the palette; `@` opens file search; pick a
 file → chip; select text in an editor → context menu *Attach selection* →

@@ -33,6 +33,11 @@ export const STRING_IDS = [
   "common.confirm",
   // capability-driven degradation
   "capability.hidden",
+  // context/token usage strip
+  "chat.usage",
+  "chat.usage.input",
+  "chat.usage.output",
+  "chat.usage.reasoning",
   // todos/diffs dock
   "dock.diffs.empty",
   "dock.diffs.openDiff",
@@ -157,6 +162,10 @@ export const en: Record<StringId, string> = {
   "common.close": "Close",
   "common.confirm": "Confirm",
   "capability.hidden": "This feature is not supported by the connected server",
+  "chat.usage": "Session token usage",
+  "chat.usage.input": "in",
+  "chat.usage.output": "out",
+  "chat.usage.reasoning": "reasoning",
   "dock.diffs.empty": "No file changes in this session",
   "dock.diffs.openDiff": "Open diff",
   "dock.diffs.openFile": "Open file",
@@ -267,6 +276,10 @@ export const zhTW: Record<StringId, string> = {
   "common.close": "關閉",
   "common.confirm": "確認",
   "capability.hidden": "連線的伺服器不支援此功能",
+  "chat.usage": "工作階段 Token 用量",
+  "chat.usage.input": "輸入",
+  "chat.usage.output": "輸出",
+  "chat.usage.reasoning": "推理",
   "dock.diffs.empty": "此工作階段尚無檔案變更",
   "dock.diffs.openDiff": "開啟差異比對",
   "dock.diffs.openFile": "開啟檔案",

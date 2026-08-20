@@ -35,6 +35,9 @@ security workarounds, no provider keys stored by the extension.
   opened in VS Code's native diff editor.
 - **Message ops** — revert (with confirmation), unrevert, regenerate,
   summarize/compact, run a shell command, export transcripts as markdown.
+- **Token usage strip** — per-session totals of assistant
+  input/output/reasoning tokens shown in the chat toolbar (hidden until the
+  server reports usage).
 - **IDE integrations** — editor context menu *Attach selection* / *Attach
   current file*, click file chips to open files, status-bar item with server
   controls, and an **Open opencode TUI** escape hatch.
@@ -139,6 +142,8 @@ GUI 聊天面板。
   原生 diff 檢視。
 - **訊息操作**——revert（需確認）、unrevert、重新產生、summarize/compact、
   執行 shell 指令、匯出逐字稿為 Markdown。
+- **Token 用量列**——聊天工具列顯示此工作階段助理訊息的輸入/輸出/推理
+  token 合計（伺服器回報用量前自動隱藏）。
 - **IDE 整合**——編輯器右鍵「附加選取範圍 / 附加目前檔案」、檔案 chip 點擊
   即開、狀態列圖示含伺服器控制，以及**一鍵開啟 opencode TUI** 的出口。
 - **MCP 面板**——顯示 opencode 原生設定的 MCP 伺服器。
