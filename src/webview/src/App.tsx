@@ -80,7 +80,7 @@ function SessionsDrawer(): ReactNode {
       data-oc-sessions-drawer
       data-state={sessionsOpen ? "open" : "closed"}
       aria-hidden={!sessionsOpen}
-      className={`absolute inset-0 z-40 transition-[visibility] duration-150 ${
+      className={`absolute inset-0 z-40 transition-[visibility,opacity] duration-200 ${
         sessionsOpen ? "" : "pointer-events-none invisible"
       }`}
     >
@@ -88,7 +88,7 @@ function SessionsDrawer(): ReactNode {
         type="button"
         aria-label={t("sessions.closeHistory")}
         tabIndex={-1}
-        className={`absolute inset-0 h-full w-full cursor-default bg-black/40 transition-opacity duration-150 ${
+        className={`absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-xs transition-opacity duration-200 ${
           sessionsOpen ? "opacity-100" : "opacity-0"
         }`}
         onClick={() => setSessionsOpen(false)}
@@ -97,16 +97,16 @@ function SessionsDrawer(): ReactNode {
         data-oc-slot="sessions"
         role="dialog"
         aria-label={t("sessions.historyTitle")}
-        className={`relative z-50 flex h-full w-64 shrink-0 flex-col border-e border-border bg-panel-bg shadow-xl transition-transform duration-150 ease-out ${
+        className={`relative z-50 flex h-full w-72 max-w-[85vw] shrink-0 flex-col border-e border-card-border bg-panel-bg shadow-2xl transition-transform duration-200 ease-out ${
           sessionsOpen ? "" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-2">
-          <span className="text-xs font-medium text-fg">{t("sessions.historyTitle")}</span>
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
+          <span className="text-xs font-semibold tracking-wide text-fg">{t("sessions.historyTitle")}</span>
           <button
             type="button"
             aria-label={t("sessions.closeHistory")}
-            className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
+            className="rounded-md p-1 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg"
             onClick={() => setSessionsOpen(false)}
           >
             <CloseIcon />

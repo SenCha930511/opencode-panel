@@ -20,8 +20,8 @@ import { useNow } from "./useNow.js";
  */
 
 const MENU_ITEM_CLASS =
-  "cursor-default select-none rounded-sm px-2 py-1 text-xs outline-none data-[highlighted]:bg-active-bg";
-const DANGER_MENU_ITEM_CLASS = `${MENU_ITEM_CLASS} text-err`;
+  "cursor-default select-none rounded-md px-2.5 py-1.5 text-xs outline-none transition-colors data-[highlighted]:bg-hover-bg text-fg";
+const DANGER_MENU_ITEM_CLASS = `${MENU_ITEM_CLASS} text-err data-[highlighted]:bg-err/10`;
 // Braced (never quote-literal) so the todo-4 i18n guard treats it as an aria
 // id; a11y names with no string-table entry (see strings.ts inventory).
 const SHARED_BADGE_LABEL = "shared";
@@ -48,20 +48,22 @@ function SessionRow(props: {
   const { entry } = props;
   const relative = formatRelativeTime(entry.updatedAt, props.now, props.locale);
   return (
-    <li className="group relative">
+    <li className="group relative my-0.5">
       <div
-        className={`flex items-center gap-1 rounded-sm px-1 ${
-          props.selected ? "bg-active-bg" : "hover:bg-hover-bg"
+        className={`flex items-center gap-1 rounded-lg border transition-all ${
+          props.selected
+            ? "border-focus-ring/40 bg-active-bg text-fg shadow-2xs"
+            : "border-transparent hover:border-card-border hover:bg-hover-bg/70 text-muted-fg hover:text-fg"
         }`}
       >
         <button
           type="button"
-          className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-1.5 text-start"
+          className="flex min-w-0 flex-1 flex-col gap-0.5 px-2.5 py-2 text-start"
           onClick={props.onSelect}
           aria-current={props.selected ? "true" : undefined}
         >
           <span className="flex items-center gap-1.5">
-            <span className="truncate text-sm">{entry.title}</span>
+            <span className="truncate text-xs font-medium text-fg">{entry.title}</span>
             {entry.shared ? (
               <span className="shrink-0 text-muted-fg" aria-label={SHARED_BADGE_LABEL}>
                 <LinkIcon />
@@ -73,13 +75,13 @@ function SessionRow(props: {
               </span>
             ) : null}
           </span>
-          {relative === "" ? null : <span className="text-[11px] text-muted-fg">{relative}</span>}
+          {relative === "" ? null : <span className="text-[10px] text-muted-fg font-normal">{relative}</span>}
         </button>
         <DropdownMenu.Root modal={false}>
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="shrink-0 rounded-sm p-1 text-muted-fg opacity-0 hover:bg-hover-bg focus:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="shrink-0 rounded-md p-1.5 text-muted-fg opacity-0 transition-opacity hover:bg-hover-bg hover:text-fg focus:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
               aria-label={t("sessions.title")}
               onClick={(event) => {
                 event.stopPropagation();
@@ -92,7 +94,7 @@ function SessionRow(props: {
             <DropdownMenu.Content
               align="start"
               sideOffset={4}
-              className="z-50 min-w-32 rounded-md border border-border bg-panel-bg p-1 shadow-lg"
+              className="z-50 min-w-36 rounded-xl border border-card-border bg-panel-bg p-1 shadow-2xl backdrop-blur-md"
             >
               <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={props.menu.onRename}>
                 {t("sessions.rename")}
@@ -109,7 +111,7 @@ function SessionRow(props: {
               <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={props.menu.onFork}>
                 {t("sessions.fork")}
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="mx-1 my-1 h-px bg-border" />
+              <DropdownMenu.Separator className="mx-1 my-1 h-px bg-border/60" />
               <DropdownMenu.Item className={DANGER_MENU_ITEM_CLASS} onSelect={props.menu.onDelete}>
                 {t("sessions.delete")}
               </DropdownMenu.Item>
@@ -134,11 +136,11 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
   const visible = props.store.visibleSessions();
 
   return (
-    <div className="flex h-full min-w-0 flex-col">
-      <div className="flex items-center gap-1.5 px-2 pt-2">
+    <div className="flex h-full min-w-0 flex-col bg-panel-bg/30">
+      <div className="flex items-center gap-1.5 border-b border-card-border/50 bg-panel-bg/40 p-2.5 backdrop-blur-sm">
         <input
           type="search"
-          className="min-w-0 flex-1 rounded-sm border border-border bg-input-bg px-2 py-1 text-xs text-fg outline-none focus:border-focus-ring"
+          className="min-w-0 flex-1 rounded-lg border border-card-border bg-input-card-bg px-2.5 py-1.5 text-xs text-fg outline-none transition-all placeholder:text-muted-fg/70 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30"
           placeholder={t("sessions.searchPlaceholder")}
           value={snapshot.filter}
           onChange={(event) => {
@@ -147,7 +149,7 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
         />
         <button
           type="button"
-          className="flex shrink-0 items-center gap-1 rounded-sm bg-accent px-2 py-1 text-xs font-medium text-accent-fg hover:bg-accent-hover"
+          className="flex shrink-0 items-center gap-1 rounded-lg bg-accent px-2.5 py-1.5 text-xs font-medium text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95"
           aria-label={t("sessions.new")}
           onClick={() => {
             void props.store.createSession(undefined).catch(() => {
@@ -156,7 +158,7 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
           }}
         >
           <PlusIcon />
-          {t("sessions.new")}
+          <span className="hidden sm:inline">{t("sessions.new")}</span>
         </button>
       </div>
 

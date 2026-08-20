@@ -144,6 +144,15 @@ export const STRING_IDS = [
   "tool.status.failed",
   "tool.status.pending",
   "tool.status.running",
+  "welcome.explain",
+  "welcome.explainDesc",
+  "welcome.findBugs",
+  "welcome.findBugsDesc",
+  "welcome.refactor",
+  "welcome.refactorDesc",
+  "welcome.title",
+  "welcome.unitTests",
+  "welcome.unitTestsDesc",
 ] as const;
 
 export type StringId = (typeof STRING_IDS)[number];
@@ -263,6 +272,15 @@ export const en: Record<StringId, string> = {
   "tool.status.failed": "Failed",
   "tool.status.pending": "Pending",
   "tool.status.running": "Running",
+  "welcome.explain": "Explain Code",
+  "welcome.explainDesc": "Analyze selected logic or the active file",
+  "welcome.findBugs": "Find Bugs",
+  "welcome.findBugsDesc": "Locate edge cases and fix errors",
+  "welcome.refactor": "Refactor",
+  "welcome.refactorDesc": "Improve readability and structure",
+  "welcome.title": "OpenCode Assistant",
+  "welcome.unitTests": "Unit Tests",
+  "welcome.unitTestsDesc": "Generate comprehensive test suites",
 };
 
 /**
@@ -380,6 +398,15 @@ export const zhTW: Record<StringId, string> = {
   "tool.status.failed": "失敗",
   "tool.status.pending": "等待中",
   "tool.status.running": "執行中",
+  "welcome.explain": "解釋程式碼",
+  "welcome.explainDesc": "分析選取的邏輯或當前檔案",
+  "welcome.findBugs": "找出錯誤",
+  "welcome.findBugsDesc": "定位邊界情況並修復問題",
+  "welcome.refactor": "重構",
+  "welcome.refactorDesc": "改善可讀性與結構",
+  "welcome.title": "OpenCode 助理",
+  "welcome.unitTests": "單元測試",
+  "welcome.unitTestsDesc": "產生完整的測試套組",
 };
 
 const enFallback: Readonly<Record<string, string>> = en;

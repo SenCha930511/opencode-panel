@@ -14,11 +14,54 @@ body {
   font-size: var(--vscode-font-size, 13px);
   color: var(--fg);
   background: var(--bg);
+  overflow-x: hidden;
+}
+
+/* Antigravity / Codex styled thin sleek scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, rgba(128, 128, 128, 0.2));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(128, 128, 128, 0.4));
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.96); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-oc-sessions-drawer],
-  [data-oc-sessions-drawer] * {
-    transition: none;
+  [data-oc-sessions-drawer] *,
+  .animate-pulse-subtle,
+  .animate-shimmer {
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -13,10 +13,10 @@ const STATUS_LABEL: Readonly<Record<ToolStatus, StringId>> = {
 };
 
 const STATUS_CLASS: Readonly<Record<ToolStatus, string>> = {
-  pending: "text-[var(--vscode-descriptionForeground)] border-[var(--vscode-panel-border)]",
-  running: "text-[var(--vscode-charts-blue)] border-[var(--vscode-charts-blue)]",
-  completed: "text-[var(--vscode-charts-green)] border-[var(--vscode-charts-green)]",
-  error: "text-[var(--vscode-errorForeground)] border-[var(--vscode-errorForeground)]",
+  pending: "text-muted-fg bg-panel-bg border-border",
+  running: "text-accent bg-accent/10 border-accent/30 animate-pulse-subtle",
+  completed: "text-ok bg-ok/10 border-ok/30",
+  error: "text-err bg-err/10 border-err/30",
 };
 
 function prettyJson(value: unknown): string {
@@ -41,32 +41,32 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
   const { part } = props;
   const iconKind = toolIconKind(part.tool);
   return (
-    <details className="rounded border border-[var(--vscode-panel-border)] text-[0.92em]">
-      <summary className="flex cursor-pointer select-none items-center gap-2 px-2 py-1">
+    <details className="my-2 overflow-hidden rounded-xl border border-card-border bg-card-bg/60 text-xs shadow-2xs transition-all">
+      <summary className="flex cursor-pointer select-none items-center gap-2.5 px-3 py-2 font-medium text-fg transition-colors hover:bg-hover-bg/60">
         <ToolIcon kind={iconKind} />
-        <span className="font-medium break-all">{part.tool}</span>
+        <span className="font-semibold break-all text-fg">{part.tool}</span>
         {part.title !== undefined && part.title !== part.tool ? (
-          <span className="truncate text-[var(--vscode-descriptionForeground)]">{part.title}</span>
+          <span className="truncate text-muted-fg text-[11px]">{part.title}</span>
         ) : null}
         <span
-          className={`ml-auto rounded border px-1.5 py-0.5 text-[0.85em] leading-none ${STATUS_CLASS[part.status]}`}
+          className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider leading-none shadow-2xs ${STATUS_CLASS[part.status]}`}
         >
           {t(STATUS_LABEL[part.status])}
         </span>
       </summary>
-      <div className="space-y-1 border-t border-[var(--vscode-panel-border)] px-2 py-1">
+      <div className="space-y-2 border-t border-card-border/60 bg-bg/40 p-2.5">
         {part.input !== undefined ? (
-          <pre className="overflow-x-auto rounded bg-[var(--vscode-textCodeBlock-background)] p-2 text-[0.9em]">
+          <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2.5 font-mono text-[11px] text-fg">
             {prettyJson(part.input)}
           </pre>
         ) : null}
         {part.output !== undefined ? (
-          <pre className="overflow-x-auto rounded bg-[var(--vscode-textCodeBlock-background)] p-2 text-[0.9em]">
+          <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2.5 font-mono text-[11px] text-fg">
             {part.output}
           </pre>
         ) : null}
         {part.error !== undefined ? (
-          <pre className="overflow-x-auto rounded border border-[var(--vscode-errorForeground)] p-2 text-[0.9em] text-[var(--vscode-errorForeground)]">
+          <pre className="overflow-x-auto rounded-lg border border-err/30 bg-err/10 p-2.5 font-mono text-[11px] text-err">
             {part.error}
           </pre>
         ) : null}

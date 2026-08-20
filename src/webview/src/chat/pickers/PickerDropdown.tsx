@@ -34,11 +34,11 @@ export interface PickerDropdownProps {
 }
 
 const TRIGGER_CLASS =
-  "flex max-w-44 items-center gap-1 truncate rounded px-1.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg";
+  "flex max-w-44 items-center gap-1.5 truncate rounded-full border border-card-border bg-card-bg/80 px-2.5 py-1 text-[11px] font-medium text-muted-fg transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/50 shadow-2xs";
 const MENU_CLASS =
-  "absolute bottom-full left-0 z-50 mb-1 max-h-60 min-w-44 overflow-y-auto rounded border border-border bg-panel-bg p-1 shadow-lg";
+  "absolute bottom-full left-0 z-50 mb-1.5 max-h-60 min-w-48 overflow-y-auto rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-md";
 const ROW_CLASS =
-  "flex cursor-default select-none items-baseline gap-2 rounded px-2 py-1 text-xs text-fg hover:bg-hover-bg data-[selected=true]:text-accent-fg";
+  "flex cursor-default select-none items-baseline gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg data-[selected=true]:bg-active-bg data-[selected=true]:text-fg font-medium";
 
 function ChevronIcon(): ReactNode {
   return (

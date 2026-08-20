@@ -24,12 +24,12 @@ export function DefaultAttachmentChip(props: {
 }): ReactNode {
   const { attachment, onRemove } = props;
   return (
-    <span className="inline-flex max-w-full items-center gap-1 rounded-sm border border-border bg-panel-bg px-1.5 py-0.5 text-xs text-fg">
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-card-border bg-card-bg/90 px-2 py-0.5 text-[11px] font-medium text-fg shadow-2xs">
       <span className="max-w-44 truncate">{attachment.name}</span>
       {onRemove !== undefined && (
         <button
           type="button"
-          className="shrink-0 text-muted-fg hover:text-fg"
+          className="shrink-0 rounded p-0.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg"
           onClick={() => {
             onRemove(attachment.id);
           }}

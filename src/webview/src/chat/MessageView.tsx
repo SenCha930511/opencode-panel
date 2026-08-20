@@ -32,8 +32,8 @@ export function PartView(props: { readonly part: PartVM }) {
 }
 
 const ROLE_CLASS: Readonly<Record<string, string>> = {
-  user: "text-[var(--vscode-charts-blue)]",
-  assistant: "text-[var(--vscode-charts-green)]",
+  user: "text-accent",
+  assistant: "text-ok",
 };
 
 /**
@@ -50,13 +50,24 @@ export function MessageView(props: {
   readonly store?: MessageStore;
 }) {
   const { message } = props;
-  const roleClass = ROLE_CLASS[message.role] ?? "text-[var(--vscode-descriptionForeground)]";
+  const isUser = message.role === "user";
+  const roleClass = ROLE_CLASS[message.role] ?? "text-muted-fg";
+  
   return (
-    <article data-role={message.role} data-in-flight={message.inFlight} className="group relative px-3 py-1.5">
-      <div className={`text-[0.7em] font-semibold uppercase tracking-wide ${roleClass}`}>
-        {message.role}
+    <article
+      data-role={message.role}
+      data-in-flight={message.inFlight}
+      className={`group relative my-2 transition-all ${
+        isUser
+          ? "rounded-2xl rounded-tr-xs border border-card-border bg-user-msg-bg/80 px-3.5 py-2.5 shadow-2xs"
+          : "px-2.5 py-1 text-fg"
+      }`}
+    >
+      <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider ${roleClass}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${isUser ? "bg-accent" : "bg-ok"}`} />
+        <span>{message.role}</span>
       </div>
-      <div className="mt-0.5 space-y-1.5">
+      <div className="mt-1 space-y-1.5">
         {message.parts.map((part) => (
           <PartView key={part.id} part={part} />
         ))}
@@ -64,7 +75,7 @@ export function MessageView(props: {
       <MessageActionsMenu
         message={message}
         {...(props.store === undefined ? {} : { store: props.store })}
-        className="absolute right-2 top-1 hidden group-hover:flex"
+        className="absolute right-2 top-2 z-10 hidden group-hover:flex"
       />
     </article>
   );

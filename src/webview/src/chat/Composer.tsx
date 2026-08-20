@@ -95,6 +95,28 @@ export interface ComposerProps {
 /** Tailwind max-h-40 (10rem) — the JS-side cap for the autosize math. */
 const MAX_TEXTAREA_HEIGHT_PX = 160;
 
+function SendIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 13V3M3.5 7.5L8 3L12.5 7.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StopIcon(): ReactNode {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <rect x="3" y="3" width="10" height="10" rx="1.5" />
+    </svg>
+  );
+}
+
 export function Composer(props: ComposerProps): ReactNode {
   const { t } = useStrings();
   const app = useApp();
@@ -189,50 +211,60 @@ export function Composer(props: ComposerProps): ReactNode {
   };
 
   return (
-    <div data-oc-composer className="border-t border-border bg-bg p-2">
-      {chips.length > 0 && (
-        <div data-oc-attachments className="mb-1.5 flex flex-wrap gap-1">
-          {chips.map((chip) =>
-            props.renderAttachment !== undefined ? (
-              <span key={chip.id}>{props.renderAttachment(chip)}</span>
-            ) : (
-              <DefaultAttachmentChip key={chip.id} attachment={chip} onRemove={props.onRemoveAttachment} />
-            ),
-          )}
-        </div>
-      )}
-      {props.extras !== undefined && <div data-oc-composer-extras className="mb-1.5">{props.extras}</div>}
-      <div className="flex items-end gap-2">
+    <div data-oc-composer className="border-t border-border/70 bg-bg/80 p-2.5 backdrop-blur-md">
+      <div className="flex flex-col rounded-xl border border-card-border bg-input-card-bg shadow-sm transition-all focus-within:border-focus-ring focus-within:ring-1 focus-within:ring-focus-ring/30 p-2.5">
+        {chips.length > 0 && (
+          <div data-oc-attachments className="mb-2 flex flex-wrap gap-1.5">
+            {chips.map((chip) =>
+              props.renderAttachment !== undefined ? (
+                <span key={chip.id}>{props.renderAttachment(chip)}</span>
+              ) : (
+                <DefaultAttachmentChip key={chip.id} attachment={chip} onRemove={props.onRemoveAttachment} />
+              ),
+            )}
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           rows={1}
-          className="max-h-40 min-h-8 flex-1 resize-none overflow-y-auto rounded-sm border border-border bg-input-bg px-2 py-1 text-sm text-fg outline-none focus:border-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="max-h-40 min-h-7 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-xs sm:text-sm text-fg outline-none placeholder:text-muted-fg/70 disabled:cursor-not-allowed disabled:opacity-50"
           value={text}
           placeholder={t(placeholderForStatus(status))}
           disabled={inputDisabled}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
-        {busy && (
-          <button
-            type="button"
-            data-oc-composer-stop
-            className="rounded-sm border border-border bg-bg px-3 py-1.5 text-xs font-medium text-err hover:bg-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={sessionId === undefined}
-            onClick={handleAbort}
-          >
-            {t("composer.abort")}
-          </button>
-        )}
-        <button
-          type="button"
-          data-oc-composer-send
-          className="rounded-sm bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={!canSend}
-          onClick={handleSend}
-        >
-          {t("composer.send")}
-        </button>
+        <div className="mt-2 flex items-center justify-between gap-1.5 pt-1.5 border-t border-card-border/40">
+          <div data-oc-composer-extras className="flex flex-1 min-w-0 items-center gap-1">
+            {props.extras}
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {busy && (
+              <button
+                type="button"
+                data-oc-composer-stop
+                aria-label={t("composer.abort")}
+                className="flex items-center gap-1 rounded-lg border border-err/30 bg-err/10 px-2.5 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={sessionId === undefined}
+                onClick={handleAbort}
+              >
+                <StopIcon />
+                <span>{t("composer.abort")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              data-oc-composer-send
+              aria-label={t("composer.send")}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!canSend}
+              onClick={handleSend}
+            >
+              <SendIcon />
+              <span className="sr-only">{t("composer.send")}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

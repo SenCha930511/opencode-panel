@@ -37,6 +37,12 @@
   --oc-off: var(--vscode-descriptionForeground, #8c8c8c);
   --oc-info: var(--vscode-notificationsInfoIcon-foreground, var(--vscode-charts-blue, #3794ff));
 
+  /* Modern card & bubble surfaces */
+  --oc-card-bg: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.03));
+  --oc-card-border: var(--vscode-widget-border, rgba(128, 128, 128, 0.2));
+  --oc-user-msg-bg: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.05));
+  --oc-input-card-bg: var(--vscode-input-background, rgba(0, 0, 0, 0.2));
+
   /* Chat font overrides (init.settings chatFontFamily/chatFontSize; the
      provider sets --oc-chat-font-* inline when the user configured them). */
   --oc-chat-font-family: var(--vscode-font-family, system-ui, sans-serif);
@@ -53,6 +59,10 @@
   --color-active-bg: var(--active-bg);
   --color-focus-ring: var(--focus-ring);
   --color-input-bg: var(--input-bg);
+  --color-card-bg: var(--oc-card-bg);
+  --color-card-border: var(--oc-card-border);
+  --color-user-msg-bg: var(--oc-user-msg-bg);
+  --color-input-card-bg: var(--oc-input-card-bg);
   --color-accent: var(--oc-accent);
   --color-accent-fg: var(--oc-accent-fg);
   --color-accent-hover: var(--oc-accent-hover);
