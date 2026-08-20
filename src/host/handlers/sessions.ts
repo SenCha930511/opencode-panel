@@ -84,7 +84,8 @@ export type SessionOperation =
   | "rename"
   | "share"
   | "unshare"
-  | "fork";
+  | "fork"
+  | "setSessionAuto";
 
 /** One failed session-domain server call, carries no credentials. */
 export class SessionOperationError extends Error {
@@ -176,6 +177,14 @@ export interface SessionService {
   shareSession(id: string): Promise<{ readonly url: string }>;
   unshareSession(id: string): Promise<void>;
   forkSession(id: string, messageID: string | undefined): Promise<SessionListEntry>;
+  /**
+   * Toggle the session-level permission wildcard rule (panel "auto" mode):
+   * `PATCH /session/:id {permission: [...]}` with a `{*: '*' allow}` entry when
+   * on, `{*: '*' ask}` when off. Session rules ARE the opencode-auto path the
+   * TUI uses; SDK ships no wrapper, so this is a raw probeFetch PATCH (the
+   * `SessionUpdateData.body` type hides `permission`, hence raw).
+   */
+  setSessionAuto(id: string, enabled: boolean): Promise<void>;
 }
 
 export function isSubagentSession(session: { title?: string; parentID?: string }): boolean {
@@ -278,6 +287,26 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
       );
       return toSessionListEntry(session);
     },
+
+    async setSessionAuto(id, enabled) {
+      const connection = await deps.source.connect();
+      const response = await connection.probeFetch(
+        new Request(`${connection.baseUrl}/session/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            permission: [
+              { permission: "*", pattern: "*", action: enabled ? "allow" : "ask" },
+            ],
+          }),
+        }),
+      );
+      if (!response.ok) {
+        const detail = `PATCH /session permission: HTTP ${String(response.status)}`;
+        deps.logger.warn(`sessions domain: setSessionAuto failed: ${detail}`);
+        throw new SessionOperationError("setSessionAuto", detail, response.status);
+      }
+    },
   };
 }
 
@@ -343,6 +372,12 @@ export function registerSessionHandlers(register: RegisterHandler, deps: Session
     const session = await service.forkSession(id, messageID);
     await sync.refresh();
     return { id: session.id };
+  });
+
+  register("setSessionAuto", async ({ sessionId, enabled }): Promise<FromWebviewResponse["setSessionAuto"]> => {
+    // PATCH bumps the session's timestamp — not list-worthy, so skip refresh.
+    await service.setSessionAuto(sessionId, enabled);
+    return null;
   });
 }
 

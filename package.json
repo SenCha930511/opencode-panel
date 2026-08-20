@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -230,7 +230,11 @@
         },
         "opencodePanel.language": {
           "type": "string",
-          "enum": ["auto", "en", "zh-TW"],
+          "enum": [
+            "auto",
+            "en",
+            "zh-TW"
+          ],
           "default": "auto",
           "markdownDescription": "%opencodePanel.config.language.markdownDescription%",
           "scope": "resource"

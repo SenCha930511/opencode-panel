@@ -42,6 +42,7 @@ import {
 } from "./pendingRequests.js";
 import { QuestionCard } from "./QuestionCard.js";
 import { useAutoMode } from "../composerOptions.js";
+import { ensureAutoArmed } from "../sessionArming.js";
 
 export interface ChatCardsDockProps {
   readonly store?: PendingRequestsStore;
@@ -101,13 +102,8 @@ export function ChatCardsDock(props: ChatCardsDockProps) {
   const autoMode = useAutoMode();
 
   useEffect(() => {
-    if (!autoMode) return;
-    for (const card of cards) {
-      if (card.kind === "permission" && card.status === "pending") {
-        void controller.replyPermission(card.sessionId, card.requestId, "always");
-      }
-    }
-  }, [cards, autoMode, controller]);
+    ensureAutoArmed(activeSession, autoMode);
+  }, [activeSession, autoMode]);
 
   if (cards.length === 0 && othersCount === 0) return null;
 

@@ -390,6 +390,13 @@ describe("sessions domain handlers", () => {
   });
 });
 
+  function scriptedService(fetchImpl: ProbeFetch) {
+    return createSessionService({
+      source: staticSessionSource(connectionFor("http://share-scripted.invalid", fetchImpl)),
+      logger: new PanelLogger(new CapturingChannel(), () => false),
+    });
+  }
+
 describe("share idempotency + error detail", () => {
   function shareScripted(getBody: unknown): ProbeFetch {
     return (request) => {
@@ -417,13 +424,6 @@ describe("share idempotency + error detail", () => {
     };
   }
 
-  function scriptedService(fetchImpl: ProbeFetch) {
-    return createSessionService({
-      source: staticSessionSource(connectionFor("http://share-scripted.invalid", fetchImpl)),
-      logger: new PanelLogger(new CapturingChannel(), () => false),
-    });
-  }
-
   it("a duplicate-share 500 folds to the session's existing link (idempotent share)", async () => {
     const service = scriptedService(
       shareScripted({ id: "ses_x", share: { url: "https://opncd.ai/share/existing" } }),
@@ -443,6 +443,67 @@ describe("share idempotency + error detail", () => {
       expect(text).toContain("SessionOperationError");
       expect(text).toContain('"_tag":"InternalServerError"');
       expect(text).not.toContain("[object Object]");
+    }
+  });
+});
+
+
+describe("setSessionAuto service (raw PATCH ruleset)", () => {
+  it("PATCHes a wildcard allow ruleset when enabling auto", async () => {
+    const recorded: Array<{ method: string; url: string; body: string }> = [];
+    const fetchImpl: ProbeFetch = async (request) => {
+      recorded.push({
+        method: request.method,
+        url: request.url,
+        body: await request.text(),
+      });
+      return new Response(JSON.stringify({ permission: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const service = scriptedService(fetchImpl);
+    await expect(service.setSessionAuto("ses_x", true)).resolves.toBeUndefined();
+    expect(recorded).toHaveLength(1);
+    const patch = recorded[0];
+    if (patch === undefined) throw new Error("no PATCH recorded");
+    expect(patch.method).toBe("PATCH");
+    expect(patch.url).toBe("http://share-scripted.invalid/session/ses_x");
+    expect(JSON.parse(patch.body)).toEqual({
+      permission: [{ permission: "*", pattern: "*", action: "allow" }],
+    });
+  });
+
+  it("PATCHes a wildcard ask ruleset when disabling auto", async () => {
+    const recorded: Array<{ method: string; url: string; body: string }> = [];
+    const fetchImpl: ProbeFetch = async (request) => {
+      recorded.push({ method: request.method, url: request.url, body: await request.text() });
+      return new Response(JSON.stringify({ permission: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const service = scriptedService(fetchImpl);
+    await service.setSessionAuto("ses_y", false);
+    const patch = recorded[0];
+    if (patch === undefined) throw new Error("no PATCH recorded");
+    expect(JSON.parse(patch.body)).toEqual({
+      permission: [{ permission: "*", pattern: "*", action: "ask" }],
+    });
+  });
+
+  it("a non-2xx PATCH throws SessionOperationError with the HTTP status", async () => {
+    const fetchImpl: ProbeFetch = () =>
+      Promise.resolve(new Response("gone", { status: 404 }));
+    const service = scriptedService(fetchImpl);
+    try {
+      await service.setSessionAuto("ses_z", true);
+      throw new Error("setSessionAuto should have failed");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      const text = String(error);
+      expect(text).toContain("SessionOperationError");
+      expect(text).toContain("HTTP 404");
     }
   });
 });

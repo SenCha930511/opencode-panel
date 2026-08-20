@@ -76,6 +76,7 @@ function countingService(entries: readonly SessionListEntry[]): {
     shareSession: () => Promise.resolve({ url: "https://invalid/s/x" }),
     unshareSession: () => Promise.resolve(),
     forkSession: () => Promise.resolve(session),
+    setSessionAuto: () => Promise.resolve(),
   };
   return { service: stub, calls: () => calls };
 }
@@ -119,6 +120,7 @@ describe("SessionSync", () => {
       shareSession: () => Promise.reject(new Error("unused")),
       unshareSession: () => Promise.reject(new Error("unused")),
       forkSession: () => Promise.reject(new Error("unused")),
+      setSessionAuto: () => Promise.reject(new Error("unused")),
     };
     const sink = new RecordingEventSink();
     const sync = new SessionSync({ service: failing, sink, logger });
