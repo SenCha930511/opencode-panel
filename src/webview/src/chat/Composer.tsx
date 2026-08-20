@@ -183,8 +183,8 @@ export function Composer(props: ComposerProps): ReactNode {
   const [queuedPrompt, setQueuedPrompt] = useState<{
     text: string;
     chips: readonly ComposerAttachment[];
-    agent?: string;
-    model?: string;
+    agent?: string | undefined;
+    model?: string | undefined;
   } | null>(null);
 
   // Clear queue on session switch

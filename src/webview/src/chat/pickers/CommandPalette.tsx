@@ -57,7 +57,7 @@ function CommandGlyph(props: { readonly name: string }): ReactNode {
 }
 
 const MENU_CLASS =
-  "absolute bottom-full left-0 right-0 z-50 mb-2 max-h-60 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs";
+  "absolute bottom-full left-0 right-0 z-50 mb-2 max-h-60 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg p-1.5 shadow-2xl ring-1 ring-black/20 text-xs";
 
 export interface CommandPaletteProps {
   readonly commands: readonly CommandEntry[];
@@ -113,12 +113,12 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
                     props.onHover?.(index);
                   }}
                 >
-                  <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex min-w-0 shrink-0 items-center gap-2">
                     <CommandGlyph name={command.name} />
-                    <span className="shrink-0 font-medium text-fg">{command.name}</span>
+                    <span className="font-medium text-fg">{command.name}</span>
                   </div>
                   {command.description !== undefined && (
-                    <span className="truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-end font-normal">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-right font-normal">
                       {command.description}
                     </span>
                   )}

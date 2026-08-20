@@ -38,7 +38,8 @@
         {
           "id": "opencodePanel.chatView",
           "name": "OpenCode Panel",
-          "type": "webview"
+          "type": "webview",
+          "icon": "media/icon.svg"
         }
       ]
     },

@@ -29,7 +29,7 @@ export function MentionPalette(props: MentionPaletteProps): ReactNode {
     <div
       data-oc-mention-palette
       role="listbox"
-      className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-56 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs"
+      className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-56 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg p-1.5 shadow-2xl ring-1 ring-black/20 text-xs"
     >
       <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
         <span className="flex items-center gap-1.5">
@@ -48,16 +48,16 @@ export function MentionPalette(props: MentionPaletteProps): ReactNode {
               role="option"
               aria-selected="false"
               title={row}
-              className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-start transition-colors hover:bg-hover-bg cursor-pointer group"
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-1.5 text-start transition-colors hover:bg-hover-bg cursor-pointer group"
               onClick={() => {
                 props.onPick?.(row);
               }}
             >
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 shrink-0 items-center gap-2">
                 <FileGlyph path={row} />
-                <span className="shrink-0 font-medium text-fg">{baseNameOfPath(row)}</span>
+                <span className="font-medium text-fg">{baseNameOfPath(row)}</span>
               </div>
-              <span className="truncate text-[11px] text-muted-fg/70 font-mono group-hover:text-muted-fg text-end">{row}</span>
+              <span className="min-w-0 flex-1 truncate text-[11px] text-muted-fg/70 font-mono group-hover:text-muted-fg text-right">{row}</span>
             </button>
           </li>
         ))}
