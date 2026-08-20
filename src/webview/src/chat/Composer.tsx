@@ -80,7 +80,9 @@ export interface ComposerProps {
   readonly renderAttachment?: { (attachment: ComposerAttachment): ReactNode };
   /** T17: remove callback; the default chip renders an X only when set. */
   readonly onRemoveAttachment?: { (attachmentId: string): void };
-  /** T15: pickers/palette row (rendered verbatim above the input row). */
+  /** T15: pickers row (Agent & Model), rendered in its own line. */
+  readonly pickers?: ReactNode;
+  /** T15: extra action triggers (e.g. '+' attachment menu). */
   readonly extras?: ReactNode;
   /** T15: controlled agent selection, sent onto the payload verbatim. */
   readonly agent?: string;
@@ -234,6 +236,8 @@ export function Composer(props: ComposerProps): ReactNode {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
+
+        {/* Row 1 (Actions): Attachments '+' on left, Stop/Send on right */}
         <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
           <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar py-0.5">
             {props.extras}
@@ -244,7 +248,7 @@ export function Composer(props: ComposerProps): ReactNode {
                 type="button"
                 data-oc-composer-stop
                 aria-label={t("composer.abort")}
-                className="flex items-center gap-1 rounded-full border border-err/40 bg-err/10 px-3 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-1 rounded-full border border-err/40 bg-err/10 px-3 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                 disabled={sessionId === undefined}
                 onClick={handleAbort}
               >
@@ -256,7 +260,7 @@ export function Composer(props: ComposerProps): ReactNode {
               type="button"
               data-oc-composer-send
               aria-label={t("composer.send")}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
               disabled={!canSend}
               onClick={handleSend}
             >
@@ -265,6 +269,13 @@ export function Composer(props: ComposerProps): ReactNode {
             </button>
           </div>
         </div>
+
+        {/* Row 2 (Pickers): Agent & Model */}
+        {props.pickers && (
+          <div data-oc-composer-pickers className="mt-1.5 flex items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar pt-1.5 border-t border-card-border/30">
+            {props.pickers}
+          </div>
+        )}
       </div>
     </div>
   );

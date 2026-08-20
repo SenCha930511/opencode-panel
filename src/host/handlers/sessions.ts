@@ -266,6 +266,11 @@ export interface SessionsDomainDeps {
 export function registerSessionHandlers(register: RegisterHandler, deps: SessionsDomainDeps): void {
   const { service, sync } = deps;
 
+  register("listSessions", async (): Promise<FromWebviewResponse["listSessions"]> => {
+    const sessions = await service.listSessions();
+    return { sessions };
+  });
+
   register("createSession", async ({ title }): Promise<FromWebviewResponse["createSession"]> => {
     const session = await service.createSession(title);
     await sync.refresh();

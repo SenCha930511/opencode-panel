@@ -121,6 +121,15 @@ export class SessionsStore {
         this.applyList(toSessionEntries(event.payload));
       }
     });
+    // Proactive pull for the initial list (pushes cover later changes;
+    // offline ⇒ keep whatever init/push delivers).
+    void this.messenger
+      .request("listSessions", {})
+      .then((res: unknown) => {
+        const entries = toSessionEntries(res);
+        this.applyList(entries);
+      })
+      .catch(() => {});
     const disposer: Disposable = {
       dispose: () => {
         offList();
@@ -268,6 +277,14 @@ export class SessionsStore {
 }
 
 let sharedSessionsStore: SessionsStore | null = null;
+const sharedStoreListeners = new Set<() => void>();
+
+export function subscribeSharedSessionsStore(listener: () => void): () => void {
+  sharedStoreListeners.add(listener);
+  return () => {
+    sharedStoreListeners.delete(listener);
+  };
+}
 
 export function getSharedSessionsStore(deps?: SessionsStoreDeps): SessionsStore | null {
   if (sharedSessionsStore === null && deps !== undefined) {
@@ -278,4 +295,7 @@ export function getSharedSessionsStore(deps?: SessionsStoreDeps): SessionsStore 
 
 export function setSharedSessionsStore(store: SessionsStore | null): void {
   sharedSessionsStore = store;
+  for (const listener of sharedStoreListeners) {
+    listener();
+  }
 }

@@ -103,6 +103,8 @@ export interface FromWebviewProtocol {
   readonly setSecret: { readonly key: string; readonly value: string };
   readonly searchFiles: { readonly query: string };
   readonly selectSession: { readonly sessionId: string };
+  readonly listSessions: Record<string, never>;
+  readonly getCapabilities: Record<string, never>;
 }
 
 /** The value each request resolves to in its terminal `done:true` envelope. */
@@ -132,6 +134,9 @@ export interface FromWebviewResponse {
   readonly setSecret: null;
   readonly searchFiles: readonly string[];
   readonly selectSession: null;
+  readonly listSessions: SessionListPayload;
+  /** The capabilities.refresh payload, or null when nothing is connected/readable. */
+  readonly getCapabilities: CapabilitiesRefreshPayload | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +168,42 @@ export interface EventPayload {
 
 export interface SessionListPayload {
   readonly sessions: readonly SessionSummary[];
+}
+
+/** One agent the server advertises via GET /agent (subset of the SDK Agent type). */
+export interface AgentSummary {
+  readonly name: string;
+  /** Agent mode as reported (`primary` | `subagent` | `all`); absent when the server omits it. */
+  readonly mode?: string;
+  readonly builtIn: boolean;
+}
+
+/** One slash command the server advertises via GET /command. */
+export interface CommandSummary {
+  readonly name: string;
+  readonly description?: string;
+}
+
+/** One model inside a provider group (defensive parse of /config/providers). */
+export interface CapabilityModelEntry {
+  readonly id: string;
+  readonly name: string;
+}
+
+/** One provider group; `models` may be empty (the webview hides the group). */
+export interface CapabilityProviderEntry {
+  readonly id: string;
+  readonly name: string;
+  readonly models: readonly CapabilityModelEntry[];
+}
+
+/** The `capabilities.refresh` payload (host/handlers/capabilityWire.ts documents the push contract). */
+export interface CapabilitiesRefreshPayload {
+  readonly agents: readonly AgentSummary[];
+  readonly commands: readonly CommandSummary[];
+  readonly providers: readonly CapabilityProviderEntry[];
+  readonly defaultModels: Readonly<Record<string, string>>;
+  readonly defaultModel?: string;
 }
 
 export interface ToastPayload {

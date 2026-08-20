@@ -264,16 +264,19 @@ export function wireSessionsDomain(deps: SessionsWiringDeps): SessionsWiring {
     started = true;
     bridge.start();
   };
-  if (isAlive(manager)) {
+
+  const onState = (): void => {
+    if (!isAlive(manager)) return;
     startOnce();
-  } else {
-    startSubscription = manager.onDidChangeState(() => {
-      if (!isAlive(manager)) return;
-      startSubscription?.dispose();
-      startSubscription = undefined;
-      startOnce();
-    });
+    void sessionSync.refresh();
+  };
+
+  if (isAlive(manager)) {
+    onState();
   }
+  startSubscription = manager.onDidChangeState(() => {
+    onState();
+  });
 
   return {
     deps: { service, sync: sessionSync },

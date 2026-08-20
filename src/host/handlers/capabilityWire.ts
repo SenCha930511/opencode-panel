@@ -15,32 +15,22 @@
  */
 
 import { isRecord } from "../../shared/protocol.js";
-import type { AgentSummary, CommandSummary } from "../../server/capabilities.js";
+import type {
+  AgentSummary,
+  CommandSummary,
+  CapabilityModelEntry,
+  CapabilityProviderEntry,
+  CapabilitiesRefreshPayload,
+} from "../../shared/protocol.js";
+
+export type {
+  CapabilityModelEntry,
+  CapabilityProviderEntry,
+  CapabilitiesRefreshPayload,
+} from "../../shared/protocol.js";
 
 /** Event-channel type carrying {@link CapabilitiesRefreshPayload}. */
 export const CAPABILITIES_REFRESH_EVENT = "capabilities.refresh";
-
-/** One model inside a provider group (defensive parse of /config/providers). */
-export interface CapabilityModelEntry {
-  readonly id: string;
-  readonly name: string;
-}
-
-/** One provider group; `models` may be empty (the webview hides the group). */
-export interface CapabilityProviderEntry {
-  readonly id: string;
-  readonly name: string;
-  readonly models: readonly CapabilityModelEntry[];
-}
-
-/** The `capabilities.refresh` payload (see capabilityInfo.ts for the contract). */
-export interface CapabilitiesRefreshPayload {
-  readonly agents: readonly AgentSummary[];
-  readonly commands: readonly CommandSummary[];
-  readonly providers: readonly CapabilityProviderEntry[];
-  readonly defaultModels: Readonly<Record<string, string>>;
-  readonly defaultModel?: string;
-}
 
 export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[] {
   if (Array.isArray(payload)) {

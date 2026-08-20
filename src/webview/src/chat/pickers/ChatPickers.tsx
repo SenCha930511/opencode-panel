@@ -55,12 +55,16 @@ export function AgentPicker(props: AgentPickerProps): ReactNode {
     ...(row.custom ? { badge: t("picker.agent.customBadge") } : {}),
     selected: row.entry.name === props.value,
   }));
+  const fullTooltip = props.value ? `${t("picker.agent.title")}: ${props.value}` : undefined;
   return (
     <PickerDropdown
       title={t("picker.agent.title")}
       groups={[{ rows }]}
       open={open}
-      {...(props.value === undefined ? {} : { currentLabel: props.value })}
+      {...(props.value === undefined
+        ? {}
+        : { currentLabel: props.value, displayLabel: props.value })}
+      {...(fullTooltip === undefined ? {} : { tooltip: fullTooltip })}
       onToggle={() => {
         setOpen((current) => !current);
       }}
@@ -92,6 +96,7 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
   const [open, setOpen] = useState(props.initialOpen === true);
   const groups: PickerGroup[] = [];
   let currentModelName: string | undefined;
+  let currentProviderName: string | undefined;
   for (const provider of props.providers) {
     if (provider.models.length === 0) continue;
     groups.push({
@@ -101,19 +106,37 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
         const isSelected = key === props.value || model.id === props.value;
         if (isSelected) {
           currentModelName = model.name;
+          currentProviderName = provider.name;
         }
         return { key, primary: model.name, secondary: model.id, selected: isSelected };
       }),
     });
   }
   if (groups.length === 0) return null;
-  const displayLabel = currentModelName ?? props.value;
+
+  // Short display label: prefer model.name or the last segment after '/'
+  let shortLabel: string | undefined;
+  if (currentModelName) {
+    shortLabel = currentModelName;
+  } else if (props.value) {
+    shortLabel = props.value.includes("/") ? props.value.split("/").pop() : props.value;
+  }
+
+  // Full tooltip on mouse hover
+  const fullTooltip = props.value
+    ? currentProviderName && currentModelName
+      ? `${currentProviderName} / ${currentModelName} (${props.value})`
+      : props.value
+    : undefined;
+
   return (
     <PickerDropdown
       title={t("picker.model.title")}
       groups={groups}
       open={open}
       {...(props.value === undefined ? {} : { currentLabel: props.value })}
+      {...(shortLabel === undefined ? {} : { displayLabel: shortLabel })}
+      {...(fullTooltip === undefined ? {} : { tooltip: fullTooltip })}
       onToggle={() => {
         setOpen((current) => !current);
       }}
@@ -155,7 +178,7 @@ export function ChatPickers(): ReactNode {
     });
 
   return (
-    <div data-oc="chat-pickers" className="flex flex-wrap items-center gap-1 min-w-0">
+    <div data-oc="chat-pickers" className="flex items-center gap-1.5 min-w-0">
       <AgentPicker
         agents={snapshot.agents}
         {...(selection.agent === undefined ? {} : { value: selection.agent })}

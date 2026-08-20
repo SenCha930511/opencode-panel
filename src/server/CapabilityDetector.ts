@@ -212,15 +212,32 @@ async function runDetection(
     logger.debug(`capability probe '${label}' failed: ${errorSummary(error)}`);
     return [];
   };
+  // Structural SDK probe: finds `target.method` when the SDK surface exposes
+  // it (names drift across versions), calls it, unwraps `{data}`; any miss or
+  // failure degrades to undefined so that section simply hides.
+  const callData = async (target: unknown, method: string): Promise<unknown> => {
+    if (!isRecord(target)) return undefined;
+    const candidate = target[method];
+    if (typeof candidate !== "function") return undefined;
+    try {
+      const result = await (
+        candidate as (this: unknown) => Promise<{ readonly data?: unknown }>
+      ).call(target);
+      return result?.data;
+    } catch (error) {
+      logger.debug(`capability probe '${method}' failed: ${errorSummary(error)}`);
+      return undefined;
+    }
+  };
   const [agents, commands, mcpNative] = await Promise.all([
-    client
-      .app.agents()
-      .then((result) => toAgentSummaries(result.data))
-      .catch(empty<AgentSummary>("agents")),
-    client.command
-      .list()
-      .then((result) => toCommandSummaries(result.data))
-      .catch(empty<CommandSummary>("commands")),
+    // SDK naming drifted across versions: `app.agents()` on older bundles,
+    // `agent.list()` on newer ones — probe both, drop when neither exists.
+    callData(client.app, "agents").then(async (data) =>
+      data !== undefined
+        ? data
+        : callData((client as { agent?: unknown }).agent, "list"),
+    ).then(toAgentSummaries),
+    callData(client.command, "list").then(toCommandSummaries),
     client.mcp
       .status()
       .then((result) => toMcpNativeStatus(result.data))

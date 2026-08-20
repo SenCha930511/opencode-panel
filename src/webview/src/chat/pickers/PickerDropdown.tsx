@@ -26,6 +26,10 @@ export interface PickerDropdownProps {
   readonly title: string;
   /** Trigger text when a selection (or resolved default) exists. */
   readonly currentLabel?: string;
+  /** Abbreviated display label on the button. */
+  readonly displayLabel?: string;
+  /** Full text for tooltip on mouse hover. */
+  readonly tooltip?: string;
   readonly groups: readonly PickerGroup[];
   readonly open: boolean;
   onToggle(): void;
@@ -34,7 +38,7 @@ export interface PickerDropdownProps {
 }
 
 const TRIGGER_CLASS =
-  "flex max-w-28 sm:max-w-40 items-center gap-1 truncate rounded-full border border-card-border bg-card-bg/90 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0";
+  "flex max-w-32 sm:max-w-44 items-center gap-1 truncate rounded-full border border-card-border bg-card-bg/90 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0";
 const MENU_CLASS =
   "absolute bottom-full left-0 z-50 mb-2 max-h-64 min-w-56 max-w-72 overflow-y-auto rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10";
 const ROW_CLASS =
@@ -73,6 +77,8 @@ function useDismissOnOutsideDown(
 export function PickerDropdown(props: PickerDropdownProps): ReactNode {
   const rootRef = useRef<HTMLSpanElement | null>(null);
   useDismissOnOutsideDown(rootRef, props.open, props.onClose);
+  const textToShow = props.displayLabel ?? props.currentLabel ?? props.title;
+  const hoverTooltip = props.tooltip ?? props.currentLabel ?? props.title;
   return (
     <span
       ref={rootRef}
@@ -89,11 +95,11 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         aria-haspopup="listbox"
         aria-expanded={props.open}
         aria-label={props.title}
-        title={props.currentLabel ?? props.title}
+        title={hoverTooltip}
         className={TRIGGER_CLASS}
         onClick={props.onToggle}
       >
-        <span className="truncate min-w-0 flex-1">{props.currentLabel ?? props.title}</span>
+        <span className="truncate min-w-0 flex-1">{textToShow}</span>
         <span className="shrink-0 text-muted-fg"><ChevronIcon /></span>
       </button>
       {props.open ? (

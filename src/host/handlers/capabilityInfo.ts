@@ -119,6 +119,28 @@ export class CapabilityInfoSync {
     return this.inflight;
   }
 
+  async fetchPayload(): Promise<CapabilitiesRefreshPayload | undefined> {
+    try {
+      const connection = await this.deps.source.connect();
+      const [providersResult, configResult] = await Promise.all([
+        readConfigProbe(connection.client, "providers"),
+        readConfigProbe(connection.client, "get"),
+      ]);
+      const defaultModel = toDefaultModel(configResult);
+      return {
+        agents: connection.capabilities.agents,
+        commands: connection.capabilities.commands,
+        providers: toProviderEntries(providersResult),
+        defaultModels: toDefaultModels(providersResult),
+        ...(defaultModel === undefined ? {} : { defaultModel }),
+      };
+    } catch {
+      // Probe reads are best-effort: any failure degrades to "no payload"
+      // (the periodic push paths keep the webview honest on their own).
+      return undefined;
+    }
+  }
+
   private async run(): Promise<void> {
     try {
       await this.runRefresh();

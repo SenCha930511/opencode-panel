@@ -79,12 +79,8 @@ function ProductionChatSection(props: { readonly store: MessageStore }): ReactNo
         store={props.store}
         attachments={attachments.chips}
         onRemoveAttachment={attachments.remove}
-        extras={
-          <>
-            {pickers.extras}
-            <AttachmentsExtras controller={attachments} />
-          </>
-        }
+        pickers={pickers.extras}
+        extras={<AttachmentsExtras controller={attachments} />}
         {...(pickers.agent === undefined ? {} : { agent: pickers.agent })}
         {...(pickers.model === undefined ? {} : { model: pickers.model })}
       />

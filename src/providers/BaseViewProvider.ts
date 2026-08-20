@@ -113,9 +113,6 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(view: PanelWebviewView, _context: unknown, _token: unknown): void {
     this.view = view;
-    if (this.viewKind() === "sessions") {
-      view.title = "歷程記錄";
-    }
     const mediaRoot = this.deps.joinPath(this.deps.extensionUri, "media");
     // enableCommandUris stays UNSET (plan todo 10 MUST-NOT); roots = media/.
     view.webview.options = {
@@ -144,6 +141,13 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
       return null;
     });
 
+    this.track(
+      view.onDidChangeVisibility(() => {
+        if (view.visible) {
+          void this.postInitRefresh();
+        }
+      }),
+    );
     this.track(
       this.deps.onManagerStateChange((state) => {
         if (this.view !== view) return;

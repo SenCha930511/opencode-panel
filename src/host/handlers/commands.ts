@@ -11,11 +11,16 @@
  * (the QA failure path, asserted in __tests__/commands.test.ts).
  */
 
-import { isRecord } from "../../shared/protocol.js";
+import { isRecord, type FromWebviewResponse } from "../../shared/protocol.js";
+import type { CapabilitiesRefreshPayload } from "./capabilityWire.js";
 import type { RegisterHandler, SessionClientSource } from "./sessions.js";
 
 export interface CommandDomainDeps {
   readonly source: SessionClientSource;
+  readonly sync?: {
+    fetchPayload?: () => Promise<CapabilitiesRefreshPayload | undefined>;
+    refresh: () => Promise<void>;
+  };
 }
 
 /** One failed slash-command execution; carries no credentials. */
@@ -76,5 +81,10 @@ export function registerCommandHandlers(register: RegisterHandler, deps: Command
     const connection = await deps.source.connect();
     await runSlashCommand(connection.client, { sessionId, command, args });
     return null;
+  });
+
+  register("getCapabilities", async (): Promise<FromWebviewResponse["getCapabilities"]> => {
+    if (deps.sync?.fetchPayload === undefined) return null;
+    return (await deps.sync.fetchPayload()) ?? null;
   });
 }

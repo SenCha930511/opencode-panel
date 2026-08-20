@@ -56,6 +56,19 @@ export function attachCapabilityStore(messenger: WebviewMessenger): void {
     snapshot = parsed;
     emit();
   });
+  // Proactive pull on attach (the push arrives on refresh; this covers the
+  // already-connected case). Offline/unsupported ⇒ snapshot unchanged; the
+  // init push and refresh push still deliver.
+  void messenger
+    .request("getCapabilities", {})
+    .then((payload: unknown) => {
+      const parsed = parseCapabilitySnapshot(payload);
+      if (parsed !== undefined) {
+        snapshot = parsed;
+        emit();
+      }
+    })
+    .catch(() => {});
 }
 
 /** Test seam: drop the snapshot between suites (attach caches weaken out). */

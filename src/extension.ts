@@ -144,7 +144,10 @@ export function activate(
     logger,
     events: panel.chat,
   });
-  registerCommandHandlers(panel.registerHandler, capabilityInfo.deps);
+  registerCommandHandlers(panel.registerHandler, {
+    ...capabilityInfo.deps,
+    sync: capabilityInfo.sync,
+  });
   // Todo-17: attachments domain (searchFiles handler) + editor context seam.
   // Composed chips ride the `event` channel as ATTACHMENTS_ADD_EVENT — the
   // sessions.list push pattern; the host holds no pending-attachment state.

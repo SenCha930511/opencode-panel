@@ -7,7 +7,11 @@ import { DeleteSessionDialog, RenameSessionDialog } from "./sessionDialogs.js";
 import { CheckIcon, KebabIcon, LinkIcon, PlusIcon } from "./icons.js";
 import { SessionErrorBanner, SessionListSkeleton } from "./feedback.js";
 import { createShareLink } from "./sessionOps.js";
-import { getSharedSessionsStore, type SessionsStore } from "./sessionsStore.js";
+import {
+  getSharedSessionsStore,
+  subscribeSharedSessionsStore,
+  type SessionsStore,
+} from "./sessionsStore.js";
 import { formatRelativeTime } from "./time.js";
 import { useNow } from "./useNow.js";
 
@@ -137,7 +141,7 @@ function SessionRow(props: {
 
 export function RecentSessionsTop(props?: {
   readonly store?: SessionsStore;
-  readonly onViewAll?: () => void;
+  readonly onViewAll?: () => void; // i18n-allow-literal
 }): ReactNode {
   const { locale, t } = useStrings();
   let appState: ReturnType<typeof useApp> | null = null;
@@ -146,11 +150,16 @@ export function RecentSessionsTop(props?: {
   } catch {
     // Graceful fallback if outside provider
   }
-  const store = props?.store ?? getSharedSessionsStore();
+  const sharedStore = useSyncExternalStore(
+    subscribeSharedSessionsStore,
+    getSharedSessionsStore,
+    getSharedSessionsStore,
+  );
+  const store = props?.store ?? sharedStore;
   const snapshot = useSyncExternalStore(
     store ? store.subscribe : () => () => {},
-    store ? store.getSnapshot : () => null,
-    store ? store.getSnapshot : () => null,
+    store ? store.getSnapshot : () => null, // i18n-allow-literal
+    store ? store.getSnapshot : () => null, // i18n-allow-literal
   );
   const now = useNow();
   if (!store || !snapshot) return null;
@@ -191,7 +200,7 @@ export function RecentSessionsTop(props?: {
           }
         }}
       >
-        檢視全部({visible.length})
+        {t("sessions.viewAll").replace("{count}", String(visible.length))}
       </button>
     </div>
   );

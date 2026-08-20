@@ -8,19 +8,8 @@
  * the plan (first-party agent names) lives here with its citation.
  */
 
-/** One agent the server advertises via GET /agent (subset of the SDK Agent type). */
-export interface AgentSummary {
-  readonly name: string;
-  /** Agent mode as reported (`primary` | `subagent` | `all`); absent when the server omits it. */
-  readonly mode?: string;
-  readonly builtIn: boolean;
-}
-
-/** One slash command the server advertises via GET /command. */
-export interface CommandSummary {
-  readonly name: string;
-  readonly description?: string;
-}
+import type { AgentSummary, CommandSummary } from "../shared/protocol.js";
+export type { AgentSummary, CommandSummary } from "../shared/protocol.js";
 
 /** One natively-configured MCP server from GET /mcp (key → status entry). */
 export interface McpNativeStatus {

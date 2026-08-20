@@ -29,7 +29,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function isSubagentSessionEntry(entry: { title?: string; parentID?: string }): boolean {
+export function isSubagentSessionEntry(entry: {
+  title?: string | undefined;
+  parentID?: string | undefined;
+}): boolean {
   const lower = (entry.title ?? "").toLowerCase().trim();
   if (
     lower.startsWith("subtask:") ||

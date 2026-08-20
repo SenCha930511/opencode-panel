@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useStrings } from "../../../lib/i18n.js";
 import { baseNameOfPath } from "./logic.js";
 
 export interface MentionPaletteProps {
@@ -23,6 +24,7 @@ function FileGlyph(props: { readonly path: string }): ReactNode {
 }
 
 export function MentionPalette(props: MentionPaletteProps): ReactNode {
+  const { t } = useStrings();
   return (
     <div
       data-oc-mention-palette
@@ -32,9 +34,11 @@ export function MentionPalette(props: MentionPaletteProps): ReactNode {
       <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
         <span className="flex items-center gap-1.5">
           <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-accent/20 text-accent text-[9px] font-bold">@</span>
-          <span>提及檔案或符號 (Mention Context)</span>
+          <span>{t("mention.paletteHint")}</span>
         </span>
-        <span className="text-[10px] text-muted-fg/60">共 {props.rows.length} 項</span>
+        <span className="text-[10px] text-muted-fg/60">
+          {t("mention.count").replace("{count}", String(props.rows.length))}
+        </span>
       </div>
       <ul className="flex flex-col gap-0.5">
         {props.rows.map((row) => (

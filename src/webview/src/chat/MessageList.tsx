@@ -81,6 +81,7 @@ function SparkleIcon(): ReactNode {
 import { RecentSessionsTop } from "../sessions/SessionList.js";
 
 function CodexCloudWatermark(): ReactNode {
+  const { t } = useStrings();
   return (
     <div className="flex flex-col items-center gap-2.5 select-none pointer-events-none opacity-30 hover:opacity-60 transition-opacity duration-300">
       <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-card-border/50 bg-card-bg/30 p-2.5 shadow-2xs backdrop-blur-xs">
@@ -107,7 +108,7 @@ function CodexCloudWatermark(): ReactNode {
           />
         </svg>
       </div>
-      <span className="text-[11px] font-medium text-muted-fg/70 tracking-wider uppercase">OpenCode Panel</span>
+      <span className="text-[11px] font-medium text-muted-fg/70 tracking-wider uppercase">{t("app.name")}</span>
     </div>
   );
 }
