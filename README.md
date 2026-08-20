@@ -21,6 +21,9 @@ security workarounds, no provider keys stored by the extension.
 
 - **Sessions** — list, create, rename, delete, search, share/unshare, and fork
   sessions. Session state syncs automatically over the server event stream.
+  The panel is chat-first: the conversation owns the sidebar by default, and
+  the header history button slides the session list in as a left drawer (Esc,
+  backdrop click, or picking/creating a session closes it).
 - **Streaming chat** — markdown rendering with syntax highlighting, collapsed
   reasoning ("Thinking") parts, and generic tool-call cards that render *any*
   tool name data-driven (built-in or custom).
@@ -128,7 +131,9 @@ GUI 聊天面板。
 ## 功能
 
 - **工作階段**——列表、建立、重新命名、刪除、搜尋、分享/取消分享、fork；
-  工作階段狀態透過伺服器事件串流自動同步。
+  工作階段狀態透過伺服器事件串流自動同步。面板採聊天優先：預設整個側邊欄
+  都是對話介面，標題列的歷程按鈕會從左側滑出工作階段歷程抽屜（Esc、點擊
+  遮罩或選取/建立工作階段皆會關閉）。
 - **串流聊天**——Markdown 渲染、語法高亮、可收合的「思考中」(reasoning)
   片段，以及資料驅動的通用工具卡片（內建或自訂工具名都能正確顯示）。
 - **輸入框**——Enter 送出、Shift+Enter 換行、每個工作階段各自的草稿、

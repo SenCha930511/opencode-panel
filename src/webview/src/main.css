@@ -15,3 +15,10 @@ body {
   color: var(--fg);
   background: var(--bg);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-oc-sessions-drawer],
+  [data-oc-sessions-drawer] * {
+    transition: none;
+  }
+}

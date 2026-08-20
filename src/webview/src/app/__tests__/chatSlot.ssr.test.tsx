@@ -12,6 +12,10 @@
  * 1. FULL SLOTS RENDER: `<App/>` rendered with `createAppSlots()` — the same
  *    seam bootstrap mounts — asserting the structural markers of every
  *    composed piece. If the seam record drops `chat`, the markers vanish.
+ *    The chat-first shell renders the chat slot full-width by default; the
+ *    sessions panel stays MOUNTED inside the keep-alive history drawer
+ *    (visibility-toggled, never unmounted — the only SessionsStore lives in
+ *    SessionsPanel's effects), pinned here via the drawer's closed state.
  * 2. STATIC CONSUMPTION GUARD: reads `../bootstrap.tsx` source and pins the
  *    structural wiring tokens (`createAppSlots()` + `slots={slots}`), so a
  *    future bootstrap that stops consuming the seam fails the suite. Source
@@ -91,12 +95,11 @@ function renderWithProviders(element: ReactNode): string {
 }
 
 describe("production slots record (regression: slots.chat must stay mounted)", () => {
-  it("renders the real chat surface + sessions rail through createAppSlots()", () => {
+  it("renders the real chat surface chat-first with the sessions panel kept alive in the closed drawer", () => {
     // Given: the exact slots record bootstrap mounts
     // When: the chat route renders under SSR
     const html = renderToStaticMarkup(createAppSlotsTree());
-    // Then: every composed surface carries its structural marker
-    expect(html).toContain('data-oc-slot="sessions"');
+    // Then: every composed chat surface carries its structural marker
     expect(html).toContain('data-oc-slot="chat"');
     expect(html).toContain("data-oc-composer");
     expect(html).toContain("data-oc-composer-extras");
@@ -106,8 +109,46 @@ describe("production slots record (regression: slots.chat must stay mounted)", (
     expect(html).toContain(SENTINELS.searchPlaceholder);
     expect(html).toContain(SENTINELS.commandsTitle);
     expect(html).toContain(SENTINELS.composerPlaceholder);
+    // And: the sessions panel stays mounted inside the keep-alive drawer —
+    // hidden by default (never unmounted), with NO permanent rail left behind
+    expect(html).toContain('data-oc-slot="sessions"');
+    expect(html).toContain('data-oc-sessions-drawer="true" data-state="closed" aria-hidden="true"');
+    expect(html).not.toContain("w-52");
     // And: the cards dock honestly hides while no requests are pending
     expect(html).not.toContain('data-oc-dock="cards"');
+  });
+
+  it("keeps the full chat surface intact when the history drawer is open (state seam)", () => {
+    // Given/When: the provider state seam renders the composition drawer-open
+    const html = renderToStaticMarkup(createAppSlotsTree({ initialSessionsOpen: true }));
+    // Then: the drawer shows the REAL sessions panel over the chat surface
+    expect(html).toContain('data-oc-sessions-drawer="true" data-state="open" aria-hidden="false"');
+    expect(html).toContain('data-oc-slot="sessions"');
+    expect(html).toContain(SENTINELS.searchPlaceholder);
+    // And: the toolbar/list/composer/dock underneath are untouched
+    expect(html).toContain('data-oc-slot="chat"');
+    expect(html).toContain("data-oc-composer");
+    expect(html).toContain("data-oc-chat-toolbar");
+    expect(html).toContain('data-oc-dock="session"');
+  });
+
+  it("guard sensitivity: dropping `chat` from the slots record removes every chat marker", () => {
+    // Given: a slots record in the F-wave regression shape (chat lost)
+    const init = stubInit();
+    // When: the composition renders with that record
+    const html = renderToStaticMarkup(
+      <StringsProvider init={init}>
+        <AppProvider init={init} messenger={getWebviewMessenger()} slots={{ sessions: <div /> }}>
+          <App />
+        </AppProvider>
+      </StringsProvider>,
+    );
+    // Then: the layer-1 markers vanish, so the guard above can never
+    // green-light a lost slots.chat (the shell's default empty state stays)
+    expect(html).toContain('data-oc-slot="chat"');
+    expect(html).not.toContain("data-oc-composer");
+    expect(html).not.toContain("data-oc-chat-toolbar");
+    expect(html).not.toContain('data-oc-dock="session"');
   });
 
   it("pins bootstrap's consumption of the seam (static wiring tokens)", () => {
@@ -120,11 +161,18 @@ describe("production slots record (regression: slots.chat must stay mounted)", (
 });
 
 /** The `<App/>` tree below the seam's slots, exactly as bootstrap composes it. */
-function createAppSlotsTree(): ReactElement {
+function createAppSlotsTree(options?: { readonly initialSessionsOpen?: boolean }): ReactElement {
   const init = stubInit();
   return (
     <StringsProvider init={init}>
-      <AppProvider init={init} messenger={getWebviewMessenger()} slots={createAppSlots()}>
+      <AppProvider
+        init={init}
+        messenger={getWebviewMessenger()}
+        slots={createAppSlots()}
+        {...(options?.initialSessionsOpen === undefined
+          ? {}
+          : { initialSessionsOpen: options.initialSessionsOpen })}
+      >
         <App />
       </AppProvider>
     </StringsProvider>

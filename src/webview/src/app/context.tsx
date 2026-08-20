@@ -25,6 +25,14 @@ import type { WebviewMessenger } from "../../lib/messenger.js";
  * lib), a `send()` helper that wraps messenger requests with error-toast
  * surfacing, the host toast queue, and the panel slots T12/T13 mount into.
  * No redux/zustand — context + hooks per the plan.
+ *
+ * SESSIONS DRAWER STATE (chat-first layout): `sessionsOpen` toggles the
+ * floating sessions drawer on the chat route, shared by the Header history
+ * button and ChatRoute's rendering/auto-close. In-memory per mount — it is
+ * session-only UI chrome, deliberately NOT persisted to settings or
+ * vscode.setState (a webview remount resets to closed, which is also the
+ * honest default on reconnect). `initialSessionsOpen` mirrors
+ * `initialRoute`: an SSR test seam, unused by production bootstrap.
  */
 
 export type Route = "chat" | "settings";
@@ -100,6 +108,10 @@ export interface AppContextValue {
     payload: FromWebviewProtocol[K],
   ): Promise<FromWebviewResponse[K] | null>;
   readonly slots: AppSlots;
+  /** Sessions history drawer (see module header). Default closed. */
+  readonly sessionsOpen: boolean;
+  setSessionsOpen(open: boolean): void;
+  toggleSessions(): void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -110,11 +122,14 @@ export function AppProvider(props: {
   readonly init: InitPayload;
   readonly messenger: WebviewMessenger;
   readonly initialRoute?: Route;
+  /** SSR test seam only (mirrors initialRoute); production always opens closed. */
+  readonly initialSessionsOpen?: boolean;
   readonly slots?: AppSlots;
   readonly children: ReactNode;
 }): ReactNode {
   const { init, messenger } = props;
   const [route, setRoute] = useState<Route>(props.initialRoute ?? "chat");
+  const [sessionsOpen, setSessionsOpen] = useState(props.initialSessionsOpen ?? false);
   const [serverLost, setServerLost] = useState(false);
   const [toasts, setToasts] = useState<readonly ToastItem[]>([]);
   const timersRef = useRef<readonly ReturnType<typeof setTimeout>[]>([]);
@@ -180,6 +195,10 @@ export function AppProvider(props: {
     [messenger, pushToast],
   );
 
+  const toggleSessions = useCallback(() => {
+    setSessionsOpen((current) => !current);
+  }, []);
+
   const value = useMemo<AppContextValue>(
     () => ({
       init,
@@ -192,8 +211,23 @@ export function AppProvider(props: {
       pushToast,
       send,
       slots: props.slots ?? {},
+      sessionsOpen,
+      setSessionsOpen,
+      toggleSessions,
     }),
-    [init, messenger, route, serverLost, toasts, dismissToast, pushToast, send, props.slots],
+    [
+      init,
+      messenger,
+      route,
+      serverLost,
+      toasts,
+      dismissToast,
+      pushToast,
+      send,
+      props.slots,
+      sessionsOpen,
+      toggleSessions,
+    ],
   );
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;

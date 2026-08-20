@@ -11,9 +11,10 @@ import { SessionList } from "./SessionList.js";
  *
  * Mount point (binding): todo 11's shell mounts this via
  * `<AppProvider slots={{ sessions: <SessionsPanel />, chat: ... }}>` inside
- * `src/webview/src/app/bootstrap.tsx`, below the StringsProvider. The aside
- * rail wrapper (`data-oc-slot="sessions"`) is the shell's; this component
- * fills it edge-to-edge.
+ * `src/webview/src/app/bootstrap.tsx`, below the StringsProvider. The shell's
+ * keep-alive history drawer wraps it (`data-oc-slot="sessions"`): this
+ * component fills the drawer edge-to-edge and stays mounted while the drawer
+ * is hidden, so the store below (and its command intake) never dies.
  *
  * Self-wiring (no props): the store binds the todo-3 webview messenger
  * singleton (listens on both list carriers and issues the six domain

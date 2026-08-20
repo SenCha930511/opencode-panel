@@ -26,6 +26,9 @@ const SENTINELS = {
   settingsTitle: "ZZ_SENTINEL_SETTINGS_TITLE_ZZ",
   sessionsEmpty: "ZZ_SENTINEL_SESSIONS_EMPTY_ZZ",
   messagesEmpty: "ZZ_SENTINEL_MESSAGES_EMPTY_ZZ",
+  history: "ZZ_SENTINEL_SESSIONS_HISTORY_ZZ",
+  historyTitle: "ZZ_SENTINEL_SESSIONS_HISTORY_TITLE_ZZ",
+  closeHistory: "ZZ_SENTINEL_SESSIONS_CLOSE_HISTORY_ZZ",
 } as const;
 
 function stubStrings(): Readonly<Record<string, string>> {
@@ -37,6 +40,9 @@ function stubStrings(): Readonly<Record<string, string>> {
     "settings.title": SENTINELS.settingsTitle,
     "sessions.empty": SENTINELS.sessionsEmpty,
     "messages.empty": SENTINELS.messagesEmpty,
+    "sessions.history": SENTINELS.history,
+    "sessions.historyTitle": SENTINELS.historyTitle,
+    "sessions.closeHistory": SENTINELS.closeHistory,
   };
 }
 
@@ -61,13 +67,21 @@ function stubMessenger(): WebviewMessenger {
   });
 }
 
-function renderShell(init: InitPayload, initialRoute?: "chat" | "settings"): string {
+interface ShellOptions {
+  readonly initialRoute?: "chat" | "settings";
+  readonly initialSessionsOpen?: boolean;
+}
+
+function renderShell(init: InitPayload, options?: ShellOptions): string {
   return renderToString(
     <StringsProvider init={init}>
       <AppProvider
         init={init}
         messenger={stubMessenger()}
-        {...(initialRoute === undefined ? {} : { initialRoute })}
+        {...(options?.initialRoute === undefined ? {} : { initialRoute: options.initialRoute })}
+        {...(options?.initialSessionsOpen === undefined
+          ? {}
+          : { initialSessionsOpen: options.initialSessionsOpen })}
       >
         <App />
       </AppProvider>
@@ -90,12 +104,41 @@ describe("App shell smoke render", () => {
     expect(html).toContain('data-oc-slot="chat"');
   });
 
+  it("opens chat-first: full-width chat, no permanent rail, drawer closed by default", () => {
+    // Given/When: the default chat route renders
+    const html = renderShell(stubInit());
+    // Then: the chat surface is the default and the old fixed rail is gone
+    expect(html).toContain('data-oc-slot="chat"');
+    expect(html).not.toContain("w-52");
+    // And: the history toggle renders its localized affordance, collapsed
+    expect(html).toContain(SENTINELS.history);
+    expect(html).toContain('aria-expanded="false"');
+    // And: the keep-alive drawer is present but hidden (visibility-toggled,
+    // never unmounted — SessionsPanel's store lifetime depends on it)
+    expect(html).toContain('data-oc-sessions-drawer="true" data-state="closed" aria-hidden="true"');
+  });
+
+  it("opens the sessions history drawer via the provider state seam with the chat intact", () => {
+    // Given/When: the state seam renders the shell with the drawer toggled open
+    const html = renderShell(stubInit(), { initialSessionsOpen: true });
+    // Then: the drawer chrome renders (title + close affordance) over the chat
+    expect(html).toContain('data-oc-sessions-drawer="true" data-state="open" aria-hidden="false"');
+    expect(html).toContain('aria-expanded="true"');
+    expect(html).toContain(SENTINELS.historyTitle);
+    expect(html).toContain(SENTINELS.closeHistory);
+    expect(html).toContain(SENTINELS.sessionsEmpty);
+    // And: the chat surface underneath is fully intact
+    expect(html).toContain('data-oc-slot="chat"');
+    expect(html).toContain(SENTINELS.messagesEmpty);
+  });
+
   it("renders the settings route placeholder instead of the chat slots", () => {
     // Given/When: the shell renders with the settings route selected
-    const html = renderShell(stubInit(), "settings");
+    const html = renderShell(stubInit(), { initialRoute: "settings" });
     // Then: the settings heading renders and the chat slots are absent
     expect(html).toContain(SENTINELS.settingsTitle);
     expect(html).not.toContain('data-oc-slot="chat"');
+    expect(html).not.toContain("data-oc-sessions-drawer");
   });
 
   it("shows the stopped status when the init server slice is disconnected", () => {

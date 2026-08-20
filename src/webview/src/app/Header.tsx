@@ -6,17 +6,45 @@ import { McpPopover, OldServerBanner } from "../mcp/index.js";
 import { useApp, type ServerStatus } from "./context";
 
 /**
- * Shell header (plan todo 11): server status badge, new-session / settings /
- * overflow actions. Model+agent chips intentionally render nothing yet — the
- * current init wire carries no model id and no agent list
- * (ServerCapabilities is fork/question/todo booleans; todo 15's pickers own
- * real selection state), so there is no honest value to show.
+ * Shell header (plan todo 11): sessions-history drawer toggle (chat-first
+ * layout), server status badge, new-session / settings / overflow actions.
+ * Model+agent chips intentionally render nothing yet — the current init wire
+ * carries no model id and no agent list (ServerCapabilities is
+ * fork/question/todo booleans; todo 15's pickers own real selection state),
+ * so there is no honest value to show.
  */
 
 function PlusIcon(): ReactNode {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
       <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function HistoryIcon(): ReactNode {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 8a6 6 0 1 0 1.76-4.24L2 5.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M2 2v3.5h3.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 4.67V8l2.67 1.33"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -115,6 +143,36 @@ function ServerStatusBadge(): ReactNode {
   );
 }
 
+function SessionsHistoryButton(): ReactNode {
+  const { sessionsOpen, toggleSessions } = useApp();
+  const { t } = useStrings();
+  return (
+    <Tooltip.Provider delayDuration={300}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <button
+            type="button"
+            aria-label={t("sessions.history")}
+            aria-expanded={sessionsOpen}
+            className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
+            onClick={toggleSessions}
+          >
+            <HistoryIcon />
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            sideOffset={4}
+            className="z-50 max-w-72 rounded border border-border bg-panel-bg px-2 py-1 text-xs text-fg shadow-lg"
+          >
+            {t("sessions.historyTitle")}
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  );
+}
+
 function OverflowMenu(): ReactNode {
   const { t } = useStrings();
   const itemClass =
@@ -152,11 +210,12 @@ function OverflowMenu(): ReactNode {
 }
 
 export function Header(): ReactNode {
-  const { navigate, send } = useApp();
+  const { navigate, send, setSessionsOpen } = useApp();
   const { t } = useStrings();
   return (
     <>
       <header className="flex h-9 shrink-0 items-center gap-1 border-b border-border bg-panel-bg px-2">
+        <SessionsHistoryButton />
         <ServerStatusBadge />
         {/*
           Model/agent chips render here once honest values exist on the wire
@@ -182,6 +241,7 @@ export function Header(): ReactNode {
           aria-label={t("settings.title")}
           className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
           onClick={() => {
+            setSessionsOpen(false);
             navigate("settings");
           }}
         >

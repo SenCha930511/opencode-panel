@@ -22,8 +22,8 @@
  * - T17 attachments: `useAttachments()` chips -> Composers controlled
  *   `attachments`/`onRemoveAttachment` props, `<AttachmentsExtras>` fused
  *   into the T15 extras row per chat/attachments/index.ts's union recipe.
- * - T18 session dock: right-side rail INSIDE this slot (App.tsx's
- *   aside/section flex split stays untouched — the dock rides the section's
+ * - T18 session dock: right-side rail INSIDE this slot (App.tsx mounts this
+ *   slot full-width in the chat-first shell — the dock rides the section's
  *   own row layout). `todosEnabled` folds the todo-20 capability-flag store
  *   (task-pinned carrier) OR-ed with init.capabilities.todo: the flags store
  *   only sees init pushes posted AFTER mount, so the init baseline cannot be
