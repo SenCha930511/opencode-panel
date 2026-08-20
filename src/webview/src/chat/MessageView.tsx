@@ -1,3 +1,5 @@
+import { MessageActionsMenu } from "./messageOps/MessageActionsMenu.js";
+import type { MessageStore } from "./messageStore.js";
 import type { MessageVM, PartVM } from "./types.js";
 import { TextPartView } from "./parts/TextPartView.js";
 import { ReasoningPartView } from "./parts/ReasoningPartView.js";
@@ -34,12 +36,23 @@ const ROLE_CLASS: Readonly<Record<string, string>> = {
   assistant: "text-[var(--vscode-charts-green)]",
 };
 
-/** One `{info, parts}` row: role marker + every part in payload order. */
-export function MessageView(props: { readonly message: MessageVM }) {
+/**
+ * One `{info, parts}` row: role marker + every part in payload order.
+ *
+ * T19 INTEGRATION (FIX-E, additive): the todo-19 documented mount site for
+ * the per-message hover menu — `<article class="group relative">` plus the
+ * menu absolutely anchored, hover-revealed via the group. `store` is the
+ * optional regenerate seam (MessageList threads its own store through;
+ * without it the Regenerate row hides, per the T19 contract).
+ */
+export function MessageView(props: {
+  readonly message: MessageVM;
+  readonly store?: MessageStore;
+}) {
   const { message } = props;
   const roleClass = ROLE_CLASS[message.role] ?? "text-[var(--vscode-descriptionForeground)]";
   return (
-    <article data-role={message.role} data-in-flight={message.inFlight} className="px-3 py-1.5">
+    <article data-role={message.role} data-in-flight={message.inFlight} className="group relative px-3 py-1.5">
       <div className={`text-[0.7em] font-semibold uppercase tracking-wide ${roleClass}`}>
         {message.role}
       </div>
@@ -48,6 +61,11 @@ export function MessageView(props: { readonly message: MessageVM }) {
           <PartView key={part.id} part={part} />
         ))}
       </div>
+      <MessageActionsMenu
+        message={message}
+        {...(props.store === undefined ? {} : { store: props.store })}
+        className="absolute right-2 top-1 hidden group-hover:flex"
+      />
     </article>
   );
 }

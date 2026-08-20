@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getWebviewMessenger } from "../../lib/messenger.js";
 import { setActiveSession } from "../chat/activeSession.js";
+import { attachNewSessionCommand } from "./newSessionCommand.js";
 import { createWebviewPersistence } from "./persistence.js";
 import { SessionsStore } from "./sessionsStore.js";
 import { SessionList } from "./SessionList.js";
@@ -24,6 +25,12 @@ import { SessionList } from "./SessionList.js";
  * ./activeSession.ts). Cleared selections map to T13's no-change (their
  * setter accepts ids only; a deleted selection refetches as null and their
  * next explicit set re-pins).
+ *
+ * NEW-SESSION COMMAND INTAKE (FIX-E): the host forwards
+ * `opencodePanel.newSession` as a `command.newSession` event; this panel —
+ * the owner of the only SessionsStore — consumes it through
+ * ./newSessionCommand so the command creates AND selects a session through
+ * the real store.
  */
 export function SessionsPanel(): ReactNode {
   const [store] = useState(() => {
@@ -39,6 +46,10 @@ export function SessionsPanel(): ReactNode {
     return () => {
       wire.dispose();
     };
+  }, [store]);
+
+  useEffect(() => {
+    return attachNewSessionCommand(store.messenger, store);
   }, [store]);
 
   useEffect(

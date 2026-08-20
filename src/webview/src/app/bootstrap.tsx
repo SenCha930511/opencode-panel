@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { InitPayload } from "../../../shared/protocol.js";
 import { useStrings, StringsProvider } from "../../lib/i18n.js";
 import { getWebviewMessenger, type WebviewMessenger } from "../../lib/messenger.js";
 import { App } from "../App";
-import { SessionsPanel } from "../sessions/SessionsPanel";
+import { createAppSlots } from "./chatSlot.js";
 import { AppProvider } from "./context";
 import { ErrorBoundary } from "./ErrorBoundary";
 
@@ -14,6 +14,14 @@ import { ErrorBoundary } from "./ErrorBoundary";
  * post `ready` -> host answers with an `init` push -> providers compose.
  * While `init` is pending the skeleton below renders; `useStrings()` there
  * uses the bundled English table until the host table arrives.
+ *
+ * SLOT COMPOSITION (FIX-E): the slots record comes from the single exported
+ * seam `./chatSlot.createAppSlots()` — sessions + chat together, never a
+ * partial record (the F-wave regression shipped exactly that: sessions
+ * only). The record is memoized so AppProvider's context identity stays
+ * stable across re-renders. The regression guard in
+ * ./__tests__/chatSlot.ssr.test.tsx pins both this consumption and the
+ * composed tree's structural markers.
  */
 
 interface Session {
@@ -38,6 +46,9 @@ function LoadingSkeleton(): ReactNode {
 
 export function AppRoot(): ReactNode {
   const [session, setSession] = useState<Session | null>(null);
+  const slots = useMemo(() => {
+    return createAppSlots();
+  }, []);
 
   useEffect(() => {
     const messenger = getWebviewMessenger();
@@ -60,11 +71,7 @@ export function AppRoot(): ReactNode {
         <LoadingSkeleton />
       ) : (
         <StringsProvider init={session.init}>
-          <AppProvider
-            init={session.init}
-            messenger={session.messenger}
-            slots={{ sessions: <SessionsPanel /> }}
-          >
+          <AppProvider init={session.init} messenger={session.messenger} slots={slots}>
             <App />
           </AppProvider>
         </StringsProvider>

@@ -15,6 +15,10 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 
+import type { InitPayload } from "../../../../shared/protocol.js";
+import { StringsProvider } from "../../../lib/i18n.js";
+import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
+import { AppProvider } from "../../app/context.js";
 import { AutoScrollPark } from "../autoScroll.js";
 import { resetActiveSessionForTest } from "../activeSession.js";
 import { routeChatEvent } from "../events.js";
@@ -26,8 +30,33 @@ function render(element: ReactElement): string {
   return renderToStaticMarkup(element);
 }
 
+const INIT: InitPayload = {
+  locale: "en",
+  strings: {},
+  server: { url: "", version: null },
+  capabilities: { fork: true, question: true, todo: true },
+  settings: {},
+};
+
+function fakeMessenger(): WebviewMessenger {
+  const port: WebviewPort = {
+    postMessage: () => undefined,
+    onMessage: () => undefined,
+  };
+  return new WebviewMessenger(port);
+}
+
+// FIX-E: MessageView mounts the todo-19 hover menu, which resolves reporter/
+// availability from the app context — the row map therefore renders below
+// the same providers production composes (previously provider-free).
 function renderMessages(messages: readonly MessageVM[]): string {
-  return render(<MessageListBody messages={messages} />);
+  return render(
+    <StringsProvider init={INIT}>
+      <AppProvider init={INIT} messenger={fakeMessenger()}>
+        <MessageListBody messages={messages} />
+      </AppProvider>
+    </StringsProvider>,
+  );
 }
 
 // -- fixtures mirroring src/test/mock-server shapes ----------------------------

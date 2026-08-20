@@ -31,12 +31,24 @@ export interface MessageListProps {
   readonly actions?: ChatActions;
 }
 
-/** Virtuoso-free row map: the per-item renderer contract + DOM-free tests. */
-export function MessageListBody(props: { readonly messages: readonly MessageVM[] }) {
+/**
+ * Virtuoso-free row map: the per-item renderer contract + DOM-free tests.
+ * FIX-E (additive): threads the store to each MessageView so the todo-19
+ * hover menu's Regenerate row can find the last user text (T19 regenerate
+ * seam; optional to preserve the documented no-store degradation).
+ */
+export function MessageListBody(props: {
+  readonly messages: readonly MessageVM[];
+  readonly store?: MessageStore;
+}) {
   return (
     <>
       {props.messages.map((message) => (
-        <MessageView key={message.id} message={message} />
+        <MessageView
+          key={message.id}
+          message={message}
+          {...(props.store === undefined ? {} : { store: props.store })}
+        />
       ))}
     </>
   );
@@ -71,7 +83,7 @@ export function MessageList(props: MessageListProps) {
         className="h-full"
         followOutput={park.current.followFor}
         atBottomStateChange={(atBottom: boolean) => park.current.onAtBottomChange(atBottom)}
-        itemContent={(_index, message) => <MessageView message={message} />}
+        itemContent={(_index, message) => <MessageView message={message} store={store} />}
       />
     );
 
