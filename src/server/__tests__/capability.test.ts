@@ -15,6 +15,7 @@ import {
   createCapabilityDetector,
   extractSpecPaths,
   isBelowMinimumVersion,
+  isCoreAgentName,
   resolveOmoSignal,
   type CapabilityDetector,
   type CapabilityDetectorOptions,
@@ -287,6 +288,11 @@ describe("version floor matrix", () => {
     ["garbage", "1.0.0", false],
     ["1.2.3", "garbage", false],
     ["1.2", "1.2.0", false],
+    ["10.0.0", "2.0.0", false],
+    ["2.0.0", "10.0.0", true],
+    ["1.0.42-mock", "1.0.42", false],
+    ["0.3", "0.3.1", true],
+    [" 1.2.3 ", "1.2.4", true],
   ])("isBelowMinimumVersion(%s, %s) === %s", (version, floor, expected) => {
     expect(isBelowMinimumVersion(version, floor)).toBe(expected);
   });
@@ -494,5 +500,123 @@ describe("fallback probes when /doc is unusable", () => {
     // Then
     expect(caps.hasTodo).toBe(false);
     expect(guard(caps).todo).toBe(false);
+  });
+});
+
+describe("malformed-doc probe outcomes (200 + unusable body)", () => {
+  const servers: Array<() => Promise<void>> = [];
+  afterEach(async () => {
+    for (const close of servers.splice(0)) await close();
+  });
+
+  async function startMalformedDoc(
+    doc: { readonly contentType: string; readonly body: string },
+    todoAnswer: "session" | "route",
+  ): Promise<{ url: string; close: () => Promise<void> }> {
+    const sockets = new Set<Socket>();
+    const app = http.createServer((req, res) => {
+      const path = new URL(req.url ?? "/", "http://localhost").pathname;
+      if (path === "/doc") {
+        res.writeHead(200, { "content-type": doc.contentType });
+        res.end(doc.body);
+        return;
+      }
+      const json = (status: number, body: unknown): void => {
+        res.writeHead(status, { "content-type": "application/json" });
+        res.end(JSON.stringify(body));
+      };
+      if (path === "/global/health") json(200, { healthy: true, version: "1.2.3" });
+      else if (path.startsWith("/session/") && path.endsWith("/todo")) {
+        if (todoAnswer === "session") {
+          json(404, { name: "NotFoundError", data: { message: "session not found: __capability_probe__" } });
+        } else {
+          json(404, { name: "NotFoundError", data: { message: `route not found: GET ${path}` } });
+        }
+      } else if (path === "/agent") json(200, []);
+      else if (path === "/command") json(200, []);
+      else if (path === "/config") json(200, {});
+      else if (path === "/mcp") json(200, {});
+      else json(404, { name: "NotFoundError", data: { message: `route not found: GET ${path}` } });
+    });
+    app.on("connection", (socket) => {
+      sockets.add(socket);
+      socket.on("close", () => sockets.delete(socket));
+    });
+    await new Promise<void>((resolve) => app.listen(0, "127.0.0.1", resolve));
+    const address = app.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("malformed-doc helper server has no port");
+    }
+    const { port } = address;
+    const close = (): Promise<void> =>
+      new Promise((resolve, reject) => {
+        for (const socket of sockets) socket.destroy();
+        app.close((error) => (error ? reject(error) : resolve()));
+      });
+    servers.push(close);
+    return { url: `http://127.0.0.1:${port}`, close };
+  }
+
+  it("200 JSON-typed garbage body drops to fallback; proven todo route still surfaces", async () => {
+    // Given: /doc answers 200 application/json but the body is not JSON
+    const malformed = await startMalformedDoc(
+      { contentType: "application/json", body: "{not json" },
+      "session",
+    );
+    const { logger, channel } = makeLogger();
+    const secrets = new PanelSecrets(new FakeSecretStorage());
+    const panel = createPanelClient(malformed.url, { secrets, logger });
+    const detector = makeDetector(logger);
+    // When
+    const caps = await detector.detect(panel.client, malformed.url);
+    // Then: fallback branch — only the distinguishable todo bit may surface
+    expect(caps.version).toBe("1.2.3");
+    expect(caps.hasTodo).toBe(true);
+    expect(caps.hasFork).toBe(false);
+    expect(caps.hasQuestion).toBe(false);
+    expect(caps.hasShell).toBe(false);
+    const summary = channel.lines.find((line) => line.includes("capabilities for"));
+    expect(summary).toContain("doc=fallback");
+  });
+
+  it("200 HTML without a spec script drops to fallback; ambiguous todo stays hidden", async () => {
+    // Given: /doc answers 200 text/html with no usable spec script
+    const malformed = await startMalformedDoc(
+      { contentType: "text/html", body: "<html><body>nope</body></html>" },
+      "route",
+    );
+    const { logger } = makeLogger();
+    const secrets = new PanelSecrets(new FakeSecretStorage());
+    const panel = createPanelClient(malformed.url, { secrets, logger });
+    const detector = makeDetector(logger);
+    // When
+    const caps = await detector.detect(panel.client, malformed.url);
+    // Then: every route bit hidden under ambiguity, no crash
+    expect(caps.hasFork).toBe(false);
+    expect(caps.hasQuestion).toBe(false);
+    expect(caps.hasTodo).toBe(false);
+    expect(caps.hasShell).toBe(false);
+    expect(guard(caps)).toEqual({
+      fork: false,
+      question: false,
+      todo: false,
+      shell: false,
+      omoMcpNote: false,
+    });
+  });
+});
+
+describe("isCoreAgentName", () => {
+  it("accepts every name in CORE_AGENT_NAMES, including scout", () => {
+    for (const name of CORE_AGENT_NAMES) {
+      expect(isCoreAgentName(name)).toBe(true);
+    }
+    expect(CORE_AGENT_NAMES).toContain("scout");
+  });
+
+  it("rejects custom agent names and case variants", () => {
+    expect(isCoreAgentName("sisyphus")).toBe(false);
+    expect(isCoreAgentName("Build")).toBe(false);
+    expect(isCoreAgentName("")).toBe(false);
   });
 });

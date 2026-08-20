@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HostMessenger } from "../../host/messenger";
 import { WebviewMessenger } from "../../webview/lib/messenger";
 import {
+  MalformedMessageError,
   RemoteError,
   UnknownMessageIdError,
   UnknownMessageTypeError,
@@ -236,5 +237,161 @@ describe("messenger protocol", () => {
       )}`,
     );
     await settle();
+  });
+});
+
+describe("correlator + out-of-order chunk guard", () => {
+  function streamMessageIdOf(hostPosts: readonly HostMessage[]): string {
+    const last = hostPosts.at(-1);
+    const messageId = last !== undefined && isStreamChunk(last) ? last.payload.messageId : "";
+    expect(messageId.length).toBeGreaterThan(0);
+    return messageId;
+  }
+
+  it("a chunk arriving after done:true throws UnknownMessageIdError and is never delivered", async () => {
+    // Given: a completed two-envelope stream (one chunk, one terminal)
+    const { host, webview, hostPosts, emitToWebview } = createLoopback();
+    host.register("sendPrompt", () => {
+      async function* stream(): AsyncGenerator<string, string> {
+        yield "only-chunk";
+        return "stream-final";
+      }
+      return stream();
+    });
+    const chunks: unknown[] = [];
+    const result = await webview.request(
+      "sendPrompt",
+      { text: "hi", sessionId: "s1", attachments: [] },
+      (chunk) => {
+        chunks.push(chunk);
+      },
+    );
+    expect(result).toBe("stream-final");
+    expect(chunks).toEqual(["only-chunk"]);
+    const messageId = streamMessageIdOf(hostPosts);
+
+    // When: a late non-final chunk arrives for the settled messageId
+    let caught: unknown;
+    try {
+      emitToWebview({
+        type: "streamChunk",
+        payload: { messageId, status: "success", done: false, content: "late-forged" },
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    // Then: the guard throws and the settled consumer never sees the chunk
+    expect(caught).toBeInstanceOf(UnknownMessageIdError);
+    expect(chunks).toEqual(["only-chunk"]);
+  });
+
+  it("a replayed done:true cannot hijack a settled request", async () => {
+    // Given: a non-stream request that resolved normally
+    const { host, webview, hostPosts, emitToWebview } = createLoopback();
+    host.register("renameSession", async ({ id }) => `${id}-done`);
+    const result = await webview.request("renameSession", { id: "s9", title: "t" });
+    expect(result).toBe("s9-done");
+    const messageId = streamMessageIdOf(hostPosts);
+
+    // When: a second terminal envelope is replayed with hostile content
+    let caught: unknown;
+    try {
+      emitToWebview({
+        type: "streamChunk",
+        payload: { messageId, status: "success", done: true, content: "hijacked" },
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    // Then: the guard throws and the originally resolved value is intact
+    expect(caught).toBeInstanceOf(UnknownMessageIdError);
+    expect(result).toBe("s9-done");
+  });
+
+  it("a success chunk arriving after an error terminal throws and cannot re-settle the rejection", async () => {
+    // Given: a request whose handler failed → RemoteError rejection
+    const { host, webview, hostPosts, emitToWebview } = createLoopback();
+    host.register("createSession", () => {
+      throw new Error("kaput");
+    });
+    const failure = webview.request("createSession", {});
+    await expect(failure).rejects.toThrow(RemoteError);
+    const messageId = streamMessageIdOf(hostPosts);
+    const terminal = hostPosts.at(-1);
+    expect(terminal !== undefined && isStreamChunk(terminal) && terminal.payload.status).toBe("error");
+
+    // When: a success chunk arrives for the failed messageId
+    let caught: unknown;
+    try {
+      emitToWebview({
+        type: "streamChunk",
+        payload: { messageId, status: "success", done: true, content: "not-a-failure" },
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    // Then: the guard throws and the rejection is still the original error
+    expect(caught).toBeInstanceOf(UnknownMessageIdError);
+    await expect(failure).rejects.toThrow(/kaput/);
+  });
+
+  it("interleaved concurrent streams stay correlated by messageId", async () => {
+    // Given: two open sendPrompt requests held pending by the host
+    const { host, webview, emitToWebview } = createLoopback();
+    const ids: string[] = [];
+    host.register("sendPrompt", (_payload, { messageId }) => {
+      ids.push(messageId);
+      // Hold the request open; this test drives reply envelopes manually.
+      return new Promise<string>(() => {});
+    });
+    const chunksA: unknown[] = [];
+    const chunksB: unknown[] = [];
+    const promiseA = webview.request("sendPrompt", { text: "a", sessionId: "s1", attachments: [] }, (chunk) => {
+      chunksA.push(chunk);
+    });
+    const promiseB = webview.request("sendPrompt", { text: "b", sessionId: "s2", attachments: [] }, (chunk) => {
+      chunksB.push(chunk);
+    });
+    // register() runs synchronously up to its first await — ids are ready now.
+    expect(ids).toHaveLength(2);
+    const [idA, idB] = ids as [string, string];
+
+    // When: envelopes for the two streams arrive interleaved, with B's
+    // terminal landing between A's chunks
+    const chunk = (messageId: string, content: unknown, done: boolean): void => {
+      emitToWebview({ type: "streamChunk", payload: { messageId, status: "success", done, content } });
+    };
+    chunk(idA, "a1", false);
+    chunk(idB, "b1", false);
+    chunk(idB, "B-final", true);
+    chunk(idA, "a2", false);
+    chunk(idA, "A-final", true);
+
+    // Then: each consumer received only its own chunks and final content
+    expect(chunksA).toEqual(["a1", "a2"]);
+    expect(chunksB).toEqual(["b1"]);
+    await expect(promiseA).resolves.toBe("A-final");
+    await expect(promiseB).resolves.toBe("B-final");
+  });
+
+  it("rejects malformed envelopes at the correlator boundary", () => {
+    const { emitToWebview } = createLoopback();
+    const cases: readonly unknown[] = [
+      null, // not an object
+      { type: 42, payload: {} }, // non-string type
+      { type: "streamChunk", payload: { messageId: "", status: "success", done: true, content: null } },
+    ];
+    for (const bad of cases) {
+      let caught: unknown;
+      try {
+        emitToWebview(bad);
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught).toBeInstanceOf(MalformedMessageError);
+    }
   });
 });

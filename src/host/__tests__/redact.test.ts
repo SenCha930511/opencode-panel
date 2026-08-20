@@ -94,6 +94,79 @@ describe("redact", () => {
   });
 });
 
+describe("redact edge cases", () => {
+  it("scrubs every sensitive element of a JSON-ish env array, keeping safe entries", () => {
+    // Given: a spawn-env array as it appears in process traces
+    const line = 'env: ["OPENCODE_SERVER_PASSWORD=hunter2","PATH=/usr/bin","GIT_TOKEN=ghp_x"]';
+    // When: the line is redacted
+    const scrubbed = redact(line);
+    // Then: no secret fragment survives; non-sensitive entries stay readable
+    expect(scrubbed).not.toContain("hunter2");
+    expect(scrubbed).not.toContain("ghp_x");
+    expect(scrubbed).toContain("PATH=/usr/bin");
+    expect(scrubbed).toContain(`OPENCODE_SERVER_PASSWORD=${REDACTED}`);
+    expect(scrubbed).toContain(`GIT_TOKEN=${REDACTED}`);
+  });
+
+  it("scrubs a double-quoted value containing an escaped quote, wholesale", () => {
+    // Given: a password whose quoted shell form embeds an escaped quote
+    const line = 'OPENCODE_SERVER_PASSWORD="hun\\"ter2" opencode serve';
+    // When/Then: the whole quoted run is replaced — no fragment leaks
+    const scrubbed = redact(line);
+    expect(scrubbed).not.toContain("hun");
+    expect(scrubbed).not.toContain("ter2");
+    expect(scrubbed).toBe(`OPENCODE_SERVER_PASSWORD=${REDACTED} opencode serve`);
+  });
+
+  it("scrubs single-quoted values containing spaces", () => {
+    // Given/When/Then
+    expect(redact("API_TOKEN='tok en' next")).toBe(`API_TOKEN=${REDACTED} next`);
+  });
+
+  it("scrubs an empty quoted value the same as any quoted value", () => {
+    // Given/When/Then
+    expect(redact('PASSWORD=""')).toBe(`PASSWORD=${REDACTED}`);
+  });
+
+  it("treats = inside a quoted value as content, not as a delimiter", () => {
+    // Given/When/Then
+    expect(redact('TOKEN="a=b"')).toBe(`TOKEN=${REDACTED}`);
+  });
+
+  it("scrubs lowercase and mixed-case env names", () => {
+    // Given: env globs are case-insensitive per spec
+    // When/Then
+    expect(redact("github_token=ghp_x")).toBe(`github_token=${REDACTED}`);
+    expect(redact("api_Key=k")).toBe(`api_Key=${REDACTED}`);
+  });
+
+  it("scrubs OPENCODE_SERVER_PASSWORD as a bare env prefix on a command line", () => {
+    // Given: the canonical spawn trace shape
+    const line = "OPENCODE_SERVER_PASSWORD=hunter2 opencode serve --port 4096";
+    // When/Then: the value stops at whitespace; the command survives intact
+    expect(redact(line)).toBe(`OPENCODE_SERVER_PASSWORD=${REDACTED} opencode serve --port 4096`);
+  });
+
+  it("scrubs a quoted password prefix wrapping a piped command line", () => {
+    // Given: quoted env prefix + shell pipe
+    const line = 'env OPENCODE_SERVER_PASSWORD="hun ter2" npx opencode serve | tee out.log';
+    // When/Then
+    expect(redact(line)).toBe(`env OPENCODE_SERVER_PASSWORD=${REDACTED} npx opencode serve | tee out.log`);
+  });
+
+  it("scrubs semicolon-joined command lines without eating the separator", () => {
+    // Given/When/Then
+    expect(redact("export OPENCODE_SERVER_PASSWORD=hunter2; opencode serve")).toBe(
+      `export OPENCODE_SERVER_PASSWORD=${REDACTED}; opencode serve`,
+    );
+  });
+
+  it("scrubs repeated sensitive names on the same line", () => {
+    // Given/When/Then
+    expect(redact("A_TOKEN=1 B_TOKEN=2")).toBe(`A_TOKEN=${REDACTED} B_TOKEN=${REDACTED}`);
+  });
+});
+
 describe("PanelLogger", () => {
   class FakeChannel implements OutputChannelLike {
     readonly lines: string[] = [];
@@ -180,5 +253,19 @@ describe("PanelLogger", () => {
     logger.httpTrace("noise");
     // Then
     expect(channel.lines).toEqual([]);
+  });
+
+  it("evaluates the debug gate on every call, not once at construction", () => {
+    // Given: a gate that flips between writes
+    const channel = new FakeChannel();
+    let gate = false;
+    const logger = new PanelLogger(channel, () => gate, () => FIXED_NOW);
+    // When: a debug line is written before and after enabling
+    logger.debug("before");
+    gate = true;
+    logger.debug("after");
+    // Then: only the enabled write landed
+    expect(channel.lines).toHaveLength(1);
+    expect(channel.lines[0]).toContain("after");
   });
 });

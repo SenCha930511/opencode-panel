@@ -204,4 +204,72 @@ describe("createConfigAccessor", () => {
     // Then
     expect(source.disposed).toBe(true);
   });
+
+  it("delivers every write individually — the emitter does not debounce or coalesce", () => {
+    // Given: two rapid writes before their section events land
+    const adapter = new FakeAdapter({ port: 4096 });
+    const source = new FakeChangeSource();
+    const accessor = createConfigAccessor(adapter, source);
+    const seen: PanelConfig[] = [];
+    accessor.onDidChange((next) => seen.push(next));
+    // When
+    adapter.values["port"] = 5000;
+    source.emit(sectionEvent("opencodePanel.port"));
+    adapter.values["port"] = 6000;
+    source.emit(sectionEvent("opencodePanel.port"));
+    // Then: two events, one per source emission, in order
+    expect(seen).toHaveLength(2);
+    expect(seen[0]?.port).toBe(5000);
+    expect(seen[1]?.port).toBe(6000);
+  });
+
+  it("each emission snapshots the values at emission time (no cached snapshot)", () => {
+    // Given
+    const adapter = new FakeAdapter({ port: 4096, debugLogs: false });
+    const source = new FakeChangeSource();
+    const accessor = createConfigAccessor(adapter, source);
+    const seen: PanelConfig[] = [];
+    accessor.onDidChange((next) => seen.push(next));
+    // When: one key changes, then another
+    adapter.values["port"] = 1111;
+    source.emit(sectionEvent("opencodePanel.port"));
+    adapter.values["debugLogs"] = true;
+    source.emit(sectionEvent("opencodePanel.debugLogs"));
+    // Then: each snapshot carries the full state at its own emission
+    expect(seen[0]).toMatchObject({ port: 1111, debugLogs: false });
+    expect(seen[1]).toMatchObject({ port: 1111, debugLogs: true });
+    expect(seen[0]).not.toBe(seen[1]);
+  });
+
+  it("fans a single emission out to every registered listener", () => {
+    // Given
+    const adapter = new FakeAdapter({ port: 7777 });
+    const source = new FakeChangeSource();
+    const accessor = createConfigAccessor(adapter, source);
+    const first: PanelConfig[] = [];
+    const second: PanelConfig[] = [];
+    accessor.onDidChange((next) => first.push(next));
+    accessor.onDidChange((next) => second.push(next));
+    // When
+    source.emit(sectionEvent("opencodePanel.port"));
+    // Then
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(1);
+    expect(first[0]?.port).toBe(7777);
+    expect(second[0]?.port).toBe(7777);
+  });
+
+  it("fires on the whole-section event but filters a near-name section prefix", () => {
+    // Given
+    const adapter = new FakeAdapter({ port: 4096 });
+    const source = new FakeChangeSource();
+    const accessor = createConfigAccessor(adapter, source);
+    const seen: PanelConfig[] = [];
+    accessor.onDidChange((next) => seen.push(next));
+    // When: a bulk section event, then a lookalike section
+    source.emit(sectionEvent("opencodePanel"));
+    source.emit(sectionEvent("opencodePanelExtras"));
+    // Then: only the real section landed
+    expect(seen).toHaveLength(1);
+  });
 });

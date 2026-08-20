@@ -24,6 +24,7 @@ import {
   type ChildSpawner,
   type Clock,
   type ServerStartError,
+  type ServerTiming,
   type SpawnError,
   type SpawnOptions,
   type SpawnedProcess,
@@ -187,6 +188,8 @@ interface HarnessOverrides {
   readonly spawnBehavior?: SpawnBehavior;
   readonly env?: Record<string, string | undefined>;
   readonly folder?: string;
+  readonly timing?: Partial<ServerTiming>;
+  readonly customFetch?: ProbeFetch;
 }
 
 const BASE_CONFIG: PanelConfig = {
@@ -219,8 +222,9 @@ function makeHarness(overrides: HarnessOverrides = {}): Harness {
     spawner: spawn.spawner,
     workspaceFolder: () => overrides.folder ?? "/fake/workspace",
     ...(overrides.env === undefined ? {} : { env: () => overrides.env ?? {} }),
-    fetchImpl: fetchCalls.fetch,
+    fetchImpl: overrides.customFetch ?? fetchCalls.fetch,
     clock,
+    ...(overrides.timing === undefined ? {} : { timing: overrides.timing }),
   });
   const states: string[] = [];
   manager.onDidChangeState((state) => states.push(state.kind));
@@ -554,6 +558,156 @@ describe("ServerManager lifecycle", () => {
     if (state.kind === "error") {
       expect(state.error.failure.kind).toBe("process-exited");
     }
+  });
+});
+
+describe("ServerManager start/attach/stop races", () => {
+  it("start() during probing joins the in-flight run instead of spawning twice", async () => {
+    // Given: a down server whose spawn turns healthy after a few polls
+    const h = makeHarness({ downCount: 4, fallback: "up" });
+    // When: two overlapping start() calls land while probing
+    const [first, second] = await Promise.all([h.manager.start(), h.manager.start()]);
+    // Then: both callers settle on the SAME run result; exactly one spawn
+    expect(second).toBe(first);
+    expect(first).toEqual({ ok: true, state: "managed", baseUrl: "http://127.0.0.1:4096" });
+    expect(h.spawn.calls).toHaveLength(1);
+    expect(h.states).toEqual(["probing", "managed"]);
+  });
+
+  it("stop() during probing cancels the start run: no spawn, cancelled result, stopped state", async () => {
+    // Given: a health endpoint that only answers once the probe's own
+    // transport timeout aborts it (detectProbeTimeoutMs = 1 keeps it instant)
+    const fetchCalls: string[] = [];
+    const hangUntilAbort: ProbeFetch = (request) => {
+      fetchCalls.push(new URL(request.url).pathname);
+      return new Promise<Response>((resolve) => {
+        const answer = (): void => {
+          resolve(new Response("unreachable", { status: 503 }));
+        };
+        if (request.signal.aborted) {
+          answer();
+          return;
+        }
+        request.signal.addEventListener("abort", answer, { once: true });
+      });
+    };
+    const h = makeHarness({ customFetch: hangUntilAbort, timing: { detectProbeTimeoutMs: 1 } });
+    // When: stop lands while the first detect probe is suspended
+    const started = h.manager.start();
+    const stopped = h.manager.stop();
+    const [startResult] = await Promise.all([started, stopped]);
+    // Then: the start run resolves cancelled, nothing was ever spawned
+    expect(startResult.ok).toBe(false);
+    if (startResult.ok) throw new Error("expected a cancelled start");
+    expect(startResult.error.failure.kind).toBe("cancelled");
+    expect(h.spawn.calls).toHaveLength(0);
+    expect(fetchCalls).toEqual(["/global/health"]);
+    expect(h.manager.state).toEqual({ kind: "stopped" });
+    expect(h.states).toEqual(["probing", "stopping", "stopped"]);
+  });
+
+  it("start() during stopping serializes after the stop: old child killed once, new run attaches", async () => {
+    // Given: a managed server whose child honors SIGTERM
+    const h = makeHarness({
+      downCount: 2,
+      fallback: "up",
+      spawnBehavior: (child) => {
+        child.onKill = (signal) => {
+          if (signal === "SIGTERM") child.exit(0);
+        };
+      },
+    });
+    await h.manager.start();
+    expect(h.manager.state.kind).toBe("managed");
+    const child = h.spawn.children[0];
+    if (child === undefined) throw new Error("expected one spawned child");
+    // When: stop and start overlap
+    const stopPromise = h.manager.stop();
+    const startPromise = h.manager.start();
+    await stopPromise;
+    const second = await startPromise;
+    // Then: old child signaled once; the deferred start ran AFTER stopped
+    expect(child.kills).toEqual(["SIGTERM"]);
+    expect(h.spawn.calls).toHaveLength(1);
+    expect(second).toEqual({ ok: true, state: "attached", baseUrl: "http://127.0.0.1:4096" });
+    expect(h.states).toEqual([
+      "probing",
+      "managed",
+      "stopping",
+      "stopped",
+      "probing",
+      "attached",
+    ]);
+  });
+
+  it("spawn failure event with code EADDRINUSE attaches via the first-window-owns re-probe", async () => {
+    // Given: the spawn error event (not the process-exit path) reports
+    // EADDRINUSE; failSpawn settles synchronously like the exit-path test so
+    // the child event deterministically wins over the first instant poll
+    const h = makeHarness({
+      downCount: 2,
+      fallback: "up",
+      spawnBehavior: (child) => {
+        child.failSpawn({ message: "listen EADDRINUSE 127.0.0.1:4096", code: "EADDRINUSE" });
+      },
+    });
+    // When
+    const result = await h.manager.start();
+    // Then: same ownership outcome as the exit-path port conflict — attach, no kills
+    expect(result).toEqual({ ok: true, state: "attached", baseUrl: "http://127.0.0.1:4096" });
+    expect(h.clock.delays).toContain(2000);
+    expect(h.fetchCalls.calls).toHaveLength(4);
+    const child = h.spawn.children[0];
+    if (child === undefined) throw new Error("expected one spawned child");
+    expect(child.kills).toEqual([]);
+    expect(h.states).toEqual(["probing", "attached"]);
+  });
+
+  it("a spawn that never becomes healthy is killed and errors health-timeout", async () => {
+    // Given: the server stays down forever; the spawned child hangs
+    const h = makeHarness({ downCount: Number.MAX_SAFE_INTEGER, fallback: "down" });
+    // When
+    const result = await h.manager.start();
+    // Then: the health budget ran out; the hung child was TERM→KILLed
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected a health-timeout failure");
+    expect(result.error.failure.kind).toBe("health-timeout");
+    expect(result.error.message).toContain("20000");
+    const child = h.spawn.children[0];
+    if (child === undefined) throw new Error("expected one spawned child");
+    expect(child.kills).toEqual(["SIGTERM", "SIGKILL"]);
+    expect(h.clock.delays).toContain(3000);
+    expect(h.states).toEqual(["probing", "error"]);
+  });
+
+  it("attaching to a foreign server never consults the env provider (spawn-only precondition)", async () => {
+    // Given: an env provider that records every read
+    const channel = new CapturingChannel();
+    const logger = new PanelLogger(channel, () => true);
+    const fetchCalls = new FakeFetch(0, "up");
+    const spawn = new FakeSpawnFactory();
+    let envReads = 0;
+    const manager = new ServerManager({
+      config: makeConfigAccessor(BASE_CONFIG),
+      secrets: new PanelSecrets(new FakeSecretStorage()),
+      logger,
+      spawner: spawn.spawner,
+      workspaceFolder: () => "/fake/workspace",
+      env: () => {
+        envReads += 1;
+        return {};
+      },
+      fetchImpl: fetchCalls.fetch,
+      clock: new InstantClock(),
+    });
+    // When: a foreign healthy server is attached and later detached
+    const result = await manager.start();
+    // Then: attach path took no env snapshot (env is a spawn-only input)
+    expect(result).toEqual({ ok: true, state: "attached", baseUrl: "http://127.0.0.1:4096" });
+    expect(envReads).toBe(0);
+    await manager.stop();
+    expect(envReads).toBe(0);
+    manager.dispose();
   });
 });
 
