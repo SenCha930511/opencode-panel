@@ -42,10 +42,22 @@ export interface SlashKeyRef {
   current: SlashKeyHandler | null;
 }
 
+function CommandGlyph(props: { readonly name: string }): ReactNode {
+  let colorClass = "bg-accent/15 text-accent";
+  if (props.name.includes("init")) colorClass = "bg-emerald-500/15 text-emerald-400";
+  else if (props.name.includes("review")) colorClass = "bg-blue-500/15 text-blue-400";
+  else if (props.name.includes("git")) colorClass = "bg-amber-500/15 text-amber-400";
+  else if (props.name.includes("test") || props.name.includes("playwright")) colorClass = "bg-purple-500/15 text-purple-400";
+  else if (props.name.includes("debug") || props.name.includes("slop")) colorClass = "bg-pink-500/15 text-pink-400";
+  return (
+    <span className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded text-[10px] font-mono font-bold ${colorClass}`}>
+      /
+    </span>
+  );
+}
+
 const MENU_CLASS =
-  "absolute bottom-full left-0 z-50 mb-1 max-h-60 min-w-48 overflow-y-auto rounded border border-border bg-panel-bg p-1 shadow-lg";
-const ROW_CLASS =
-  "flex cursor-default select-none items-baseline gap-2 rounded px-2 py-1 text-xs text-fg hover:bg-hover-bg data-[active=true]:bg-hover-bg";
+  "absolute bottom-full left-0 right-0 z-50 mb-2 max-h-60 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs";
 
 export interface CommandPaletteProps {
   readonly commands: readonly CommandEntry[];
@@ -62,32 +74,59 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
   const matches = filterCommands(props.commands, props.query);
   const active = Math.min(Math.max(props.activeIndex, 0), Math.max(matches.length - 1, 0));
   return (
-    <div role="listbox" aria-label={t("commands.title")} className={MENU_CLASS}>
+    <div
+      data-oc-command-palette
+      role="listbox"
+      aria-label={t("commands.title")}
+      className={MENU_CLASS}
+    >
+      <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
+        <span className="flex items-center gap-1.5">
+          <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-accent/20 text-accent text-[9px] font-bold">/</span>
+          <span>{t("commands.title")}</span>
+        </span>
+        <span className="text-[10px] text-muted-fg/60">
+          {matches.length}
+        </span>
+      </div>
       {matches.length === 0 ? (
-        <div className="px-2 py-1.5 text-xs text-muted-fg">{t("commands.empty")}</div>
+        <div className="px-3 py-2 text-xs text-muted-fg">{t("commands.empty")}</div>
       ) : (
-        matches.map((command, index) => (
-          <div
-            key={command.name}
-            role="option"
-            aria-selected={index === active}
-            data-active={index === active}
-            className={ROW_CLASS}
-            onMouseDown={(event) => {
-              // mousedown (not click) so the textarea blur race cannot eat it.
-              event.preventDefault();
-              props.onSelect(command.name);
-            }}
-            onMouseEnter={() => {
-              props.onHover?.(index);
-            }}
-          >
-            <span className="shrink-0 font-medium">{command.name}</span>
-            {command.description === undefined ? null : (
-              <span className="min-w-0 truncate text-muted-fg">{command.description}</span>
-            )}
-          </div>
-        ))
+        <ul className="flex flex-col gap-0.5">
+          {matches.map((command, index) => {
+            const isActive = index === active;
+            return (
+              <li key={command.name}>
+                <div
+                  role="option"
+                  aria-selected={isActive}
+                  data-active={isActive}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-1.5 text-start transition-colors cursor-pointer group ${
+                    isActive ? "bg-hover-bg text-fg font-medium" : "text-fg/90 hover:bg-hover-bg/70 hover:text-fg"
+                  }`}
+                  onMouseDown={(event) => {
+                    // mousedown (not click) so the textarea blur race cannot eat it.
+                    event.preventDefault();
+                    props.onSelect(command.name);
+                  }}
+                  onMouseEnter={() => {
+                    props.onHover?.(index);
+                  }}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CommandGlyph name={command.name} />
+                    <span className="shrink-0 font-medium text-fg">{command.name}</span>
+                  </div>
+                  {command.description !== undefined && (
+                    <span className="truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-end font-normal">
+                      {command.description}
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

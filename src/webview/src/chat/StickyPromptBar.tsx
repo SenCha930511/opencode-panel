@@ -83,12 +83,12 @@ export function StickyPromptBar(props: {
   return (
     <div
       data-oc-sticky-prompt
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4.5 sm:px-5 pt-2 transition-all duration-200 ease-out"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-bg px-4.5 sm:px-5 pt-2 pb-2 transition-all duration-200 ease-out"
     >
       <button
         type="button"
         title="回到此處 (Jump to prompt)"
-        className="pointer-events-auto group flex w-full items-start justify-between gap-2.5 rounded-2xl border border-card-border/80 bg-panel-bg/95 p-3 text-left shadow-lg backdrop-blur-md transition-all duration-150 hover:border-focus-ring/60 active:scale-[0.99] cursor-pointer"
+        className="pointer-events-auto group flex w-full items-start justify-between gap-2.5 rounded-2xl border border-card-border/80 bg-panel-bg p-3 text-left shadow-md transition-all duration-150 hover:border-focus-ring/60 active:scale-[0.99] cursor-pointer"
         onClick={() => {
           props.onJump(props.anchor.index);
         }}

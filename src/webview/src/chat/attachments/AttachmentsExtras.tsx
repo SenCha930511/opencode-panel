@@ -204,6 +204,90 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
     };
   }, [textarea, ingestImageFiles]);
 
+  // Drag-and-drop file ingestion: images attach, workspace/code files insert as @mentions.
+  useEffect(() => {
+    const host = containerRef.current?.closest("[data-oc-composer]");
+    if (!host) return;
+
+    const onDragOver = (event: Event): void => {
+      const e = event as DragEvent;
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
+    };
+
+    const onDrop = (event: Event): void => {
+      const e = event as DragEvent;
+      e.preventDefault();
+      if (textarea === null) return;
+
+      const files = Array.from(e.dataTransfer?.files ?? []);
+      const imageFiles: File[] = [];
+      const nonImageMentions: string[] = [];
+
+      for (const file of files) {
+        if (file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name)) {
+          imageFiles.push(file);
+        } else {
+          const filePath = (file as any).path;
+          let target = file.name;
+          if (typeof filePath === "string" && filePath.length > 0) {
+            const parts = filePath.replace(/\\/g, "/").split("/");
+            target = parts[parts.length - 1] || file.name;
+            recordMentionPath(target, filePath);
+          }
+          nonImageMentions.push(`@${target}`);
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        ingestImageFiles(imageFiles);
+      }
+
+      if (files.length === 0 && e.dataTransfer) {
+        const uriList = e.dataTransfer.getData("text/uri-list");
+        const plainText = e.dataTransfer.getData("text/plain");
+        const raw = uriList || plainText || "";
+        if (raw.length > 0) {
+          const lines = raw.split(/[\r\n]+/).map((s) => s.trim()).filter(Boolean);
+          for (const line of lines) {
+            let clean = line;
+            if (clean.startsWith("file://")) {
+              try {
+                clean = decodeURIComponent(new URL(clean).pathname);
+              } catch {
+                clean = clean.replace(/^file:\/\//, "");
+              }
+            }
+            const parts = clean.replace(/\\/g, "/").split("/");
+            const target = parts[parts.length - 1] || clean;
+            if (target.length > 0) {
+              recordMentionPath(target, clean);
+              nonImageMentions.push(`@${target}`);
+            }
+          }
+        }
+      }
+
+      if (nonImageMentions.length > 0) {
+        const insertion = nonImageMentions.join(" ") + " ";
+        const current = textarea.value;
+        const prefix = current.length > 0 && !current.endsWith(" ") ? " " : "";
+        const next = `${current}${prefix}${insertion}`;
+        setTextareaValue(textarea, next, next.length);
+        textarea.focus();
+      }
+    };
+
+    host.addEventListener("dragover", onDragOver);
+    host.addEventListener("drop", onDrop);
+    return () => {
+      host.removeEventListener("dragover", onDragOver);
+      host.removeEventListener("drop", onDrop);
+    };
+  }, [textarea, ingestImageFiles]);
+
   const handlePick = useCallback(
     (path: string): void => {
       const fileName = baseNameOfPath(path);

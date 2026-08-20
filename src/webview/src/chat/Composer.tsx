@@ -309,9 +309,27 @@ export function Composer(props: ComposerProps): ReactNode {
     handleSend();
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
     <div data-oc-composer className="border-t border-border/70 bg-bg/80 px-4.5 py-3 sm:px-5 backdrop-blur-md">
-      <div className="flex flex-col rounded-2xl border border-card-border bg-input-card-bg shadow-sm transition-all focus-within:border-focus-ring/80 focus-within:ring-1 focus-within:ring-focus-ring/25 p-3">
+      <div
+        className={`flex flex-col rounded-2xl border ${
+          isDragging
+            ? "border-accent ring-2 ring-accent/30 bg-accent/5"
+            : "border-card-border bg-input-card-bg focus-within:border-focus-ring/80 focus-within:ring-1 focus-within:ring-focus-ring/25"
+        } shadow-sm transition-all p-3`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => {
+          setIsDragging(false);
+        }}
+        onDrop={() => {
+          setIsDragging(false);
+        }}
+      >
         {queuedPrompt && (
           <div className="mb-2 flex items-center justify-between rounded-xl bg-accent/10 px-2.5 py-1 text-xs text-accent">
             <span className="truncate flex-1">
