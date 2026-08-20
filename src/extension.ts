@@ -78,6 +78,9 @@ import {
  * Todo-20 composition (owned by src/host/handlers/mcpInfo.ts): the
  * `mcp.status` push seeds the webview MCP panel and the capability-flag
  * overlay on the same transitions, riding the todo-15 wiring shape.
+ *
+ * allow: SIZE_OK — composition root wiring every todo's domain seams; no
+ * domain logic lives here (each domain owns its own module per the plan).
  */
 
 function showServerError(title: string, error: ServerStartError): void {
