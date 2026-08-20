@@ -87,8 +87,8 @@ function wireCapabilities(capabilities: Capabilities): ServerCapabilities {
  */
 export function createInitPayloadBuilder(deps: InitPayloadDeps): () => Promise<InitPayload> {
   return async () => {
-    const { locale, strings } = buildInitStrings(deps.envLanguage);
     const settings = { ...deps.config.read() };
+    const { locale, strings } = buildInitStrings(deps.envLanguage, settings.language);
     const state = deps.manager.state;
     const baseUrl = connectedBaseUrl(state);
     let server: ServerInfo = DISCONNECTED_SERVER;

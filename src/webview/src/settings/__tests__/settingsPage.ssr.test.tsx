@@ -101,6 +101,21 @@ describe("SettingsPage SSR — schema-driven form", () => {
     expect(html).toContain("Ignored when `opencodePanel.serverUrl` is set.");
   });
 
+  it("renders the language row as an enum select with the provisioned options", () => {
+    // Given/When
+    const html = renderPage(stubInit(), stubStore());
+    // Then: the appearance section's language row carries its marker and a
+    // select committing one of the manifest enum values per option
+    expect(html).toContain('data-oc-setting="language"');
+    expect(html).toContain(en["settings.field.language"]);
+    for (const optionValue of ["auto", "en", "zh-TW"]) {
+      expect(html).toContain(`value="${optionValue}"`);
+    }
+    for (const labelId of ["settings.enumOption.auto", "settings.enumOption.en", "settings.enumOption.zhTW"] as const) {
+      expect(html).toContain(en[labelId]);
+    }
+  });
+
   it("renders the documented section order and User-default scope chips", () => {
     // Given/When
     const html = renderPage(stubInit(), stubStore());

@@ -25,6 +25,23 @@ describe("resolveLocale edge cases", () => {
   }
 });
 
+describe("resolveLocale with the opencodePanel.language override", () => {
+  it("pins a locale regardless of the display language", () => {
+    expect(resolveLocale("en-US", "zh-TW")).toBe("zh-TW");
+    expect(resolveLocale("zh-tw", "en")).toBe("en");
+  });
+
+  it("treats \"auto\" exactly like no override", () => {
+    expect(resolveLocale("zh-tw", "auto")).toBe("zh-TW");
+    expect(resolveLocale("en-US", "auto")).toBe("en");
+  });
+
+  it("degrades hand-edited unknown values to auto semantics", () => {
+    expect(resolveLocale("zh-tw", "klingon")).toBe("zh-TW");
+    expect(resolveLocale("en-US", "")).toBe("en");
+  });
+});
+
 describe("tableForLocale", () => {
   it("returns the canonical table objects by reference", () => {
     expect(tableForLocale("en")).toBe(en);

@@ -22,6 +22,7 @@
   "opencodePanel.config.autoStartServer.markdownDescription": "When enabled, the extension spawns a managed `opencode serve` process if no healthy server is found on the configured endpoint. Foreign (user-started) servers are only ever attached to, never killed.",
   "opencodePanel.config.minimumServerVersion.markdownDescription": "Minimum accepted opencode server version. Servers below this version still run, but the extension shows a warning and hides features the server does not expose. `0.0.0` disables the floor (warn-only).",
   "opencodePanel.config.debugLogs.markdownDescription": "Write verbose debug output (with secret redaction) to the \"OpenCode Panel\" output channel.",
+  "opencodePanel.config.language.markdownDescription": "Interface language of the panel: `auto` follows VS Code's display language, or pin a locale explicitly. Applies instantly to every open panel.",
   "opencodePanel.config.chatFontFamily.markdownDescription": "Font family for chat message rendering in the panel. Empty inherits the VS Code editor font.",
   "opencodePanel.config.chatFontSize.markdownDescription": "Font size (px) for chat message rendering in the panel. `0` inherits the VS Code default."
 }

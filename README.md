@@ -9,7 +9,9 @@ a Codex/Cursor-grade GUI chat panel without leaving your editor.
 - Slash-command palette, agent picker, and model picker
 - `@`-mention file attachments, image paste, editor-selection attach
 - Todos and session diffs dock with native `vscode.diff` previews
-- Bilingual UI (English / 繁體中文) that follows VS Code's display language
+- Bilingual UI (English / 繁體中文) that follows VS Code's display language,
+  with an in-app override (`opencodePanel.language`) that hot-swaps every
+  open panel without a reload
 
 The extension talks to opencode's own server (HTTP + SSE) through the official
 `@opencode-ai/sdk`, all traffic proxied by the extension host — no browser
@@ -93,6 +95,7 @@ SecretStorage.
 | `opencodePanel.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Panel* output channel (credentials are always redacted). |
 | `opencodePanel.chatFontFamily` | string | `""` | Override the chat font family (empty = VS Code default). |
 | `opencodePanel.chatFontSize` | number | `0` | Override the chat font size in px (0 = VS Code default). |
+| `opencodePanel.language` | enum | `"auto"` | Panel interface language: `auto` follows VS Code's display language; `en` / `zh-TW` pin a locale and apply instantly to every open panel. |
 
 ## TUI escape hatch
 
@@ -108,7 +111,8 @@ UI is always one click away.
   does not hunt for ad-hoc TUI ports. Sessions are shared though: sessions
   created from any surface on the same server appear everywhere.
 - The MCP panel lists only natively configured MCP servers (see OMO notes).
-- UI language follows VS Code's display language; there is no in-app override.
+- The Chinese localization ships one table (Traditional). All `zh-*`
+  display variants fall back to it.
 - Question cards appear only when the connected server exposes the
   question-reply route (detected at runtime).
 
@@ -157,6 +161,8 @@ GUI 聊天面板。
 - **MCP 面板**——顯示 opencode 原生設定的 MCP 伺服器。
 - **能力偵測**——自動探測連接的伺服器，不支援的功能會隱藏並提示一次。
   無論有沒有裝 oh-my-opencode 都能正常運作。
+- **雙語介面**（English / 繁體中文）——預設跟隨 VS Code 顯示語言，亦可用
+  `opencodePanel.language` 明確指定語系，所有已開啟面板即時熱切換、不必重開。
 
 ### oh-my-opencode（OMO）補充說明
 
@@ -198,6 +204,7 @@ SecretStorage。
 | `opencodePanel.debugLogs` | boolean | `false` | 在 *OpenCode Panel* 輸出頻道輸出詳細記錄（憑證一律去識別化）。 |
 | `opencodePanel.chatFontFamily` | string | `""` | 覆寫聊天字體（空白 = 沿用 VS Code 預設）。 |
 | `opencodePanel.chatFontSize` | number | `0` | 覆寫聊天字體大小 px（0 = 沿用 VS Code 預設）。 |
+| `opencodePanel.language` | enum | `"auto"` | 面板介面語言：`auto` 跟隨 VS Code 顯示語言；`en` / `zh-TW` 明確指定語系，即時套用到所有已開啟的面板。 |
 
 ## TUI 出口
 
@@ -212,7 +219,7 @@ SecretStorage。
   工作階段是共用的：同一台伺服器上，任何介面建立的工作階段都會出現在
   各處。
 - MCP 面板只列出原生設定的 MCP 伺服器（見 OMO 說明）。
-- 介面語言跟隨 VS Code 的顯示語言，不提供面板內手動切換。
+- 中文在地化僅提供繁體中文單一語系表；所有 `zh-*` 顯示語言變體皆回退至此表。
 - 問題卡片只在連接的伺服器提供 question-reply 路由時出現（執行期偵測）。
 
 ## 螢幕截圖

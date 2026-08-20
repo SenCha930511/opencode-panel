@@ -110,6 +110,28 @@ function WelcomeHero(props: { readonly emptyLabel: string }): ReactNode {
   );
 }
 
+function ScrollBottomIcon(): ReactNode {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 6.5L8 11L12.5 6.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function findLatestUserMessageIndex(messages: readonly MessageVM[]): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg !== undefined && msg.role === "user") return i;
+  }
+  return -1;
+}
+
 export function MessageList(props: MessageListProps) {
   const { t } = useStrings();
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
@@ -118,10 +140,16 @@ export function MessageList(props: MessageListProps) {
   const state = useChatStore(store);
   const activeSessionId = useActiveSession();
   const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
+  const [atBottom, setAtBottom] = useState(true);
+  const lastHandledUserMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (activeSessionId) {
       store.setSession(activeSessionId);
+      const messages = store.getState().messages;
+      const lastUserIdx = findLatestUserMessageIndex(messages);
+      const lastUser = lastUserIdx >= 0 ? messages[lastUserIdx] : undefined;
+      lastHandledUserMessageIdRef.current = lastUser !== undefined ? lastUser.id : null;
     }
   }, [activeSessionId, store]);
 
@@ -132,20 +160,26 @@ export function MessageList(props: MessageListProps) {
     });
   }, [props.source, store]);
 
-  // Proactively keep pinned to bottom during streaming / delta arrival
+  // When a new user message is sent, jump that user message to the very top
   useEffect(() => {
-    if (park.current.isPinned && state.messages.length > 0) {
-      const isStreaming = state.status === "busy" || state.messages.some((m) => m.inFlight);
+    if (state.messages.length === 0) return;
+    const latestUserIdx = findLatestUserMessageIndex(state.messages);
+    if (latestUserIdx === -1) return;
+    const latestUserMsg = state.messages[latestUserIdx];
+    if (latestUserMsg === undefined) return;
+
+    if (lastHandledUserMessageIdRef.current !== latestUserMsg.id) {
+      lastHandledUserMessageIdRef.current = latestUserMsg.id;
       const frame = requestAnimationFrame(() => {
         virtuosoRef.current?.scrollToIndex({
-          index: state.messages.length - 1,
-          align: "end",
-          behavior: isStreaming ? "auto" : "smooth",
+          index: latestUserIdx,
+          align: "start",
+          behavior: "smooth",
         });
       });
       return () => cancelAnimationFrame(frame);
     }
-  }, [state.messages, state.status]);
+  }, [state.messages]);
 
   const body =
     state.messages.length === 0 ? (
@@ -162,6 +196,7 @@ export function MessageList(props: MessageListProps) {
         followOutput={park.current.followFor}
         atBottomStateChange={(isBottom: boolean) => {
           park.current.onAtBottomChange(isBottom);
+          setAtBottom(isBottom);
         }}
         rangeChanged={setVisibleRange}
         itemContent={(_index, message) => (
@@ -188,6 +223,25 @@ export function MessageList(props: MessageListProps) {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {body}
         </div>
+        {!atBottom && state.messages.length > 0 && (
+          <button
+            type="button"
+            data-oc-scroll-bottom
+            title="捲動至最新訊息 (Scroll to bottom)"
+            aria-label="捲動至最新訊息"
+            className="absolute bottom-3 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-card-border/80 bg-panel-bg text-fg shadow-lg transition-all duration-150 hover:bg-hover-bg hover:scale-105 active:scale-95 cursor-pointer ring-1 ring-black/10"
+            onClick={() => {
+              park.current.onAtBottomChange(true);
+              virtuosoRef.current?.scrollToIndex({
+                index: state.messages.length - 1,
+                align: "end",
+                behavior: "smooth",
+              });
+            }}
+          >
+            <ScrollBottomIcon />
+          </button>
+        )}
       </div>
     </ChatActionsProvider>
   );

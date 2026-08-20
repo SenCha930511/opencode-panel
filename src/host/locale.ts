@@ -39,8 +39,13 @@ import {
  * variant ("zh", "zh-tw", "zh-cn", "zh-hk", "zh-hant-*", case-insensitive)
  * resolves to "zh-TW" per plan decision (single Chinese table, Traditional);
  * everything else resolves to "en".
+ *
+ * `languageOverride` is the `opencodePanel.language` setting: a pinned
+ * locale short-circuits env detection; `"auto"` or any hand-edited unknown
+ * value keeps the env mapping above.
  */
-export function resolveLocale(envLanguage: string): SupportedLocale {
+export function resolveLocale(envLanguage: string, languageOverride?: string): SupportedLocale {
+  if (languageOverride === "en" || languageOverride === "zh-TW") return languageOverride;
   return envLanguage.toLowerCase().startsWith("zh") ? "zh-TW" : "en";
 }
 
@@ -65,11 +70,12 @@ export interface InitLocaleBundle {
 }
 
 /**
- * Builds the init-payload locale bundle from an injected env language.
- * `strings` is structurally `Record<string,string>` on the wire — see the
- * StringId -> wire contract above.
+ * Builds the init-payload locale bundle from an injected env language and
+ * the optional `opencodePanel.language` override. `strings` is structurally
+ * `Record<string,string>` on the wire — see the StringId -> wire contract
+ * above.
  */
-export function buildInitStrings(envLanguage: string): InitLocaleBundle {
-  const locale = resolveLocale(envLanguage);
+export function buildInitStrings(envLanguage: string, languageOverride?: string): InitLocaleBundle {
+  const locale = resolveLocale(envLanguage, languageOverride);
   return { locale, strings: tableForLocale(locale) };
 }

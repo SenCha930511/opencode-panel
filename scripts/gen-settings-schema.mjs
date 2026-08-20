@@ -41,6 +41,7 @@ const FIELD_UI = {
   autoStartServer: { section: "server" },
   minimumServerVersion: { section: "server", format: "semver" },
   debugLogs: { section: "diagnostics" },
+  language: { section: "appearance", enum: ["auto", "en", "zh-TW"] },
   chatFontFamily: { section: "appearance" },
   chatFontSize: { section: "appearance", min: 0, max: 72, integer: true },
 };
@@ -111,6 +112,19 @@ function collectFields(manifestPath) {
     const entry = properties[key];
     const ui = FIELD_UI[shortKey];
     if ("default" in entry === false) fail(`opencodePanel.${shortKey}: manifest key has no default`);
+    let enumValues;
+    if (ui.enum !== undefined) {
+      if (!Array.isArray(entry.enum) || entry.enum.some((value) => typeof value !== "string")) {
+        fail(`opencodePanel.${shortKey}: FIELD_UI declares an enum but the manifest key has no string enum`);
+      }
+      if (JSON.stringify(entry.enum) !== JSON.stringify(ui.enum)) {
+        fail(`opencodePanel.${shortKey}: manifest enum ${JSON.stringify(entry.enum)} != FIELD_UI enum ${JSON.stringify(ui.enum)} — keep both in sync`);
+      }
+      if (!ui.enum.includes(entry.default)) {
+        fail(`opencodePanel.${shortKey}: manifest default ${JSON.stringify(entry.default)} is not in the enum`);
+      }
+      enumValues = ui.enum;
+    }
     return {
       key,
       shortKey,
@@ -120,6 +134,7 @@ function collectFields(manifestPath) {
       ...(ui.min === undefined ? {} : { min: ui.min }),
       ...(ui.max === undefined ? {} : { max: ui.max }),
       ...(ui.integer === true ? { integer: true } : {}),
+      ...(ui.enum === undefined ? {} : { enum: enumValues }),
       ...(ui.format === undefined ? {} : { format: ui.format }),
       description: descriptionText(shortKey, entry, bundles),
     };
@@ -141,6 +156,7 @@ function emitField(field) {
   if (field.min !== undefined) lines.push(`    min: ${field.min},`);
   if (field.max !== undefined) lines.push(`    max: ${field.max},`);
   if (field.integer === true) lines.push(`    integer: true,`);
+  if (field.enum !== undefined) lines.push(`    enum: ${JSON.stringify(field.enum)},`);
   if (field.format !== undefined) lines.push(`    format: ${JSON.stringify(field.format)},`);
   lines.push(
     `    description: {`,
@@ -190,6 +206,7 @@ export interface SettingField {
   readonly min?: number;
   readonly max?: number;
   readonly integer?: boolean;
+  readonly enum?: readonly string[];
   readonly format?: SettingTextFormat;
   readonly description: { readonly en: string; readonly zhTW: string };
 }
@@ -295,6 +312,8 @@ export function validateFieldValue(field: SettingField, value: SettingValue): st
     }
     case "string": {
       if (typeof value !== "string") return \`\${field.shortKey}: must be a string\`;
+      if (field.enum !== undefined && !field.enum.includes(value))
+        return \`\${field.shortKey}: must be one of \${field.enum.join(", ")}\`;
       switch (field.format ?? "text") {
         case "text":
           return null;

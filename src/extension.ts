@@ -183,7 +183,6 @@ export function activate(
   // backs native vscode.diff previews. openDiff always acknowledges the
   // click: empty diff set -> info toast, any failure -> error toast.
   const dockSurface = createVscodeDockSurface();
-  const dockToasts = buildInitStrings(vscode.env.language).strings;
   const dockNotify = (level: ToastLevel, text: string): void => {
     panel.chat.postToast(level, text);
   };
@@ -193,7 +192,10 @@ export function activate(
     opener: dockSurface.opener,
     logger,
     notify: dockNotify,
-    emptyDiffText: dockToasts["dock.diffs.empty"],
+    // Resolved lazily so the opencodePanel.language override (and its
+    // hot-swap) reaches this host-side string too.
+    emptyDiffText: () =>
+      buildInitStrings(vscode.env.language, config.read().language).strings["dock.diffs.empty"],
   });
   registerDockHandlers(panel.registerHandler, { service: dockService, notify: dockNotify });
   const dockSync = new DockSync({
@@ -290,6 +292,12 @@ export function activate(
 
   let settingsPanel: vscode.WebviewPanel | undefined;
 
+  const postSettingsInit = async (): Promise<void> => {
+    if (settingsPanel === undefined) return;
+    const payload = await initPayloadBuilder();
+    settingsPanel.webview.postMessage({ type: "init", payload });
+  };
+
   const openSettingsTab = async (): Promise<void> => {
     if (settingsPanel !== undefined) {
       settingsPanel.reveal(vscode.ViewColumn.Active);
@@ -328,8 +336,7 @@ export function activate(
     panel.handlers.applyInto(messenger);
 
     messenger.register("ready", async () => {
-      const payload = await initPayloadBuilder();
-      settingsPanel?.webview.postMessage({ type: "init", payload });
+      await postSettingsInit();
       return null;
     });
 
@@ -378,6 +385,20 @@ export function activate(
         dockCapabilityReset.dispose();
       },
     },
+    // Language hot-swap (opencodePanel.language): a saved change re-posts
+    // the full init payload (locale + strings) to every live webview
+    // surface; each re-renders under the new StringsProvider, no reload.
+    (() => {
+      let previousLanguage = config.read().language;
+      return config.onDidChange((next) => {
+        if (next.language === previousLanguage) return;
+        previousLanguage = next.language;
+        logger.info(`opencodePanel.language now ${next.language}: re-posting init to webviews`);
+        void panel.chat.refreshInit();
+        void panel.sessions.refreshInit();
+        void postSettingsInit();
+      });
+    })(),
     { dispose: () => config.dispose() },
     { dispose: () => manager.dispose() },
     vscode.commands.registerCommand("opencodePanel.toggleHistory", async () => {

@@ -70,7 +70,9 @@ import { createWebviewDraftStore, type DraftStore } from "./draftStore.js";
 import type { ChatEventSource } from "./events.js";
 import { MessageStore } from "./messageStore.js";
 import { MessageList, useChatStore } from "./MessageList.js";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { SlashCommandPalette, type SlashKeyHandler } from "./pickers/CommandPalette.js";
+import { useEffort, setEffort, useAutoMode, setAutoMode } from "./composerOptions.js";
 
 export type { ComposerAttachment } from "./composerLogic.js";
 export { DefaultAttachmentChip } from "./composerChips.js";
@@ -122,6 +124,46 @@ function StopIcon(): ReactNode {
   );
 }
 
+function BrainIcon(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6 2.5C4 2.5 2.5 4 2.5 6C2.5 7.5 3.5 8.5 4 9C3.5 10 3.5 11.5 4.5 12.5C5.5 13.5 7 13.5 8 13M10 2.5C12 2.5 13.5 4 13.5 6C13.5 7.5 12.5 8.5 12 9C12.5 10 12.5 11.5 11.5 12.5C10.5 13.5 9 13.5 8 13M8 2V14"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SlidersIcon(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M3 4.5h10M3 8h10M3 11.5h10M5.5 3v3M10.5 6.5v3M7.5 10v3"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LightningIcon(): ReactNode {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M9 1.5L2.5 9h5L6.5 14.5L13.5 7h-5L9 1.5z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Composer(props: ComposerProps): ReactNode {
   const { t } = useStrings();
   const app = useApp();
@@ -134,6 +176,10 @@ export function Composer(props: ComposerProps): ReactNode {
   // Slash palette seam: the open menu publishes its key handler here and the
   // textarea consults it before its own Enter-send handling.
   const slashKeyRef = useRef<SlashKeyHandler | null>(null);
+
+  const [showOptions, setShowOptions] = useState(false);
+  const effort = useEffort();
+  const autoMode = useAutoMode();
 
   const [text, setText] = useState<string>(() => {
     return sessionId === undefined ? "" : drafts.read(sessionId);
@@ -375,12 +421,91 @@ export function Composer(props: ComposerProps): ReactNode {
           />
         </div>
 
-        {/* Row 1 (Actions): Attachments '+' on left, Send/Stop morphing button on right */}
-        <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
-          <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-visible py-0.5">
+        {/* Toolbar: Left [+ / Agent / Model], Right [Advanced Options (Effort & Auto), ⌘↵, Send/Stop] */}
+        <div className="mt-2 flex items-center justify-between gap-1.5 pt-2 border-t border-card-border/40 min-w-0">
+          <div data-oc-composer-extras className="flex flex-1 items-center gap-1 min-w-0 overflow-hidden py-0.5">
             {props.extras}
+            {props.pickers}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
+            {showOptions && (
+              <div className="flex items-center gap-1 animate-in fade-in duration-150">
+                {/* Effort Selector Dropdown */}
+                <DropdownMenu.Root modal={false}>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      type="button"
+                      title={`Reasoning Effort: ${effort.toUpperCase()}`}
+                      className="flex items-center gap-1 rounded-full border border-card-border/80 bg-card-bg/80 px-2 py-0.5 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg shadow-2xs cursor-pointer"
+                    >
+                      <BrainIcon />
+                      <span className="capitalize">{effort}</span>
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      side="top"
+                      align="end"
+                      sideOffset={6}
+                      className="z-50 min-w-36 rounded-xl border border-card-border bg-panel-bg p-1 shadow-2xl ring-1 ring-black/20 text-xs"
+                    >
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
+                        Reasoning Effort
+                      </div>
+                      {(["low", "medium", "high", "max"] as const).map((lvl) => (
+                        <DropdownMenu.Item
+                          key={lvl}
+                          className={`flex items-center justify-between rounded-lg px-2 py-1 text-xs cursor-pointer outline-none transition-colors ${
+                            effort === lvl ? "bg-hover-bg text-fg font-medium" : "text-fg/80 hover:bg-hover-bg/70 hover:text-fg"
+                          }`}
+                          onSelect={() => setEffort(lvl)}
+                        >
+                          <span className="capitalize">{lvl}</span>
+                          {effort === lvl && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          )}
+                        </DropdownMenu.Item>
+                      ))}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+
+                {/* Auto Mode Switch Button */}
+                <button
+                  type="button"
+                  title="自動執行模式 (Auto-approve actions & execute)"
+                  className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-all shadow-2xs cursor-pointer ${
+                    autoMode
+                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                      : "border-card-border/80 bg-card-bg/80 text-muted-fg hover:text-fg hover:bg-hover-bg"
+                  }`}
+                  onClick={() => setAutoMode(!autoMode)}
+                >
+                  <LightningIcon />
+                  <span>Auto</span>
+                </button>
+              </div>
+            )}
+
+            {/* Fold/Unfold Toggle Button */}
+            <button
+              type="button"
+              title={showOptions ? "收合進階選項" : "展開進階選項 (Effort / Auto)"}
+              aria-label="進階選項"
+              className={`flex h-6 w-6 items-center justify-center rounded-full border border-card-border/70 transition-all cursor-pointer ${
+                showOptions
+                  ? "bg-hover-bg text-fg border-focus-ring/60"
+                  : "bg-card-bg/60 text-muted-fg hover:bg-hover-bg hover:text-fg"
+              } ${autoMode && !showOptions ? "ring-1 ring-emerald-400/60" : ""}`}
+              onClick={() => setShowOptions((prev) => !prev)}
+            >
+              <SlidersIcon />
+            </button>
+
+            <span className="hidden sm:inline text-[10px] text-muted-fg/60 font-mono tracking-tight select-none px-0.5">
+              ⌘↵
+            </span>
+
             {busy && text.trim().length === 0 ? (
               <button
                 type="button"
@@ -410,13 +535,6 @@ export function Composer(props: ComposerProps): ReactNode {
             )}
           </div>
         </div>
-
-        {/* Row 2 (Pickers): Agent & Model */}
-        {props.pickers && (
-          <div data-oc-composer-pickers className="mt-1.5 flex items-center gap-1.5 min-w-0 overflow-visible pt-1.5 border-t border-card-border/30">
-            {props.pickers}
-          </div>
-        )}
       </div>
     </div>
   );

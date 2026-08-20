@@ -41,6 +41,7 @@ import {
   pendingCountOtherSessions,
 } from "./pendingRequests.js";
 import { QuestionCard } from "./QuestionCard.js";
+import { useAutoMode } from "../composerOptions.js";
 
 export interface ChatCardsDockProps {
   readonly store?: PendingRequestsStore;
@@ -97,6 +98,16 @@ export function ChatCardsDock(props: ChatCardsDockProps) {
   );
   const cards = cardsForSession(state, activeSession);
   const othersCount = pendingCountOtherSessions(state, activeSession);
+  const autoMode = useAutoMode();
+
+  useEffect(() => {
+    if (!autoMode) return;
+    for (const card of cards) {
+      if (card.kind === "permission" && card.status === "pending") {
+        void controller.replyPermission(card.sessionId, card.requestId, "always");
+      }
+    }
+  }, [cards, autoMode, controller]);
 
   if (cards.length === 0 && othersCount === 0) return null;
 

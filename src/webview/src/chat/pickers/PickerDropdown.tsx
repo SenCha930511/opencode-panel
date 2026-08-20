@@ -79,7 +79,7 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
   return (
     <span
       ref={rootRef}
-      className="relative inline-flex min-w-0 shrink-0"
+      className="relative inline-flex min-w-0 shrink"
       onKeyDown={(event) => {
         if (event.key === "Escape" && props.open) {
           event.stopPropagation();
@@ -93,7 +93,7 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         aria-expanded={props.open}
         aria-label={props.title}
         title={hoverTooltip}
-        className="flex max-w-[140px] sm:max-w-[200px] items-center gap-1.5 rounded-full border border-card-border/80 bg-card-bg/80 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink-0 min-w-0"
+        className="flex max-w-[110px] sm:max-w-[160px] items-center gap-1 rounded-full border border-card-border/80 bg-card-bg/80 px-2 py-0.5 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0"
         onClick={props.onToggle}
       >
         {props.icon && <span className="shrink-0 text-muted-fg">{props.icon}</span>}

@@ -49,6 +49,13 @@ export interface PanelConfig {
   readonly autoStartServer: boolean;
   readonly minimumServerVersion: string;
   readonly debugLogs: boolean;
+  /**
+   * Panel interface language override: `"auto"` follows
+   * `vscode.env.language`; `"en"` / `"zh-TW"` pin a locale. Any other value
+   * (hand-edited config) degrades to `"auto"` semantics at the locale
+   * boundary (see host/locale.ts).
+   */
+  readonly language: string;
   readonly chatFontFamily: string;
   readonly chatFontSize: number;
 }
@@ -67,6 +74,7 @@ export const DEFAULT_PANEL_CONFIG: PanelConfig = {
   autoStartServer: true,
   minimumServerVersion: "0.0.0",
   debugLogs: false,
+  language: "auto",
   chatFontFamily: "",
   chatFontSize: 0,
 };
@@ -115,6 +123,7 @@ export function readPanelConfig(adapter: ConfigAdapter): PanelConfig {
       DEFAULT_PANEL_CONFIG.minimumServerVersion,
     ),
     debugLogs: readBoolean(adapter, "debugLogs", DEFAULT_PANEL_CONFIG.debugLogs),
+    language: readString(adapter, "language", DEFAULT_PANEL_CONFIG.language),
     chatFontFamily: readString(
       adapter,
       "chatFontFamily",

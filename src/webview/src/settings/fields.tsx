@@ -61,6 +61,43 @@ function ScopeChip(props: {
   );
 }
 
+/**
+ * Enum option label ids ride a naming convention
+ * (`settings.enumOption.<value-alnum>`), provisioned in strings.ts like the
+ * settings.field.* labels; the fallback chain renders the id itself if a
+ * value is ever added to a manifest enum without a provisioned label.
+ */
+function enumOptionLabelId(value: string): StringId {
+  return `settings.enumOption.${value.replace(/[^a-zA-Z0-9]/g, "")}` as StringId;
+}
+
+function EnumSelect(props: {
+  readonly field: SettingField;
+  readonly value: string;
+  readonly disabled: boolean;
+  onCommit(value: string): void;
+}): ReactNode {
+  const { t } = useStrings();
+  const options = props.field.enum ?? [];
+  return (
+    <select
+      aria-label={t(fieldLabelId(props.field))}
+      className={`${INPUT_CLASS} cursor-pointer`}
+      disabled={props.disabled}
+      value={options.includes(props.value) ? props.value : (props.field.defaultValue as string)}
+      onChange={(event) => {
+        props.onCommit(event.target.value);
+      }}
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {t(enumOptionLabelId(option))}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function StringInput(props: {
   readonly label: string;
   readonly value: string;
@@ -161,6 +198,16 @@ function FieldControl(props: FieldRowProps & { onTextError(reason: string | null
   const label = t(fieldLabelId(field));
   switch (field.type) {
     case "string":
+      if (field.enum !== undefined) {
+        return (
+          <EnumSelect
+            field={field}
+            disabled={props.disabled}
+            value={typeof value === "string" ? value : String(field.defaultValue)}
+            onCommit={props.onValueChange}
+          />
+        );
+      }
       return (
         <StringInput
           label={label}

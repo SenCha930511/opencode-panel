@@ -77,6 +77,7 @@ describe("readPanelConfig", () => {
       debugLogs: true,
       chatFontFamily: "JetBrains Mono",
       chatFontSize: 15,
+      language: "auto",
     });
     // When
     const config = readPanelConfig(adapter);
@@ -92,6 +93,7 @@ describe("readPanelConfig", () => {
       debugLogs: true,
       chatFontFamily: "JetBrains Mono",
       chatFontSize: 15,
+      language: "auto",
     });
   });
 

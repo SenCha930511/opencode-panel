@@ -84,6 +84,34 @@ describe("createInitPayloadBuilder — disconnected manager", () => {
     expect(payload.strings).toBe(zhTW);
   });
 
+  it("honors the opencodePanel.language override over the display language", async () => {
+    const pinned = await createInitPayloadBuilder({
+      envLanguage: "en-US",
+      config: realConfigAccessor({ ...DEFAULT_PANEL_CONFIG, language: "zh-TW" }),
+      manager: stoppedManager(),
+    })();
+    expect(pinned.locale).toBe("zh-TW");
+    expect(pinned.strings).toBe(zhTW);
+
+    const unpinned = await createInitPayloadBuilder({
+      envLanguage: "zh-tw",
+      config: realConfigAccessor({ ...DEFAULT_PANEL_CONFIG, language: "en" }),
+      manager: stoppedManager(),
+    })();
+    expect(unpinned.locale).toBe("en");
+    expect(unpinned.strings).toBe(en);
+  });
+
+  it("degrades a hand-edited language value to auto semantics", async () => {
+    const payload = await createInitPayloadBuilder({
+      envLanguage: "zh-tw",
+      config: realConfigAccessor({ ...DEFAULT_PANEL_CONFIG, language: "klingon" }),
+      manager: stoppedManager(),
+    })();
+    expect(payload.locale).toBe("zh-TW");
+    expect(payload.strings).toBe(zhTW);
+  });
+
   it("carries no credentials in the serialized payload", async () => {
     const build = createInitPayloadBuilder({
       envLanguage: "en",

@@ -805,7 +805,7 @@ export interface DockServiceDeps {
   /** User-visible toast seam (the empty-set path has no other signal). */
   readonly notify?: { (level: ToastLevel, text: string): void };
   /** Localized body for the empty-diff toast (defaults to the en table). */
-  readonly emptyDiffText?: string;
+  readonly emptyDiffText?: string | (() => string);
 }
 
 export interface DockService {
@@ -836,7 +836,12 @@ export function createDockService(deps: DockServiceDeps): DockService {
       }
       if (outcome.items.length === 0) {
         deps.logger.debug(`dock: openDiff for session ${sessionId}: no changed files`);
-        deps.notify?.("info", deps.emptyDiffText ?? "No file changes in this session");
+        const emptyText = deps.emptyDiffText;
+        deps.notify?.(
+          "info",
+          (typeof emptyText === "function" ? emptyText() : emptyText) ??
+            "No file changes in this session",
+        );
         return;
       }
       const targetItems = file

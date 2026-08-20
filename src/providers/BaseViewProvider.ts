@@ -257,6 +257,15 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Public refresh seam: callers that mutate any init slice (e.g. the
+   * opencodePanel.language override on config change) re-post the full
+   * payload through the exact path the visibility/manager transitions use.
+   */
+  async refreshInit(): Promise<void> {
+    await this.postInitRefresh();
+  }
+
+  /**
    * Init refresh on connection/server-lost transitions (todo 10): the
    * payload's `server` slice doubles as the visible server-status affordance
    * this milestone.

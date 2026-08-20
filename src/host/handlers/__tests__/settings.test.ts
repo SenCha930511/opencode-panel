@@ -231,6 +231,9 @@ describe("setSettings", () => {
       ["autoStartServer", 1],
       ["debugLogs", "yes"],
       ["serverArgs", ["--a", 3]],
+      ["language", "klingon"],
+      ["language", ""],
+      ["language", 42],
       ["bogusKey", 1],
     ];
     // When/Then: every entry raises the aggregate typed error

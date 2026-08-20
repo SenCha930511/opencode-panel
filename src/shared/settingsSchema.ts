@@ -24,6 +24,7 @@ export interface SettingField {
   readonly min?: number;
   readonly max?: number;
   readonly integer?: boolean;
+  readonly enum?: readonly string[];
   readonly format?: SettingTextFormat;
   readonly description: { readonly en: string; readonly zhTW: string };
 }
@@ -150,6 +151,18 @@ export const SETTING_FIELDS: readonly SettingField[] = [
       zhTW: "面板中聊天訊息顯示的字體大小（px）。`0` 表示沿用 VS Code 預設值。",
     },
   },
+  {
+    key: "opencodePanel.language",
+    shortKey: "language",
+    type: "string",
+    defaultValue: "auto",
+    section: "appearance",
+    enum: ["auto","en","zh-TW"],
+    description: {
+      en: "Interface language of the panel: `auto` follows VS Code's display language, or pin a locale explicitly. Applies instantly to every open panel.",
+      zhTW: "面板的介面語言：`auto` 跟隨 VS Code 顯示語言，或明確指定語系。變更即時套用到所有已開啟的面板。",
+    },
+  },
 ];
 
 /** Typed settings values; keys mirror the manifest short keys 1:1. */
@@ -164,6 +177,7 @@ export interface SettingsValues {
   readonly debugLogs: boolean;
   readonly chatFontFamily: string;
   readonly chatFontSize: number;
+  readonly language: string;
 }
 
 export function defaultSettingsValues(): SettingsValues {
@@ -178,6 +192,7 @@ export function defaultSettingsValues(): SettingsValues {
     debugLogs: false,
     chatFontFamily: "",
     chatFontSize: 0,
+    language: "auto",
   };
 }
 
@@ -204,6 +219,7 @@ const VALUE_ACCESSORS: ReadonlyMap<string, (values: SettingsValues) => SettingVa
   ["debugLogs", (values: SettingsValues): SettingValue => values.debugLogs],
   ["chatFontFamily", (values: SettingsValues): SettingValue => values.chatFontFamily],
   ["chatFontSize", (values: SettingsValues): SettingValue => values.chatFontSize],
+  ["language", (values: SettingsValues): SettingValue => values.language],
 ]);
 
 /** Typed per-field read over a SettingsValues record (generated accessors). */
@@ -265,6 +281,7 @@ export function coerceSettingsValues(raw: unknown): SettingsValues {
     debugLogs: coerceBoolean(record, "debugLogs", defaults.debugLogs),
     chatFontFamily: coerceString(record, "chatFontFamily", defaults.chatFontFamily),
     chatFontSize: coerceNumber(record, "chatFontSize", defaults.chatFontSize),
+    language: coerceString(record, "language", defaults.language),
   };
 }
 
@@ -284,6 +301,8 @@ export function validateFieldValue(field: SettingField, value: SettingValue): st
     }
     case "string": {
       if (typeof value !== "string") return `${field.shortKey}: must be a string`;
+      if (field.enum !== undefined && !field.enum.includes(value))
+        return `${field.shortKey}: must be one of ${field.enum.join(", ")}`;
       switch (field.format ?? "text") {
         case "text":
           return null;

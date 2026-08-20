@@ -99,6 +99,7 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
               <li key={command.name}>
                 <div
                   role="option"
+                  title={command.description ? `${command.name} — ${command.description}` : command.name}
                   aria-selected={isActive}
                   data-active={isActive}
                   className={`flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-1.5 text-start transition-colors cursor-pointer group ${
@@ -118,7 +119,10 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
                     <span className="font-medium text-fg">{command.name}</span>
                   </div>
                   {command.description !== undefined && (
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-right font-normal">
+                    <span
+                      title={command.description}
+                      className="min-w-0 flex-1 truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-right font-normal"
+                    >
                       {command.description}
                     </span>
                   )}

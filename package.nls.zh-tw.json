@@ -22,6 +22,7 @@
   "opencodePanel.config.autoStartServer.markdownDescription": "啟用後，當設定的端點上找不到健康的伺服器時，擴充套件會啟動受管理的 `opencode serve` 行程。外部（使用者自行啟動）的伺服器只會被連接，絕不會被終止。",
   "opencodePanel.config.minimumServerVersion.markdownDescription": "可接受的最低 opencode 伺服器版本。低於此版本的伺服器仍可執行，但擴充套件會顯示警告，並隱藏伺服器未提供的功能。設為 `0.0.0` 表示停用下限（僅警告）。",
   "opencodePanel.config.debugLogs.markdownDescription": "將詳細除錯輸出（含密鑰遮蔽）寫入「OpenCode Panel」輸出頻道。",
+  "opencodePanel.config.language.markdownDescription": "面板的介面語言：`auto` 跟隨 VS Code 顯示語言，或明確指定語系。變更即時套用到所有已開啟的面板。",
   "opencodePanel.config.chatFontFamily.markdownDescription": "面板中聊天訊息顯示的字型。留空則沿用 VS Code 編輯器字型。",
   "opencodePanel.config.chatFontSize.markdownDescription": "面板中聊天訊息顯示的字體大小（px）。`0` 表示沿用 VS Code 預設值。"
 }
