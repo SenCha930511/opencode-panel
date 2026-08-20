@@ -105,11 +105,9 @@ export function resolveTuiPlan(state: ServerManagerState): TuiPlan {
   }
 }
 
-/** Double-quote a binary path containing spaces; escape shell-active chars. */
-export function shellQuote(binaryPath: string): string {
-  return /\s/.test(binaryPath)
-    ? `"${binaryPath.replace(/["\\$`]/g, "\\$&")}"`
-    : binaryPath;
+/** Single-quote a shell word (`'` → `'\''`), unconditionally: config-sourced values are workspace-controlled, so shell metacharacters must never reach the shell bare. */
+export function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
 /** The exact command line executed in the terminal for a plan. */
@@ -117,7 +115,7 @@ export function planCommandLine(plan: TuiPlan, binaryPath: string): string {
   const binary = shellQuote(binaryPath);
   switch (plan.kind) {
     case "attach":
-      return `${binary} attach ${plan.baseUrl}`;
+      return `${binary} attach ${shellQuote(plan.baseUrl)}`;
     case "plain":
       return binary;
     default:

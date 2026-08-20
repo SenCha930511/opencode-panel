@@ -155,24 +155,38 @@ describe("resolveTuiPlan", () => {
 });
 
 describe("planCommandLine / shellQuote", () => {
-  it("builds the attach argv for a connected plan", () => {
+  it("builds the attach argv for a connected plan, quoting binary and URL", () => {
     // Given/When/Then
     expect(planCommandLine({ kind: "attach", baseUrl: MANAGED_URL }, "opencode")).toBe(
-      `opencode attach ${MANAGED_URL}`,
+      `'opencode' attach '${MANAGED_URL}'`,
     );
   });
 
-  it("builds the bare binary line for a plain plan", () => {
+  it("builds the single-quoted binary line for a plain plan", () => {
     // Given/When/Then
-    expect(planCommandLine({ kind: "plain" }, "opencode")).toBe("opencode");
+    expect(planCommandLine({ kind: "plain" }, "opencode")).toBe("'opencode'");
   });
 
   it("quotes binary paths containing spaces", () => {
     // Given/When/Then
-    expect(shellQuote("/opt/my tools/opencode")).toBe('"/opt/my tools/opencode"');
+    expect(shellQuote("/opt/my tools/opencode")).toBe("'/opt/my tools/opencode'");
     expect(planCommandLine({ kind: "plain" }, "/opt/my tools/opencode")).toBe(
-      '"/opt/my tools/opencode"',
+      "'/opt/my tools/opencode'",
     );
+  });
+
+  it("neutralizes shell metacharacters even without whitespace", () => {
+    // Given/When/Then
+    expect(shellQuote("opencode;id>/tmp/x")).toBe("'opencode;id>/tmp/x'");
+    expect(shellQuote("$(evil)")).toBe("'$(evil)'");
+    expect(planCommandLine({ kind: "plain" }, "opencode;id>/tmp/x")).toBe(
+      "'opencode;id>/tmp/x'",
+    );
+  });
+
+  it("escapes embedded single quotes", () => {
+    // Given/When/Then
+    expect(shellQuote("o'code")).toBe("'o'\\''code'");
   });
 });
 
@@ -219,7 +233,7 @@ describe("TuiLauncher", () => {
         },
       },
     ]);
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`]);
     expect(factory.terminals[0]?.shows).toBe(1);
   });
 
@@ -230,7 +244,7 @@ describe("TuiLauncher", () => {
     // When
     await launcher.open();
     // Then
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`]);
     expect(factory.options[0]?.env).toEqual({ OPENCODE_SERVER_PASSWORD: PASSWORD });
   });
 
@@ -240,7 +254,7 @@ describe("TuiLauncher", () => {
     // When
     await launcher.open();
     // Then
-    expect(factory.terminals[0]?.runs).toEqual(["opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual(["'opencode'"]);
     expect(factory.options[0]?.env).toEqual({});
   });
 
@@ -255,7 +269,7 @@ describe("TuiLauncher", () => {
     // Then: one terminal created, shown twice, one launch per invocation
     expect(factory.options).toHaveLength(1);
     expect(factory.terminals[0]?.shows).toBe(2);
-    expect(factory.terminals[0]?.runs).toEqual(["opencode", "opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual(["'opencode'", "'opencode'"]);
   });
 
   it("does not relaunch while a TUI occupies the terminal", async () => {
@@ -267,7 +281,7 @@ describe("TuiLauncher", () => {
     await launcher.open();
     // Then: one terminal, one command line, revealed both times
     expect(factory.options).toHaveLength(1);
-    expect(factory.terminals[0]?.runs).toEqual(["opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual(["'opencode'"]);
     expect(factory.terminals[0]?.shows).toBe(2);
   });
 
@@ -283,7 +297,7 @@ describe("TuiLauncher", () => {
     await flush();
     // Then: plain binary re-run in the SAME terminal (no new creation), one toast
     expect(factory.options).toHaveLength(1);
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`, "opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`, "'opencode'"]);
     expect(infos).toHaveLength(1);
     expect(logs.join("\n")).toContain("falling back");
   });
@@ -296,7 +310,7 @@ describe("TuiLauncher", () => {
     await launcher.open();
     await flush();
     // Then
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`, "opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`, "'opencode'"]);
     expect(infos).toHaveLength(1);
   });
 
@@ -307,7 +321,7 @@ describe("TuiLauncher", () => {
     await launcher.open();
     await flush();
     // Then
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`]);
     expect(infos).toHaveLength(0);
   });
 
@@ -317,7 +331,7 @@ describe("TuiLauncher", () => {
     await launcher.open();
     await flush();
     // Then: no fallback, no toast, and the launcher stays usable afterwards
-    expect(factory.terminals[0]?.runs).toEqual([`opencode attach ${MANAGED_URL}`]);
+    expect(factory.terminals[0]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`]);
     expect(infos).toHaveLength(0);
     await launcher.open();
     expect(factory.terminals[0]?.runs).toHaveLength(2);
@@ -371,7 +385,7 @@ describe("TuiLauncher", () => {
     expect(factory.terminals[0]?.disposed).toBe(true);
     expect(factory.options).toHaveLength(2);
     expect(factory.options[1]?.env).toEqual({ OPENCODE_SERVER_PASSWORD: PASSWORD });
-    expect(factory.terminals[1]?.runs).toEqual([`opencode attach ${MANAGED_URL}`]);
+    expect(factory.terminals[1]?.runs).toEqual([`'opencode' attach '${MANAGED_URL}'`]);
   });
 
   it("keeps a running terminal even when the plan env would differ", async () => {
@@ -386,7 +400,7 @@ describe("TuiLauncher", () => {
     // Then: the user's session is NOT killed to refresh credentials
     expect(factory.options).toHaveLength(1);
     expect(factory.terminals[0]?.disposed).toBe(false);
-    expect(factory.terminals[0]?.runs).toEqual(["opencode"]);
+    expect(factory.terminals[0]?.runs).toEqual(["'opencode'"]);
   });
 
   it("detaches listeners on dispose but never disposes the terminal", async () => {
