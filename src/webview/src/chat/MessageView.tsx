@@ -56,22 +56,24 @@ export function MessageView(props: {
     <article
       data-role={message.role}
       data-in-flight={message.inFlight}
-      className={`group relative my-2.5 text-sm transition-all ${
+      className={`group relative text-[13px] transition-all break-words [overflow-wrap:anywhere] ${
         isUser
-          ? "ml-auto max-w-[90%] rounded-2xl rounded-tr-xs border border-card-border/80 bg-user-msg-bg/90 px-3.5 py-2.5 shadow-2xs"
-          : "w-full py-1 text-fg"
+          ? "my-2.5 w-full rounded-2xl border border-card-border/80 bg-card-bg/60 p-3 shadow-2xs text-fg"
+          : "my-2 w-full px-0.5 py-1 text-fg"
       }`}
     >
-      <div className="space-y-2 min-w-0 max-w-full overflow-hidden text-sm">
+      <div className="space-y-1.5 min-w-0 max-w-full overflow-hidden text-[13px] break-words [overflow-wrap:anywhere]">
         {message.parts.map((part) => (
           <PartView key={part.id} part={part} />
         ))}
       </div>
-      <MessageActionsMenu
-        message={message}
-        {...(props.store === undefined ? {} : { store: props.store })}
-        className="absolute right-2 top-2 z-10 hidden group-hover:flex"
-      />
+      <div className="mt-1 flex items-center justify-end">
+        <MessageActionsMenu
+          message={message}
+          {...(props.store === undefined ? {} : { store: props.store })}
+          className="hidden group-hover:flex"
+        />
+      </div>
     </article>
   );
 }

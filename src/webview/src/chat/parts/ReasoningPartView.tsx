@@ -29,13 +29,18 @@ function BrainIcon(): ReactNode {
 export function ReasoningPartView(props: { readonly part: Extract<PartVM, { kind: "reasoning" }> }) {
   const { t } = useStrings();
   return (
-    <details className="my-1.5 overflow-hidden rounded-xl border border-card-border bg-card-bg/50 text-xs shadow-2xs transition-all">
-      <summary className="flex cursor-pointer select-none items-center gap-1.5 px-3 py-2 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg font-medium">
+    <details className="group my-1 overflow-hidden rounded-lg text-xs transition-all">
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 text-muted-fg hover:text-fg font-medium transition-colors">
+        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90">
+          ▶
+        </span>
         <BrainIcon />
-        <span className="not-italic font-semibold text-fg/90 shrink-0">{t("messages.thinking")}</span>
-        <span className="truncate opacity-70 italic font-normal text-[11px] min-w-0 flex-1">{snippet(props.part.text)}</span>
+        <span className="font-semibold text-fg/90 shrink-0">{t("messages.thinking")}</span>
+        <span className="truncate opacity-70 italic font-normal text-[11px] min-w-0 flex-1">
+          {snippet(props.part.text)}
+        </span>
       </summary>
-      <div className="border-t border-card-border/60 bg-bg/30 px-3.5 py-2.5 font-mono text-[11px] leading-relaxed text-muted-fg">
+      <div className="mt-1 pl-4 border-l border-card-border/60 font-mono text-[11px] leading-relaxed text-muted-fg">
         <Markdown text={props.part.text} className="leading-relaxed break-words" />
       </div>
     </details>

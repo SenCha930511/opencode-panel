@@ -193,7 +193,7 @@ export function MessageList(props: MessageListProps) {
       <Virtuoso
         ref={virtuosoRef}
         data={state.messages}
-        className="h-full px-2.5"
+        className="h-full px-3 py-1"
         atBottomThreshold={80}
         followOutput={park.current.followFor}
         atBottomStateChange={(isBottom: boolean) => {
@@ -207,7 +207,9 @@ export function MessageList(props: MessageListProps) {
   return (
     <ChatActionsProvider actions={props.actions ?? defaultActionsFallback}>
       <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden text-fg">
-        {body}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {body}
+        </div>
         {!atBottom && state.messages.length > 0 && (
           <button
             type="button"
