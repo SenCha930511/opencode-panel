@@ -32,6 +32,7 @@ import { Composer, ChatDock } from "../Composer.js";
 import {
   buildPromptPayload,
   composerDisabled,
+  ensureSessionForSend,
   placeholderForStatus,
   requestAbort,
   shouldSend,
@@ -350,6 +351,33 @@ describe("wire round-trips", () => {
     expect(await pending).toBe(true);
     expect(errors).toEqual([]);
   });
+
+describe("ensureSessionForSend", () => {
+  it("with no active session: creates a new chat and returns its id", async () => {
+    const loop = createLoopback();
+    const pending = ensureSessionForSend(loop.messenger, undefined);
+
+    // Given: exactly one outgoing wire request — the typed createSession
+    const envelope = captured(loop.posted);
+    expect(envelope.type).toBe("createSession");
+    expect(envelope.payload).toEqual({});
+
+    // When: the host replies with the new id
+    loop.emit({
+      type: "streamChunk",
+      payload: { messageId: envelope.messageId, status: "success", done: true, content: { id: "ses_new" } },
+    });
+
+    // Then
+    expect(await pending).toBe("ses_new");
+  });
+
+  it("with an active session: returns it untouched and posts nothing", async () => {
+    const loop = createLoopback();
+    expect(await ensureSessionForSend(loop.messenger, "ses_keep")).toBe("ses_keep");
+    expect(loop.posted).toEqual([]);
+  });
+});
 
   it("failure folds to false + reports the error text (draft stays: the caller never clears on false)", async () => {
     const loop = createLoopback();

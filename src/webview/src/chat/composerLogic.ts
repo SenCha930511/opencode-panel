@@ -19,6 +19,22 @@ import type { FromWebviewProtocol } from "../../../shared/protocol.js";
 import type { StringId } from "../../../shared/strings.js";
 import type { WebviewMessenger } from "../../lib/messenger.js";
 import type { ServerStatus } from "../app/context.js";
+import { setActiveSession } from "./activeSession.js";
+
+/**
+ * Resolve the session a send targets: the active one, or — on the home
+ * screen where none exists — a freshly created chat that gets pinned as the
+ * active session so the composer, message list, and host sync all follow it.
+ */
+export async function ensureSessionForSend(
+  messenger: WebviewMessenger,
+  sessionId: string | undefined,
+): Promise<string> {
+  if (sessionId !== undefined) return sessionId;
+  const created = await messenger.request("createSession", {});
+  setActiveSession(created.id);
+  return created.id;
+}
 
 /** One attachment chip staged in the composer (todo-17 fills this in). */
 export interface ComposerAttachment {

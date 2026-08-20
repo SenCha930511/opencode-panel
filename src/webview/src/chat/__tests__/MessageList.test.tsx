@@ -222,7 +222,7 @@ describe("MessageList rendering", () => {
     expect(html).toContain("hidden detail");
   });
 
-  it("renders unknown part types as a JSON card without crashing", () => {
+  it("renders unknown part types as a JSON card without crashing, while hiding step lifecycle parts", () => {
     const store = new MessageStore();
     store.applyFullSync(SESSION, [
       {
@@ -232,6 +232,13 @@ describe("MessageList rendering", () => {
             id: "prt_x",
             sessionID: SESSION,
             messageID: "msg_5",
+            type: "custom-plugin-data",
+            value: "payload-123",
+          },
+          {
+            id: "prt_step",
+            sessionID: SESSION,
+            messageID: "msg_5",
             type: "step-finish",
             reason: "stop",
           },
@@ -239,8 +246,9 @@ describe("MessageList rendering", () => {
       },
     ]);
     const html = renderMessages(storedMessages(store));
-    expect(html).toContain("step-finish");
-    expect(html).toContain("&quot;reason&quot;: &quot;stop&quot;");
+    expect(html).toContain("custom-plugin-data");
+    expect(html).toContain("&quot;value&quot;: &quot;payload-123&quot;");
+    expect(html).not.toContain("step-finish");
   });
 
   it("QA FAILURE FIXTURE: neutralizes XSS markdown payloads", () => {

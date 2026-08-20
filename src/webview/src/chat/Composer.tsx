@@ -59,6 +59,7 @@ import { expandMentionPaths } from "./attachments/logic.js";
 import {
   buildPromptPayload,
   composerDisabled,
+  ensureSessionForSend,
   placeholderForStatus,
   requestAbort,
   shouldSend,
@@ -172,27 +173,42 @@ export function Composer(props: ComposerProps): ReactNode {
   );
 
   const inputDisabled = composerDisabled(status);
-  const canSend =
-    !inputDisabled && !busy && sessionId !== undefined && text.trim().length > 0;
+  const [creating, setCreating] = useState(false);
+  // No active session must not dead-key the send action: the first send from
+  // the home screen creates a fresh chat and posts the prompt into it.
+  const canSend = !inputDisabled && !busy && !creating && text.trim().length > 0;
 
   const handleSend = useCallback(() => {
-    if (!canSend || sessionId === undefined) return;
+    if (!canSend) return;
     const effectiveText = expandMentionPaths(text);
-    const payload = buildPromptPayload({
-      sessionId,
-      text: effectiveText,
-      attachments: chips,
-      ...(props.agent === undefined ? {} : { agent: props.agent }),
-      ...(props.model === undefined ? {} : { model: props.model }),
-    });
-    // Fire-and-observe: the reply only gates the draft clear; streamed state
-    // arrives via the todo-9/13 channel, so the UI never blocks here.
-    void submitPrompt(app.messenger, payload, reportError).then((ok) => {
+    void (async () => {
+      let target = sessionId;
+      if (target === undefined) {
+        setCreating(true);
+        try {
+          target = await ensureSessionForSend(app.messenger, sessionId);
+        } catch (error) {
+          setCreating(false);
+          reportError(error instanceof Error ? error.message : String(error));
+          return;
+        }
+        setCreating(false);
+      }
+      const payload = buildPromptPayload({
+        sessionId: target,
+        text: effectiveText,
+        attachments: chips,
+        ...(props.agent === undefined ? {} : { agent: props.agent }),
+        ...(props.model === undefined ? {} : { model: props.model }),
+      });
+      // Fire-and-observe: the reply only gates the draft clear; streamed state
+      // arrives via the todo-9/13 channel, so the UI never blocks here.
+      const ok = await submitPrompt(app.messenger, payload, reportError);
       if (ok) {
         setText("");
-        drafts.clear(sessionId);
+        drafts.clear(target);
       }
-    });
+    })();
   }, [app.messenger, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text]);
 
   const handleAbort = useCallback(() => {
