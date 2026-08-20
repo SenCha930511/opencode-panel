@@ -26,6 +26,8 @@ export interface PickerDropdownProps {
   readonly title: string;
   /** Leading icon for the button. */
   readonly icon?: ReactNode;
+  /** Alignment of popup menu ("start" for left-aligned, "end" for right-aligned). */
+  readonly align?: "start" | "end";
   /** Trigger text when a selection (or resolved default) exists. */
   readonly currentLabel?: string;
   /** Abbreviated display label on the button. */
@@ -102,7 +104,9 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         <div
           role="listbox"
           aria-label={props.title}
-          className="absolute bottom-full left-0 z-50 mb-2 max-h-64 w-60 sm:w-72 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs"
+          className={`absolute bottom-full ${
+            props.align === "end" ? "right-0" : "left-0"
+          } z-50 mb-2 max-h-64 w-60 sm:w-64 max-w-[calc(100vw-36px)] overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs`}
         >
           {props.groups.map((group, groupIndex) => (
             <div

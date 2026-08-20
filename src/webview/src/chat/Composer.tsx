@@ -53,6 +53,7 @@ import {
 import { useStrings } from "../../lib/i18n.js";
 import { useApp } from "../app/context.js";
 import { useActiveSession } from "./activeSession.js";
+import type { ChatActions } from "./chatContext.js";
 import { DefaultAttachmentChip } from "./composerChips.js";
 import { expandMentionPaths } from "./attachments/logic.js";
 import {

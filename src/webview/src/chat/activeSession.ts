@@ -66,6 +66,18 @@ export function adoptSessionFrom(payload: unknown): void {
   }
 }
 
+/**
+ * Clear the chat-side selection (T12 prune path): a selected session that no
+ * longer exists server-side is cleared from the panel's list; the chat must
+ * follow or the composer keeps prompting the dead id (404 "Session not
+ * found"). No selectSession post — the next explicit pick re-pins the host.
+ */
+export function clearActiveSession(): void {
+  if (activeSessionId === undefined) return;
+  activeSessionId = undefined;
+  emit();
+}
+
 /** Test seam: reset between suites (production never clears). */
 export function resetActiveSessionForTest(): void {
   activeSessionId = undefined;

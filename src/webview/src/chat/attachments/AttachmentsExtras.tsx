@@ -39,6 +39,7 @@ import {
   readFileAsDataUrl,
   setTextareaValue,
 } from "./domGlue.js";
+import { ImageAttachmentError } from "./images.js";
 import {
   baseNameOfPath,
   extractMentionQuery,

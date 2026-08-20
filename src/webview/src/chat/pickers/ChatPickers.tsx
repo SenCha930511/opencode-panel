@@ -156,6 +156,7 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
     <PickerDropdown
       title={t("picker.model.title")}
       icon={<SparkleIcon />}
+      align="end"
       groups={groups}
       open={open}
       {...(props.value === undefined ? {} : { currentLabel: props.value })}

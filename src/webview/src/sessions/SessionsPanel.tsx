@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getWebviewMessenger } from "../../lib/messenger.js";
-import { setActiveSession } from "../chat/activeSession.js";
+import { useApp } from "../app/context.js";
+import { clearActiveSession, setActiveSession } from "../chat/activeSession.js";
 import { attachNewSessionCommand } from "./newSessionCommand.js";
 import { createWebviewPersistence } from "./persistence.js";
 import { setSharedSessionsStore, SessionsStore } from "./sessionsStore.js";
@@ -57,7 +58,11 @@ export function SessionsPanel(): ReactNode {
   useEffect(
     () =>
       store.activeSession.subscribe((id) => {
-        if (id !== null) setActiveSession(id);
+        if (id === null) {
+          clearActiveSession();
+        } else {
+          setActiveSession(id);
+        }
       }),
     [store],
   );

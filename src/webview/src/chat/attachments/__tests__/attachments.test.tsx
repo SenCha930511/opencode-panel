@@ -43,7 +43,9 @@ import {
 import {
   baseNameOfPath,
   chipFromPath,
+  expandMentionPaths,
   extractMentionQuery,
+  recordMentionPath,
   replaceMentionToken,
   sensitivePathReason,
   stripMentionToken,
@@ -182,6 +184,15 @@ describe("extractMentionQuery", () => {
     const { newText, newCaret } = replaceMentionToken(text, mention, "src/app.ts");
     expect(newText).toBe("please check @src/app.ts  for this");
     expect(newCaret).toBe(25);
+  });
+
+  it("recordMentionPath and expandMentionPaths expands @filename to @fullpath on send", () => {
+    recordMentionPath("sessions.ts", "src/host/handlers/sessions.ts");
+    recordMentionPath("app.tsx", "src/webview/src/App.tsx");
+    const text = "Please inspect @sessions.ts and @app.tsx now";
+    expect(expandMentionPaths(text)).toBe(
+      "Please inspect @src/host/handlers/sessions.ts and @src/webview/src/App.tsx now",
+    );
   });
 });
 
