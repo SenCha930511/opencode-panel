@@ -222,3 +222,28 @@ describe("dev mode shell", () => {
     expect(view.webview.html).toContain("ws://localhost:5173");
   });
 });
+
+describe("view-kind discriminator wiring (fix: duplicated stacked views)", () => {
+  it("stamps the chat shell as chat and the sessions shell as sessions", () => {
+    // Given: both providers over the shared deps
+    const { chat, sessions } = createFixture();
+    // When: each contributed view resolves
+    const chatView = new FakeWebviewView();
+    chat.resolveWebviewView(chatView, {}, {});
+    const sessionsView = new FakeWebviewView();
+    sessions.resolveWebviewView(sessionsView, {}, {});
+    // Then: each shell carries its own view-kind global before the bundle
+    expect(chatView.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="chat";');
+    expect(sessionsView.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="sessions";');
+  });
+
+  it("carries the sessions stamp in the dev-mode shell too", () => {
+    // Given/When: the sessions provider resolves against the dev server shell
+    const { sessions } = createFixture(true);
+    const view = new FakeWebviewView();
+    sessions.resolveWebviewView(view, {}, {});
+    // Then: the discriminator rides the relaxed shell as well
+    expect(view.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="sessions";');
+    expect(view.webview.html).toContain("http://localhost:5173/src/main.tsx");
+  });
+});

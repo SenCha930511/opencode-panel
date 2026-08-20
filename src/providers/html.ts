@@ -14,6 +14,16 @@
  * (http://localhost:5173 + ws://localhost:5173) and drops 'strict-dynamic',
  * which breaks the dev client's module graph.
  *
+ * VIEW-KIND INJECTION CONTRACT (fix: duplicated stacked blocks): both
+ * contributed views load the same bundle, so the shell stamps WHICH view it
+ * hosts — one tiny inline script BEFORE the bundle:
+ *   `globalThis.__OPENCODE_PANEL_VIEW__ = "<kind>"` ("chat" | "sessions").
+ * The webview reads it via src/webview/src/app/viewKind.ts: the chat view
+ * renders the full app, the sessions view renders ONLY the sessions panel.
+ * The production CSP admits the inline script through the SAME per-load
+ * nonce the bundle tag carries — no non-nonced inline script is ever added;
+ * the dev CSP is 'unsafe-inline' regardless.
+ *
  * Pure module: no `vscode` import, no DOM — unit-testable under node.
  */
 
@@ -21,6 +31,9 @@ import { randomBytes } from "node:crypto";
 
 export const DEV_SERVER_ORIGIN = "http://localhost:5173";
 export const DEV_SERVER_WS_ORIGIN = "ws://localhost:5173";
+
+/** Which contributed view a shell hosts (todo-1 two-view topology). */
+export type PanelViewKind = "chat" | "sessions";
 
 export interface WebviewShellInput {
   /** `webview.cspSource` — the only non-'none' origin production CSP trusts. */
@@ -33,6 +46,11 @@ export interface WebviewShellInput {
   readonly nonce?: string;
   /** True ONLY behind the host `__DEV__` gate. */
   readonly dev?: boolean;
+  /**
+   * View kind stamped into `globalThis.__OPENCODE_PANEL_VIEW__` (see the
+   * module-header injection contract). Defaults to "chat".
+   */
+  readonly viewKind?: PanelViewKind;
 }
 
 /** 128 bits of entropy, base64-encoded — per-load CSP nonce. */
@@ -72,12 +90,16 @@ export function buildWebviewHtml(input: WebviewShellInput): string {
   // erase the Vite dev-server branch (and its origins) entirely.
   const dev = __DEV__ && (input.dev ?? false);
   const nonce = input.nonce ?? generateNonce();
+  const viewKind = input.viewKind ?? "chat";
   const csp = dev ? devCsp(input.cspSource) : productionCsp(input.cspSource, nonce);
   const styleLink =
     input.styleUri === undefined ? "" : `<link href="${input.styleUri}" rel="stylesheet" />`;
+  // View-kind stamp (see module header): nonce'd in production so the strict
+  // CSP admits it; dev CSP is 'unsafe-inline' anyway. MUST precede the bundle.
+  const viewKindScript = `<script nonce="${nonce}">globalThis.__OPENCODE_PANEL_VIEW__="${viewKind}";</script>`;
   const scriptTag = dev
-    ? `<script type="module" src="${DEV_SERVER_ORIGIN}/@vite/client"></script>\n<script type="module" src="${input.scriptUri}"></script>`
-    : `<script nonce="${nonce}" src="${input.scriptUri}"></script>`;
+    ? `${viewKindScript}\n<script type="module" src="${DEV_SERVER_ORIGIN}/@vite/client"></script>\n<script type="module" src="${input.scriptUri}"></script>`
+    : `${viewKindScript}\n<script nonce="${nonce}" src="${input.scriptUri}"></script>`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

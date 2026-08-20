@@ -5,9 +5,15 @@
  */
 
 import { BaseViewProvider, type ViewProviderDeps } from "./BaseViewProvider.js";
+import type { PanelViewKind } from "./html.js";
 
 export class SessionsViewProvider extends BaseViewProvider {
   constructor(deps: ViewProviderDeps) {
     super(deps);
+  }
+
+  /** Stamps the shell so the bundle mounts ONLY the sessions panel. */
+  protected override viewKind(): PanelViewKind {
+    return "sessions";
   }
 }

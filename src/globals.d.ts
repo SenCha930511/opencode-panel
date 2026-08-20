@@ -9,3 +9,17 @@
  * key off this constant so production builds tree-shake them out entirely.
  */
 declare const __DEV__: boolean;
+
+/**
+ * Webview-only view-kind discriminator, injected by the host shell (see
+ * src/providers/html.ts — the two contributed sidebar views load one shared
+ * bundle, and this stamp tells it which surface to mount: "chat" = the full
+ * app, "sessions" = the slim standalone sessions panel).
+ *
+ * Read defensively via src/webview/src/app/viewKind.ts. Declared as a plain
+ * `string` on purpose so the webview can narrow unknown/other host values
+ * back to the chat surface. Absent (`undefined`) outside webviews — node/SSR
+ * test code must tolerate that (and sets it explicitly only when exercising
+ * the sessions branch).
+ */
+declare var __OPENCODE_PANEL_VIEW__: string | undefined;

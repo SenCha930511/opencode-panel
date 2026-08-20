@@ -3,6 +3,7 @@ import { useStrings } from "../lib/i18n.js";
 import { ToastViewport } from "./app/ErrorBoundary";
 import { useApp, type Route } from "./app/context";
 import { Header } from "./app/Header";
+import { currentViewKind } from "./app/viewKind.js";
 import { useActiveSession } from "./chat/activeSession.js";
 import { SettingsPage } from "./settings/SettingsPage.js";
 
@@ -11,6 +12,16 @@ import { SettingsPage } from "./settings/SettingsPage.js";
  *
  * Routes: `chat` (default) | `settings` — a single webview with no router
  * lib; navigation mutates AppProvider state.
+ *
+ * TWO-VIEW TOPOLOGY (todo-1; fix: duplicated stacked blocks): the extension
+ * contributes TWO webview views to one viewsContainer, and both load this
+ * same bundle — the host shell's injected `__OPENCODE_PANEL_VIEW__` (read
+ * via app/viewKind.ts) picks the surface:
+ *  - chat view (kind "chat", the default): the full app below — Header,
+ *    chat route, settings route, keep-alive history drawer, toasts.
+ *  - sessions view (kind "sessions"): ONLY the slim sessions surface — one
+ *    full-area <section data-oc-slot="sessions"> holding the standalone
+ *    SessionsPanel. NO React Header, no chat section, no drawer machinery.
  *
  * SLOT CONTRACT (chat-first layout — supersedes the original two-column
  * aside/section split):
@@ -169,6 +180,21 @@ function readFontOverride(settings: Readonly<Record<string, unknown>>): {
   };
 }
 
+/**
+ * Standalone sessions surface (kind "sessions" only): the contributed
+ * sessions view renders this INSTEAD of the app shell — no Header, no chat
+ * section, no drawer. SessionsPanel keeps its own store/command intake alive
+ * here exactly as it does inside the chat view's history drawer.
+ */
+function SessionsViewSurface(): ReactNode {
+  const { slots } = useApp();
+  return (
+    <section data-oc-slot="sessions" className="flex min-h-0 flex-1 flex-col">
+      {slots.sessions ?? <DefaultSessionsSlot />}
+    </section>
+  );
+}
+
 export function App(): ReactNode {
   const { init, route } = useApp();
   const font = readFontOverride(init.settings);
@@ -181,6 +207,13 @@ export function App(): ReactNode {
   }
   if (font.size !== null) {
     style["--oc-chat-font-size"] = font.size;
+  }
+  if (currentViewKind() === "sessions") {
+    return (
+      <div className="flex h-full flex-col bg-bg text-fg" style={style}>
+        <SessionsViewSurface />
+      </div>
+    );
   }
   return (
     <div className="flex h-full flex-col bg-bg text-fg" style={style}>

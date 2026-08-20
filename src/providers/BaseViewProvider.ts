@@ -29,7 +29,7 @@ import type { PanelLogger } from "../host/logger.js";
 import { HostMessenger, type Handler, type HostPort } from "../host/messenger.js";
 import type { ServerManagerState } from "../server/ServerManager.js";
 import type { FromWebviewProtocol, HostMessage, InitPayload } from "../shared/protocol.js";
-import { buildWebviewHtml } from "./html.js";
+import { buildWebviewHtml, type PanelViewKind } from "./html.js";
 import type { HandlerRegistry } from "./handlers.js";
 import type { JoinPath, PanelWebview, PanelWebviewView } from "./webviewSeam.js";
 
@@ -173,6 +173,17 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
+  /**
+   * Two-view topology seam (fix: duplicated stacked blocks): which of the
+   * contributed views this provider serves — stamped into the resolved
+   * shell's `globalThis.__OPENCODE_PANEL_VIEW__` so the shared webview
+   * bundle renders the full chat app or the slim sessions panel. The chat
+   * provider keeps this default; SessionsViewProvider overrides it.
+   */
+  protected viewKind(): PanelViewKind {
+    return "chat";
+  }
+
   /** Posts a typed host message; recorded in dev, dropped when no view. */
   protected post(message: HostMessage): void {
     if (__DEV__) {
@@ -195,6 +206,7 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
         cspSource: webview.cspSource,
         scriptUri: "http://localhost:5173/src/main.tsx",
         dev: true,
+        viewKind: this.viewKind(),
       });
     }
     return buildWebviewHtml({
@@ -202,6 +214,7 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
       scriptUri: webview.asWebviewUri(joinPath(mediaRoot, "webview", "main.js")).toString(),
       styleUri: webview.asWebviewUri(joinPath(mediaRoot, "webview", "main.css")).toString(),
       dev: false,
+      viewKind: this.viewKind(),
     });
   }
 

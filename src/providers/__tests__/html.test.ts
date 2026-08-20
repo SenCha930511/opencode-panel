@@ -83,6 +83,75 @@ describe("production shell CSP", () => {
   });
 });
 
+describe("view-kind discriminator (fix: duplicated stacked views)", () => {
+  const STAMP = `globalThis.__OPENCODE_PANEL_VIEW__=`;
+
+  it("stamps the production sessions shell with a nonce'd inline script before the bundle", () => {
+    const nonce = generateNonce();
+    const html = buildWebviewHtml({
+      cspSource: CSP_SOURCE,
+      scriptUri: SCRIPT_URI,
+      styleUri: STYLE_URI,
+      dev: false,
+      nonce,
+      viewKind: "sessions",
+    });
+    const stamp = `<script nonce="${nonce}">${STAMP}"sessions";</script>`;
+    expect(html).toContain(stamp);
+    // Injected BEFORE the main bundle tag so the global exists at module init
+    expect(html.indexOf(stamp)).toBeLessThan(html.indexOf(`<script nonce="${nonce}" src=`));
+    // CSP and bundle wiring stay byte-identical to the chat shell
+    expect(html).toContain(`script-src 'nonce-${nonce}' 'strict-dynamic'`);
+    expect(html).toContain(`<script nonce="${nonce}" src="${SCRIPT_URI}">`);
+    // Still zero non-nonced scripts anywhere in the production shell
+    expect(html.match(/<script(?![^>]*\bnonce=")/g)).toBeNull();
+  });
+
+  it("leaves the chat CSP verbatim and stamps the default kind as chat", () => {
+    const nonce = generateNonce();
+    const html = productionShell(nonce);
+    const expected =
+      `default-src 'none'; img-src ${CSP_SOURCE} data:; ` +
+      `style-src ${CSP_SOURCE} 'unsafe-inline'; ` +
+      `script-src 'nonce-${nonce}' 'strict-dynamic'; connect-src ${CSP_SOURCE}; ` +
+      `font-src ${CSP_SOURCE}`;
+    expect(html).toContain(
+      `<meta http-equiv="Content-Security-Policy" content="${expected}" />`,
+    );
+    expect(html).toContain(`<script nonce="${nonce}">${STAMP}"chat";</script>`);
+  });
+
+  it("stamps the explicit chat kind identically to the default", () => {
+    const nonce = generateNonce();
+    const html = buildWebviewHtml({
+      cspSource: CSP_SOURCE,
+      scriptUri: SCRIPT_URI,
+      styleUri: STYLE_URI,
+      dev: false,
+      nonce,
+      viewKind: "chat",
+    });
+    expect(html).toContain(`<script nonce="${nonce}">${STAMP}"chat";</script>`);
+    expect(productionShell(nonce)).toContain(`<script nonce="${nonce}">${STAMP}"chat";</script>`);
+  });
+
+  it("stamps the dev sessions shell before the Vite client", () => {
+    const html = buildWebviewHtml({
+      cspSource: CSP_SOURCE,
+      scriptUri: "http://localhost:5173/src/main.tsx",
+      dev: true,
+      viewKind: "sessions",
+    });
+    const stamp = `${STAMP}"sessions";`;
+    expect(html).toContain(stamp);
+    expect(html.indexOf(stamp)).toBeLessThan(
+      html.indexOf('<script type="module" src="http://localhost:5173/@vite/client">'),
+    );
+    // Dev CSP is untouched: still relaxed, never nonce-bound
+    expect(html).toContain("script-src 'unsafe-inline' http://localhost:5173");
+  });
+});
+
 describe("dev shell", () => {
   it("relaxes CSP to the Vite dev server only in dev mode", () => {
     const html = buildWebviewHtml({

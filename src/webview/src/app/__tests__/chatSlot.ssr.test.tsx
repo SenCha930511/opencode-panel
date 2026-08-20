@@ -31,7 +31,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement, ReactNode } from "react";
 
@@ -49,6 +49,7 @@ const SENTINELS = {
   searchPlaceholder: "ZZ_SENTINEL_SEARCH_SESSIONS_ZZ",
   commandsTitle: "ZZ_SENTINEL_COMMANDS_MENU_ZZ",
   composerPlaceholder: "ZZ_SENTINEL_COMPOSER_PLACEHOLDER_ZZ",
+  history: "ZZ_SENTINEL_SESSIONS_HISTORY_ZZ",
   revert: "ZZ_SENTINEL_MESSAGE_REVERT_ZZ",
   unrevert: "ZZ_SENTINEL_MESSAGE_UNREVERT_ZZ",
 } as const;
@@ -61,6 +62,7 @@ function stubInit(overrides?: Partial<InitPayload>): InitPayload {
       "sessions.searchPlaceholder": SENTINELS.searchPlaceholder,
       "commands.title": SENTINELS.commandsTitle,
       "composer.placeholder": SENTINELS.composerPlaceholder,
+      "sessions.history": SENTINELS.history,
       "messages.revert": SENTINELS.revert,
       "messages.unrevert": SENTINELS.unrevert,
     },
@@ -178,6 +180,50 @@ function createAppSlotsTree(options?: { readonly initialSessionsOpen?: boolean }
     </StringsProvider>
   );
 }
+
+describe("sessions view kind (fix: duplicated stacked blocks)", () => {
+  // Every case here mutates the host-stamped global; restore absence so the
+  // rest of the suite (which pins the default chat surface) stays honest.
+  afterEach(() => {
+    const globals = globalThis as Record<string, unknown>;
+    delete globals.__OPENCODE_PANEL_VIEW__;
+  });
+
+  it("kind=sessions renders ONLY the standalone sessions surface", () => {
+    // Given: the shell stamped this webview as the contributed sessions view
+    const globals = globalThis as Record<string, unknown>;
+    globals.__OPENCODE_PANEL_VIEW__ = "sessions";
+    // When: the production slots tree renders
+    const html = renderToStaticMarkup(createAppSlotsTree());
+    // Then: the sessions surface is present — slot marker + the real
+    // SessionList search field served through t()
+    expect(html).toContain('data-oc-slot="sessions"');
+    expect(html).toContain(SENTINELS.searchPlaceholder);
+    // And: the chat machinery (composer, message area, toolbar, dock) is OUT
+    expect(html).not.toContain('data-oc-slot="chat"');
+    expect(html).not.toContain("data-oc-composer");
+    expect(html).not.toContain(SENTINELS.composerPlaceholder);
+    expect(html).not.toContain("data-oc-chat-toolbar");
+    expect(html).not.toContain('data-oc-dock="session"');
+    // And: the drawer logic and the React Header stay chat-only
+    expect(html).not.toContain("data-oc-sessions-drawer");
+    expect(html).not.toContain(SENTINELS.history);
+    expect(html).not.toContain(SENTINELS.commandsTitle);
+  });
+
+  it("an unknown global value falls back to the full chat view", () => {
+    // Given: a host stamp this build does not recognize
+    const globals = globalThis as Record<string, unknown>;
+    globals.__OPENCODE_PANEL_VIEW__ = "some-future-kind";
+    // When: the production slots tree renders
+    const html = renderToStaticMarkup(createAppSlotsTree());
+    // Then: the surface is the full chat app, exactly the absent-global
+    // behavior (the layer-1 guard above pins the absent case itself)
+    expect(html).toContain('data-oc-slot="chat"');
+    expect(html).toContain("data-oc-composer");
+    expect(html).toContain('data-oc-sessions-drawer="true" data-state="closed" aria-hidden="true"');
+  });
+});
 
 describe("composed chat pieces smoke", () => {
   it("ChatSlot renders toolbar, message area (empty state), composer, and session dock", () => {

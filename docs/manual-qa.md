@@ -88,10 +88,12 @@ Evidence: `.omo/evidence/task-25-test-electron.log` (activation + 4 more tests).
 
 Manual eyeball (user): open the installed extension in a normal window, watch
 the status bar item move `probing → attached:<port>`; the chat header status
-dot turns green. The panel opens chat-first (the conversation fills the
-sidebar, no permanent sessions rail); the header history (clock) button slides
-the session-history drawer in from the left, and Esc / a backdrop click /
-picking or creating a session closes it.
+dot turns green. The sidebar stacks two native views: the **Chat** view on top
+(the conversation fills it, chat-first, no permanent sessions rail; the header
+history (clock) button slides the session-history drawer in from the left, and
+Esc / a backdrop click / picking or creating a session closes it) and a
+collapsible **Sessions** view below showing ONLY the session list — it must
+NOT duplicate the chat view above it.
 
 ## S05 — Chat round-trip + Thinking (reasoning) collapsible
 
