@@ -111,12 +111,31 @@ export function stripMentionToken(text: string, mention: MentionQuery): string {
 export function replaceMentionToken(
   text: string,
   mention: MentionQuery,
-  replacementPath: string,
+  replacement: string,
 ): { readonly newText: string; readonly newCaret: number } {
-  const insert = `@${replacementPath} `;
+  const insert = `@${replacement} `;
   const newText = text.slice(0, mention.start) + insert + text.slice(mention.end);
   const newCaret = mention.start + insert.length;
   return { newText, newCaret };
+}
+
+const mentionRegistry = new Map<string, string>();
+
+/** Record a picked file mention mapping (e.g. "sessions.ts" -> "src/host/handlers/sessions.ts"). */
+export function recordMentionPath(fileName: string, fullPath: string): void {
+  mentionRegistry.set(fileName, fullPath);
+}
+
+/**
+ * Expand all recorded @filename mentions in the text to @fullPath before
+ * sending to the backend/model.
+ */
+export function expandMentionPaths(text: string): string {
+  if (mentionRegistry.size === 0) return text;
+  return text.replace(/@([^\s]+)/g, (match, name) => {
+    const full = mentionRegistry.get(name);
+    return full !== undefined ? `@${full}` : match;
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -39,8 +39,12 @@ import {
   readFileAsDataUrl,
   setTextareaValue,
 } from "./domGlue.js";
-import { ImageAttachmentError } from "./images.js";
-import { extractMentionQuery, replaceMentionToken } from "./logic.js";
+import {
+  baseNameOfPath,
+  extractMentionQuery,
+  recordMentionPath,
+  replaceMentionToken,
+} from "./logic.js";
 import { MentionPalette } from "./MentionPalette.js";
 import { createMentionSearch } from "./search.js";
 
@@ -201,15 +205,17 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
 
   const handlePick = useCallback(
     (path: string): void => {
+      const fileName = baseNameOfPath(path);
+      recordMentionPath(fileName, path);
       if (textarea !== null) {
         const active = extractMentionQuery(textarea.value, textarea.selectionStart);
         if (active !== undefined) {
-          const { newText, newCaret } = replaceMentionToken(textarea.value, active, path);
+          const { newText, newCaret } = replaceMentionToken(textarea.value, active, fileName);
           setTextareaValue(textarea, newText, newCaret);
         } else {
           const current = textarea.value;
           const prefix = current.length > 0 && !current.endsWith(" ") ? " " : "";
-          const insert = `${prefix}@${path} `;
+          const insert = `${prefix}@${fileName} `;
           setTextareaValue(textarea, `${current}${insert}`, current.length + insert.length);
         }
         textarea.focus();

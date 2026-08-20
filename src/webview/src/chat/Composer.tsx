@@ -53,8 +53,8 @@ import {
 import { useStrings } from "../../lib/i18n.js";
 import { useApp } from "../app/context.js";
 import { useActiveSession } from "./activeSession.js";
-import type { ChatActions } from "./chatContext.js";
 import { DefaultAttachmentChip } from "./composerChips.js";
+import { expandMentionPaths } from "./attachments/logic.js";
 import {
   buildPromptPayload,
   composerDisabled,
@@ -176,9 +176,10 @@ export function Composer(props: ComposerProps): ReactNode {
 
   const handleSend = useCallback(() => {
     if (!canSend || sessionId === undefined) return;
+    const effectiveText = expandMentionPaths(text);
     const payload = buildPromptPayload({
       sessionId,
-      text,
+      text: effectiveText,
       attachments: chips,
       ...(props.agent === undefined ? {} : { agent: props.agent }),
       ...(props.model === undefined ? {} : { model: props.model }),
