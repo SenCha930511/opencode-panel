@@ -21,7 +21,7 @@ import { AppProvider, deriveServerStatus, isServerLostEvent } from "../app/conte
 
 const SENTINELS = {
   newSession: "ZZ_SENTINEL_NEW_SESSION_ZZ",
-  managed: "ZZ_SENTINEL_SERVER_MANAGED_ZZ",
+  connected: "ZZ_SENTINEL_SERVER_CONNECTED_ZZ",
   stopped: "ZZ_SENTINEL_SERVER_STOPPED_ZZ",
   settingsTitle: "ZZ_SENTINEL_SETTINGS_TITLE_ZZ",
   sessionsEmpty: "ZZ_SENTINEL_SESSIONS_EMPTY_ZZ",
@@ -32,7 +32,7 @@ function stubStrings(): Readonly<Record<string, string>> {
   return {
     ...en,
     "sessions.new": SENTINELS.newSession,
-    "server.status.managed": SENTINELS.managed,
+    "server.status.connected": SENTINELS.connected,
     "server.status.stopped": SENTINELS.stopped,
     "settings.title": SENTINELS.settingsTitle,
     "sessions.empty": SENTINELS.sessionsEmpty,
@@ -82,7 +82,7 @@ describe("App shell smoke render", () => {
     const html = renderShell(stubInit());
     // Then: every wired label carries the sentinel, proving t() served it
     expect(html).toContain(SENTINELS.newSession);
-    expect(html).toContain(SENTINELS.managed);
+    expect(html).toContain(SENTINELS.connected);
     expect(html).toContain(SENTINELS.sessionsEmpty);
     expect(html).toContain(SENTINELS.messagesEmpty);
     // And: the T12/T13 mount slots carry their documented contract markers
@@ -104,7 +104,7 @@ describe("App shell smoke render", () => {
     const html = renderShell(stubInit({ server: { url: "", version: null } }));
     // Then: the stopped label (green-dot claims are absent) is served
     expect(html).toContain(SENTINELS.stopped);
-    expect(html).not.toContain(SENTINELS.managed);
+    expect(html).not.toContain(SENTINELS.connected);
   });
 
   it("applies chatFontFamily/chatFontSize overrides from init.settings as inline tokens", () => {

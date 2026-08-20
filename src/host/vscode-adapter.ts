@@ -16,6 +16,7 @@ import {
 import { PanelLogger } from "./logger.js";
 import { PanelSecrets } from "./secrets.js";
 import { SEARCH_RESULT_LIMIT, type EditorSelectionSnapshot } from "./handlers/attachments.js";
+import type { SettingsConfigSurface } from "./handlers/settings.js";
 import {
   createDiffContentProvider,
   createDiffRenderer,
@@ -52,6 +53,29 @@ export function createVscodeConfigAccessor(): PanelConfigAccessor {
 /** Credential store backed by the extension context's SecretStorage. */
 export function createVscodeSecrets(context: vscode.ExtensionContext): PanelSecrets {
   return new PanelSecrets(context.secrets);
+}
+
+/**
+ * Read/write settings surface backed by `workspace.getConfiguration` for the
+ * todo-21 settings handlers: `inspect` reports the layer a field's value
+ * comes from (the page's User/Workspace chip default), `update` writes one
+ * field to the requested target (Global default; Workspace only when the
+ * chip says so). SecretStorage is NEVER reachable through this surface.
+ */
+export function createVscodeSettingsSurface(): SettingsConfigSurface {
+  const configuration = (): vscode.WorkspaceConfiguration =>
+    vscode.workspace.getConfiguration(CONFIG_SECTION);
+  return {
+    inspect: (shortKey) => configuration().inspect(shortKey),
+    update: (shortKey, value, target) =>
+      configuration().update(
+        shortKey,
+        value,
+        target === "workspace"
+          ? vscode.ConfigurationTarget.Workspace
+          : vscode.ConfigurationTarget.Global,
+      ),
+  };
 }
 
 /**

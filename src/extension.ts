@@ -7,6 +7,7 @@ import {
   createVscodeLogger,
   createVscodeSecrets,
   createVscodeServerManager,
+  createVscodeSettingsSurface,
 } from "./host/vscode-adapter.js";
 import type { ServerStartError } from "./server/ServerManager.js";
 import { registerPanelViews } from "./providers/registration.js";
@@ -30,7 +31,10 @@ import {
   registerMessageOpsHandlers,
 } from "./host/handlers/messageOps.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
+import { registerSettingsHandlers } from "./host/handlers/settings.js";
+import { createHealthProbe } from "./host/handlers/settingsProbe.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
+import { createPanelClient } from "./server/clientFactory.js";
 import {
   createExportTranscriptCommand,
   exportTranscript,
@@ -105,6 +109,23 @@ export function activate(context: vscode.ExtensionContext): void {
     source: managerSessionSource(manager),
     logger,
     workspaceFindFiles: editorAccess.workspaceFindFiles,
+  });
+  // Todo-21: settings domain (getSettings/setSettings/getSecret/setSecret).
+  // Values ride the todo-6 config accessor, writes go through the vscode
+  // SettingsConfigSurface (per-field Global/Workspace target), secrets stay
+  // in SecretStorage (isSet-only on the wire), and setSettings additionally
+  // probes /global/health of the applied config — the settings page's Test
+  // Connection is an empty-patch setSettings (see handlers/settings.ts).
+  registerSettingsHandlers(panel.registerHandler, {
+    config,
+    surface: createVscodeSettingsSurface(),
+    secrets,
+    probe: createHealthProbe({
+      // A fresh auth-injecting client per probe base URL: a port/hostname
+      // edit probes the NEW endpoint with its own stored credentials.
+      probeFetchFor: (baseUrl) => createPanelClient(baseUrl, { secrets, logger }).probeFetch,
+    }),
+    logger,
   });
   // Todo-18: todos/diffs dock — openDiff/openFile handlers, poll-sync riding
   // the todo-12 InvalidationHub (todos+sessions kinds), one-shot capability

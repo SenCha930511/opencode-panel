@@ -2,7 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { useStrings } from "../lib/i18n.js";
 import { ToastViewport } from "./app/ErrorBoundary";
 import { useApp, type Route } from "./app/context";
-import { GearIcon, Header } from "./app/Header";
+import { Header } from "./app/Header";
+import { SettingsPage } from "./settings/SettingsPage.js";
 
 /**
  * App shell (plan todo 11): header + state-driven routes + toast viewport.
@@ -15,15 +16,13 @@ import { GearIcon, Header } from "./app/Header";
  *    mounted inside <aside data-oc-slot="sessions"> below.
  *  - T13 (message list + composer) renders into `slots.chat`, mounted inside
  *    <section data-oc-slot="chat"> below.
+ *  - T21 (settings page) mounts into the `settings` route — the placeholder
+ *    this file used to ship is replaced by <SettingsPage/> (see that module).
  *  Pass them via <AppProvider slots={{ sessions: <SessionList/>, chat:
  *  <ChatView/> }}> in app/bootstrap.tsx when those todos land. Until then the
  *  honest empty states here stay visible. Panels must keep the aside/section
  *  flex split — the sessions column stays a fixed-width rail.
  */
-
-// Settings-route placeholder note; the real page ships in todo 21 and
-// strings.ts has no placeholder key (listed as settings.placeholder).
-const SETTINGS_PLACEHOLDER_NOTE = "The settings page arrives in todo 21."; // i18n-allow-literal
 
 function assertNeverRoute(route: never): never {
   throw new Error(`unreachable route: ${JSON.stringify(route)}`);
@@ -58,26 +57,7 @@ function ChatRoute(): ReactNode {
 }
 
 function SettingsRoute(): ReactNode {
-  const { navigate } = useApp();
-  const { t } = useStrings();
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-      <span className="text-muted-fg">
-        <GearIcon />
-      </span>
-      <h2 className="text-sm font-semibold">{t("settings.title")}</h2>
-      <p className="max-w-60 text-xs text-muted-fg">{SETTINGS_PLACEHOLDER_NOTE}</p>
-      <button
-        type="button"
-        className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:bg-accent-hover"
-        onClick={() => {
-          navigate("chat");
-        }}
-      >
-        {t("common.close")}
-      </button>
-    </div>
-  );
+  return <SettingsPage />;
 }
 
 function renderRoute(route: Route): ReactNode {

@@ -13,11 +13,6 @@ import { useApp, type ServerStatus } from "./context";
  * real selection state), so there is no honest value to show.
  */
 
-// Overflow-menu copy has no StringId yet (T4 owns src/shared/strings.ts;
-// menu.openTui is listed as missing in the todo-11 report). "TUI" is an
-// untranslated acronym, matching "MCP" usage in the existing tables.
-const OPEN_TUI_LABEL = "Open TUI"; // i18n-allow-literal
-
 function PlusIcon(): ReactNode {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -55,16 +50,10 @@ interface StatusPresentation {
   readonly labelId:
     | "server.status.stopped"
     | "server.status.probing"
-    | "server.status.managed"
+    | "server.status.connected"
     | "server.status.lost";
 }
 
-/**
- * `connected` renders `server.status.managed`: the wire cannot tell managed
- * from attached (init slice carries url+version only), and `managed` is the
- * default flow (autoStartServer=true spawns the server). A dedicated
- * `server.status.connected` key is listed as missing in the todo-11 report.
- */
 function statusPresentation(status: ServerStatus): StatusPresentation {
   switch (status) {
     case "stopped":
@@ -72,7 +61,7 @@ function statusPresentation(status: ServerStatus): StatusPresentation {
     case "probing":
       return { dotClass: "bg-warn", labelId: "server.status.probing" };
     case "connected":
-      return { dotClass: "bg-ok", labelId: "server.status.managed" };
+      return { dotClass: "bg-ok", labelId: "server.status.connected" };
     case "lost":
       return { dotClass: "bg-err", labelId: "server.status.lost" };
     default: {
@@ -135,7 +124,7 @@ function OverflowMenu(): ReactNode {
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          aria-label={t("commands.title")}
+          aria-label={t("menu.more")}
           className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
         >
           <OverflowIcon />
@@ -151,7 +140,7 @@ function OverflowMenu(): ReactNode {
               no Open-TUI request (todo 22 owns the TUI escape hatch host-side)
               and Share needs a selected session id (todo 12). */}
           <DropdownMenu.Item disabled className={itemClass}>
-            {OPEN_TUI_LABEL}
+            {t("menu.openTui")}
           </DropdownMenu.Item>
           <DropdownMenu.Item disabled className={itemClass}>
             {t("sessions.share")}
