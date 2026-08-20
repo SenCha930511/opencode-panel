@@ -1,0 +1,24 @@
+# vsce packaging allowlist-by-exclusion: runtime payload = dist/extension.js,
+# media/** (icon.svg + built webview), l10n/**, package.json, README.md,
+# LICENSE, icon.png. Everything else is build-time/dev-only.
+.vscode/**
+.vscode-test/**
+.omo/**
+.tools/**
+.venv/**
+src/**
+scripts/**
+docs/**
+node_modules/**
+dist/test/**
+dist/**/*.map
+media/webview/**/*.map
+esbuild.config.mjs
+tsconfig.json
+vitest.config.mts
+.gitignore
+.vscodeignore
+.gitattributes
+*.vsix
+*.log
+**/.DS_Store

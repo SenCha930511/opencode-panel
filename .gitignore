@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 .vscode-test/
+media/webview/
 *.vsix
 *.log
 .DS_Store

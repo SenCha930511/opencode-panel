@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "SenCha930511",
   "license": "MIT",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -247,7 +248,7 @@
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@types/vscode": "^1.125.0",
+    "@types/vscode": "1.99.0",
     "@vitejs/plugin-react": "^6.0.5",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.9.2",
