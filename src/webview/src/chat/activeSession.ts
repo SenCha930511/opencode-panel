@@ -11,6 +11,7 @@
 
 import { useSyncExternalStore } from "react";
 import { isRecord } from "../../../shared/protocol.js";
+import { getWebviewMessenger } from "../../lib/messenger.js";
 
 type Listener = { (): void };
 
@@ -26,6 +27,11 @@ export function setActiveSession(sessionId: string): void {
   if (activeSessionId === sessionId) return;
   activeSessionId = sessionId;
   emit();
+  try {
+    void getWebviewMessenger().request("selectSession", { sessionId });
+  } catch {
+    // Ignore in tests / detached environments
+  }
 }
 
 export function getActiveSession(): string | undefined {

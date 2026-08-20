@@ -158,8 +158,29 @@ async function readConfigProbe(
   kind: "providers" | "get",
 ): Promise<unknown> {
   try {
-    const result: SdkResultLike =
-      kind === "providers" ? await client.config.providers() : await client.config.get();
+    if (kind === "providers") {
+      let result: SdkResultLike | undefined;
+      try {
+        result = await client.config.providers();
+      } catch {
+        result = undefined;
+      }
+      if (result === undefined || result.error !== undefined || !result.data) {
+        if ("provider" in client && typeof (client.provider as { list?: () => Promise<SdkResultLike> }).list === "function") {
+          try {
+            const providerResult = await (client.provider as { list: () => Promise<SdkResultLike> }).list();
+            if (providerResult.error === undefined && providerResult.data) {
+              return providerResult.data;
+            }
+          } catch {
+            // Best effort
+          }
+        }
+      }
+      if (result !== undefined && result.error === undefined) return result.data;
+      return undefined;
+    }
+    const result: SdkResultLike = await client.config.get();
     if (result.error !== undefined) return undefined;
     return result.data;
   } catch {

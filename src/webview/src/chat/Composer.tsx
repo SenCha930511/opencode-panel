@@ -212,7 +212,7 @@ export function Composer(props: ComposerProps): ReactNode {
 
   return (
     <div data-oc-composer className="border-t border-border/70 bg-bg/80 p-2.5 backdrop-blur-md">
-      <div className="flex flex-col rounded-xl border border-card-border bg-input-card-bg shadow-sm transition-all focus-within:border-focus-ring focus-within:ring-1 focus-within:ring-focus-ring/30 p-2.5">
+      <div className="flex flex-col rounded-2xl border border-card-border bg-input-card-bg shadow-sm transition-all focus-within:border-focus-ring/80 focus-within:ring-1 focus-within:ring-focus-ring/25 p-3">
         {chips.length > 0 && (
           <div data-oc-attachments className="mb-2 flex flex-wrap gap-1.5">
             {chips.map((chip) =>
@@ -227,15 +227,15 @@ export function Composer(props: ComposerProps): ReactNode {
         <textarea
           ref={textareaRef}
           rows={1}
-          className="max-h-40 min-h-7 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-xs sm:text-sm text-fg outline-none placeholder:text-muted-fg/70 disabled:cursor-not-allowed disabled:opacity-50"
+          className="max-h-40 min-h-8 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-xs sm:text-sm text-fg outline-none placeholder:text-muted-fg/60 disabled:cursor-not-allowed disabled:opacity-50"
           value={text}
           placeholder={t(placeholderForStatus(status))}
           disabled={inputDisabled}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
-        <div className="mt-2 flex items-center justify-between gap-1.5 pt-1.5 border-t border-card-border/40">
-          <div data-oc-composer-extras className="flex flex-1 min-w-0 items-center gap-1">
+        <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
+          <div data-oc-composer-extras className="flex flex-1 min-w-0 items-center gap-1.5">
             {props.extras}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -244,7 +244,7 @@ export function Composer(props: ComposerProps): ReactNode {
                 type="button"
                 data-oc-composer-stop
                 aria-label={t("composer.abort")}
-                className="flex items-center gap-1 rounded-lg border border-err/30 bg-err/10 px-2.5 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-1 rounded-full border border-err/40 bg-err/10 px-3 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={sessionId === undefined}
                 onClick={handleAbort}
               >
@@ -256,7 +256,7 @@ export function Composer(props: ComposerProps): ReactNode {
               type="button"
               data-oc-composer-send
               aria-label={t("composer.send")}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               disabled={!canSend}
               onClick={handleSend}
             >

@@ -170,11 +170,30 @@ export interface SessionService {
   forkSession(id: string, messageID: string | undefined): Promise<SessionListEntry>;
 }
 
+export function isSubagentSession(session: { title?: string; parentID?: string }): boolean {
+  const lower = (session.title ?? "").toLowerCase().trim();
+  if (
+    lower.startsWith("subtask:") ||
+    lower.startsWith("subagent:") ||
+    lower.startsWith("[subagent]") ||
+    lower.startsWith("subtask ") ||
+    lower.startsWith("subagent ") ||
+    lower.includes("(subagent)") ||
+    lower.includes("[subtask]")
+  ) {
+    return true;
+  }
+  if (session.parentID && !lower.endsWith("(fork)")) {
+    return true;
+  }
+  return false;
+}
+
 export function createSessionService(deps: SessionServiceDeps): SessionService {
   return {
     async listSessions() {
       const sessions = await fromSdk(deps, "list", (client) => client.session.list());
-      return sessions.map(toSessionListEntry);
+      return sessions.filter((session) => !isSubagentSession(session)).map(toSessionListEntry);
     },
 
     async createSession(title) {

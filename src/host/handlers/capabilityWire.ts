@@ -43,6 +43,17 @@ export interface CapabilitiesRefreshPayload {
 }
 
 export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[] {
+  if (Array.isArray(payload)) {
+    const models: CapabilityModelEntry[] = [];
+    for (const item of payload) {
+      if (!isRecord(item)) continue;
+      const id = typeof item.id === "string" ? item.id : "";
+      if (id.length === 0) continue;
+      const name = typeof item.name === "string" && item.name.length > 0 ? item.name : id;
+      models.push({ id, name });
+    }
+    return models;
+  }
   if (!isRecord(payload)) return [];
   const models: CapabilityModelEntry[] = [];
   for (const [id, value] of Object.entries(payload)) {
@@ -57,9 +68,16 @@ export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[
 }
 
 export function toProviderEntries(payload: unknown): readonly CapabilityProviderEntry[] {
-  if (!isRecord(payload) || !Array.isArray(payload.providers)) return [];
+  if (!isRecord(payload) && !Array.isArray(payload)) return [];
+  const rawList = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload.providers)
+      ? payload.providers
+      : Array.isArray(payload.all)
+        ? payload.all
+        : [];
   const providers: CapabilityProviderEntry[] = [];
-  for (const item of payload.providers) {
+  for (const item of rawList) {
     if (!isRecord(item) || typeof item.id !== "string" || item.id.length === 0) continue;
     providers.push({
       id: item.id,
@@ -71,9 +89,17 @@ export function toProviderEntries(payload: unknown): readonly CapabilityProvider
 }
 
 export function toDefaultModels(payload: unknown): Readonly<Record<string, string>> {
-  if (!isRecord(payload) || !isRecord(payload.default)) return {};
+  if (!isRecord(payload)) return {};
+  const map = isRecord(payload.default)
+    ? payload.default
+    : isRecord(payload.defaultModels)
+      ? payload.defaultModels
+      : isRecord(payload.defaults)
+        ? payload.defaults
+        : payload;
+  if (!isRecord(map)) return {};
   const result: Record<string, string> = {};
-  for (const [providerId, modelId] of Object.entries(payload.default)) {
+  for (const [providerId, modelId] of Object.entries(map)) {
     if (providerId.length > 0 && typeof modelId === "string" && modelId.length > 0) {
       result[providerId] = modelId;
     }
@@ -82,8 +108,10 @@ export function toDefaultModels(payload: unknown): Readonly<Record<string, strin
 }
 
 export function toDefaultModel(payload: unknown): string | undefined {
-  if (!isRecord(payload) || typeof payload.model !== "string") return undefined;
-  return payload.model.length > 0 ? payload.model : undefined;
+  if (!isRecord(payload)) return undefined;
+  if (typeof payload.model === "string" && payload.model.length > 0) return payload.model;
+  if (typeof payload.defaultModel === "string" && payload.defaultModel.length > 0) return payload.defaultModel;
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

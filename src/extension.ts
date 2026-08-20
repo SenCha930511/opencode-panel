@@ -45,6 +45,11 @@ import {
   createMessageOpsService,
   registerMessageOpsHandlers,
 } from "./host/handlers/messageOps.js";
+import {
+  MessageSync,
+  createSdkMessagesFetcher,
+  registerMessageSyncHandlers,
+} from "./host/handlers/messages.js";
 import { registerPromptHandlers } from "./host/handlers/prompt.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { registerSettingsHandlers } from "./host/handlers/settings.js";
@@ -183,7 +188,18 @@ export function activate(
     sink: panel.chat,
     logger,
   });
+  const messageSync = new MessageSync({
+    fetchMessages: async (sessionId) => {
+      const onboard = await manager.onboardClient();
+      if (!onboard.ok) return { ok: false, error: onboard.error };
+      return createSdkMessagesFetcher(onboard.connection.client)(sessionId);
+    },
+    postEvent: (type, payload) => panel.chat.postEvent(type, payload),
+    logger,
+  });
   const dockInvalidation = sessionsDomain.hub.add(dockSync.invalidate);
+  const messageInvalidation = sessionsDomain.hub.add(messageSync.invalidate);
+  registerMessageSyncHandlers(panel.registerHandler, messageSync, dockSync, capabilityInfo.sync);
   const dockCapabilityReset = manager.onDidChangeState((state) => {
     if (state.kind === "managed" || state.kind === "attached") dockSync.reset();
   });
@@ -280,6 +296,7 @@ export function activate(
     },
     {
       dispose: () => {
+        messageInvalidation.dispose();
         dockInvalidation.dispose();
         dockCapabilityReset.dispose();
       },

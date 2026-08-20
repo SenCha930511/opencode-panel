@@ -102,6 +102,7 @@ export interface FromWebviewProtocol {
   readonly getSecret: { readonly key: string };
   readonly setSecret: { readonly key: string; readonly value: string };
   readonly searchFiles: { readonly query: string };
+  readonly selectSession: { readonly sessionId: string };
 }
 
 /** The value each request resolves to in its terminal `done:true` envelope. */
@@ -130,6 +131,7 @@ export interface FromWebviewResponse {
   readonly getSecret: SecretStatus;
   readonly setSecret: null;
   readonly searchFiles: readonly string[];
+  readonly selectSession: null;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +227,7 @@ export const FROM_WEBVIEW_MESSAGE_TYPES = [
   "getSecret",
   "setSecret",
   "searchFiles",
+  "selectSession",
 ] as const;
 
 export type FromWebviewMessageType = (typeof FROM_WEBVIEW_MESSAGE_TYPES)[number];

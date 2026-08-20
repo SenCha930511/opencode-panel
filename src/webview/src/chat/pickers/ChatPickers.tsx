@@ -91,17 +91,23 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
   const { t } = useStrings();
   const [open, setOpen] = useState(props.initialOpen === true);
   const groups: PickerGroup[] = [];
+  let currentModelName: string | undefined;
   for (const provider of props.providers) {
     if (provider.models.length === 0) continue;
     groups.push({
       label: provider.name,
       rows: provider.models.map((model) => {
         const key = `${provider.id}/${model.id}`;
-        return { key, primary: model.name, secondary: model.id, selected: key === props.value };
+        const isSelected = key === props.value || model.id === props.value;
+        if (isSelected) {
+          currentModelName = model.name;
+        }
+        return { key, primary: model.name, secondary: model.id, selected: isSelected };
       }),
     });
   }
   if (groups.length === 0) return null;
+  const displayLabel = currentModelName ?? props.value;
   return (
     <PickerDropdown
       title={t("picker.model.title")}

@@ -107,18 +107,15 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
   // the list + composer render), so the totals are exactly what is on screen.
   const usage = sumAssistantUsage(useChatStore(store).messages);
   return (
-    <div data-oc-chat className="flex min-h-0 min-w-0 flex-1">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div
-          data-oc-chat-toolbar
-          className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-0.5"
-        >
-          <span className="flex min-w-0 flex-1 items-center">
-            <UsageStrip usage={usage} />
-          </span>
-          <SessionMenu sessionId={sessionId} />
-        </div>
-        <ProductionChatSection store={store} />
+    <div data-oc-chat className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        data-oc-chat-toolbar
+        className="flex shrink-0 items-center justify-between gap-2 border-b border-border/70 bg-bg/50 px-2 py-0.5 backdrop-blur-xs"
+      >
+        <span className="flex min-w-0 flex-1 items-center">
+          <UsageStrip usage={usage} />
+        </span>
+        <SessionMenu sessionId={sessionId} />
       </div>
       <SessionDock
         todosEnabled={flags.todo || app.init.capabilities.todo}
@@ -126,6 +123,9 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
           app.pushToast("info", t("capability.hidden"));
         }}
       />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <ProductionChatSection store={store} />
+      </div>
     </div>
   );
 }

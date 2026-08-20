@@ -212,3 +212,26 @@ function snapshotById(messages: readonly unknown[]): Map<string, string> {
   }
   return byId;
 }
+
+export type MessageSyncRegisterSeam = <K extends keyof import("../../shared/protocol.js").FromWebviewProtocol>(
+  type: K,
+  handler: import("../messenger.js").Handler<K>,
+) => void;
+
+export function registerMessageSyncHandlers(
+  register: MessageSyncRegisterSeam,
+  messageSync: MessageSync,
+  dockSync?: { setActiveSession(sessionId: string): void },
+  capabilitySync?: { refresh(): Promise<void> },
+): void {
+  register("selectSession", async ({ sessionId }) => {
+    messageSync.setActiveSession(sessionId);
+    if (dockSync !== undefined) {
+      dockSync.setActiveSession(sessionId);
+    }
+    if (capabilitySync !== undefined) {
+      void capabilitySync.refresh();
+    }
+    return null;
+  });
+}

@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -35,11 +35,6 @@
         {
           "id": "opencodePanel.chatView",
           "name": "%opencodePanel.views.chatView%",
-          "type": "webview"
-        },
-        {
-          "id": "opencodePanel.sessionsView",
-          "name": "%opencodePanel.views.sessionsView%",
           "type": "webview"
         }
       ]
@@ -137,11 +132,6 @@
           "command": "opencodePanel.openTui",
           "when": "view == opencodePanel.chatView",
           "group": "1_server@4"
-        },
-        {
-          "command": "opencodePanel.newSession",
-          "when": "view == opencodePanel.sessionsView",
-          "group": "navigation@1"
         }
       ],
       "editor/context": [

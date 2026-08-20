@@ -29,12 +29,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function isSubagentSessionEntry(entry: { title?: string; parentID?: string }): boolean {
+  const lower = (entry.title ?? "").toLowerCase().trim();
+  if (
+    lower.startsWith("subtask:") ||
+    lower.startsWith("subagent:") ||
+    lower.startsWith("[subagent]") ||
+    lower.startsWith("subtask ") ||
+    lower.startsWith("subagent ") ||
+    lower.includes("(subagent)") ||
+    lower.includes("[subtask]")
+  ) {
+    return true;
+  }
+  if (entry.parentID && !lower.endsWith("(fork)")) {
+    return true;
+  }
+  return false;
+}
+
 /** Boundary parse: unknown wire entry -> SessionEntry (null = drop). */
 export function toSessionEntry(value: unknown): SessionEntry | null {
   if (!isRecord(value)) return null;
   if (typeof value.id !== "string" || value.id.length === 0) return null;
   if (typeof value.title !== "string") return null;
   if (typeof value.updatedAt !== "string") return null;
+  const parentID = typeof value.parentID === "string" ? value.parentID : undefined;
+  if (isSubagentSessionEntry({ title: value.title, parentID })) return null;
   return {
     id: value.id,
     title: value.title,

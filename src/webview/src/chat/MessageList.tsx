@@ -23,6 +23,7 @@ import { ChatActionsProvider, type ChatActions } from "./chatContext.js";
 import { createMessengerEventSource, routeChatEvent, type ChatEventSource } from "./events.js";
 import { MessageStore, type ChatStoreState } from "./messageStore.js";
 import { MessageView } from "./MessageView.js";
+import { useActiveSession } from "./activeSession.js";
 import type { StringId } from "../../../shared/strings.js";
 import type { MessageVM } from "./types.js";
 
@@ -120,6 +121,13 @@ export function MessageList(props: MessageListProps) {
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
   const park = useRef(new AutoScrollPark());
   const state = useChatStore(store);
+  const activeSessionId = useActiveSession();
+
+  useEffect(() => {
+    if (activeSessionId) {
+      store.setSession(activeSessionId);
+    }
+  }, [activeSessionId, store]);
 
   useEffect(() => {
     const source = props.source ?? createMessengerEventSource(getWebviewMessenger());

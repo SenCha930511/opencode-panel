@@ -252,36 +252,54 @@ export function SessionDock(props: SessionDockProps): ReactNode {
   const todos = todosForSession(state, activeSession);
   const diffs = diffsForSession(state, activeSession);
 
+  if (todos.length === 0 && diffs.length === 0 && !open) return null;
+
   return (
     <section
       data-oc-dock="session"
-      className="flex w-60 shrink-0 flex-col border-s border-border bg-panel-bg text-fg"
+      className="flex shrink-0 flex-col border-b border-card-border/60 bg-card-bg/30 backdrop-blur-xs text-fg transition-all"
     >
       <button
         type="button"
         aria-expanded={open}
-        className="flex items-center gap-1 border-b border-border px-2 py-1 text-xs text-muted-fg hover:bg-hover-bg"
+        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-xs text-muted-fg transition-colors hover:bg-hover-bg/60 hover:text-fg"
         onClick={toggle}
       >
-        <ChevronIcon open={open} />
-        <span className="truncate">{t("dock.todos.title")}</span>
-        <span aria-hidden="true">·</span>
-        <span className="truncate">{t("dock.diffs.title")}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <ChevronIcon open={open} />
+          <span className="font-medium text-fg/90">{t("dock.todos.title")}</span>
+          <span aria-hidden="true" className="text-muted-fg/40">·</span>
+          <span className="truncate text-muted-fg">{t("dock.diffs.title")}</span>
+          {todos.length > 0 && (
+            <span className="ml-1 rounded-full bg-accent/15 px-1.5 py-0.2 text-[10px] font-semibold text-accent">
+              {todos.length}
+            </span>
+          )}
+        </div>
+        {diffs.length > 0 && (
+          <span className="text-[10px] text-muted-fg">
+            {diffs.length} {diffs.length === 1 ? "file" : "files"}
+          </span>
+        )}
       </button>
       {open ? (
-        <div className="flex-1 overflow-y-auto">
-          <h3 className="px-2 pb-0.5 pt-2 text-[0.8em] font-semibold uppercase tracking-wide text-muted-fg">
-            {t("dock.todos.title")}
-          </h3>
-          <TodosPanel todos={todos} />
-          {state.diffsUnsupported ? null : (
-            <>
-              <h3 className="px-2 pb-0.5 pt-2 text-[0.8em] font-semibold uppercase tracking-wide text-muted-fg">
-                {t("dock.diffs.title")}
+        <div className="max-h-48 overflow-y-auto border-t border-card-border/30 p-2.5 text-xs">
+          <div className="space-y-3">
+            <div>
+              <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-fg/70">
+                {t("dock.todos.title")}
               </h3>
-              <DiffsPanel diffs={diffs} sessionId={activeSession} actions={actions} />
-            </>
-          )}
+              <TodosPanel todos={todos} />
+            </div>
+            {state.diffsUnsupported ? null : (
+              <div>
+                <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-fg/70">
+                  {t("dock.diffs.title")}
+                </h3>
+                <DiffsPanel diffs={diffs} sessionId={activeSession} actions={actions} />
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
     </section>
