@@ -391,9 +391,10 @@ export function registerAttachmentHandlers(
   deps: AttachmentsDomainDeps,
 ): void {
   register("searchFiles", async ({ query }): Promise<FromWebviewResponse["searchFiles"]> => {
-    const trimmed = query.trim();
+    const trimmed = (query ?? "").trim();
     if (trimmed.length === 0) return [];
-    const viaServer = await searchFilesViaServer(deps, trimmed);
+    const serverQuery = trimmed === "*" ? "" : trimmed;
+    const viaServer = await searchFilesViaServer(deps, serverQuery);
     const results = viaServer ?? (await deps.workspaceFindFiles(trimmed));
     if (viaServer === undefined) {
       deps.logger.debug("attachments domain: server find routes missing; workspace fallback used");

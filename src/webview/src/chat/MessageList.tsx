@@ -80,30 +80,30 @@ function SparkleIcon(): ReactNode {
 
 import { RecentSessionsTop } from "../sessions/SessionList.js";
 
-function CodexCloudWatermark(): ReactNode {
+function OpenCodeWatermark(): ReactNode {
   const { t } = useStrings();
   return (
-    <div className="flex flex-col items-center gap-2.5 select-none pointer-events-none opacity-30 hover:opacity-60 transition-opacity duration-300">
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-card-border/50 bg-card-bg/30 p-2.5 shadow-2xs backdrop-blur-xs">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-fg">
+    <div className="flex flex-col items-center gap-3 select-none pointer-events-none opacity-30 hover:opacity-60 transition-opacity duration-300">
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-card-border/60 bg-card-bg/40 p-3 shadow-2xs backdrop-blur-xs">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-fg">
           <path
-            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
+            d="M5.5 3h13a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H9l-5.2 3.8a.5.5 0 0 1-.8-.4V6a3 3 0 0 1 3-3z"
             stroke="currentColor"
-            strokeWidth="1.3"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <path
-            d="M8.5 12l2 2-2 2"
+            d="M7.5 8l3.5 3-3.5 3"
             stroke="currentColor"
-            strokeWidth="1.4"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <path
-            d="M12.5 16h3"
+            d="M13 14h4.5"
             stroke="currentColor"
-            strokeWidth="1.4"
+            strokeWidth="1.8"
             strokeLinecap="round"
           />
         </svg>
@@ -119,7 +119,7 @@ function WelcomeHero(props: { readonly emptyLabel: string }): ReactNode {
       <span className="sr-only">{props.emptyLabel}</span>
       <RecentSessionsTop />
       <div className="flex flex-1 items-center justify-center py-16">
-        <CodexCloudWatermark />
+        <OpenCodeWatermark />
       </div>
     </div>
   );

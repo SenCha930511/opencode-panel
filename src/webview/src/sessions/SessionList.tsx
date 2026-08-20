@@ -208,6 +208,12 @@ export function RecentSessionsTop(props?: {
 
 export function SessionList(props: { readonly store: SessionsStore }): ReactNode {
   const { t, locale } = useStrings();
+  let appState: ReturnType<typeof useApp> | null = null;
+  try {
+    appState = useApp();
+  } catch {
+    // Graceful fallback if outside provider
+  }
   const snapshot = useSyncExternalStore(
     props.store.subscribe,
     props.store.getSnapshot,
@@ -271,6 +277,7 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
                 locale={locale}
                 onSelect={() => {
                   props.store.select(entry.id);
+                  appState?.setSessionsOpen(false);
                 }}
                 menu={{
                   onRename: () => {

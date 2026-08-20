@@ -80,25 +80,23 @@ function SessionsDrawer(): ReactNode {
       data-oc-sessions-drawer
       data-state={sessionsOpen ? "open" : "closed"}
       aria-hidden={!sessionsOpen}
-      className={`absolute inset-0 z-40 transition-[visibility,opacity] duration-200 ${
-        sessionsOpen ? "" : "pointer-events-none invisible"
+      className={`absolute inset-0 z-50 transition-all duration-200 ${
+        sessionsOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none invisible"
       }`}
     >
       <button
         type="button"
         aria-label={t("sessions.closeHistory")}
         tabIndex={-1}
-        className={`absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-xs transition-opacity duration-200 ${
-          sessionsOpen ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-xs transition-opacity duration-200"
         onClick={() => setSessionsOpen(false)}
       />
       <aside
         data-oc-slot="sessions"
         role="dialog"
         aria-label={t("sessions.historyTitle")}
-        className={`relative z-50 flex h-auto max-h-[82vh] w-full shrink-0 flex-col border-b border-card-border bg-panel-bg shadow-2xl transition-all duration-200 ease-out ${
-          sessionsOpen ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0 pointer-events-none"
+        className={`relative z-50 flex h-auto max-h-[85vh] w-full shrink-0 flex-col border-b border-card-border bg-panel-bg shadow-2xl transition-all duration-200 ease-out ${
+          sessionsOpen ? "translate-y-0" : "-translate-y-3"
         }`}
       >
         <div className="min-h-0 flex-1 overflow-y-auto">{slots.sessions ?? <DefaultSessionsSlot />}</div>
@@ -109,7 +107,6 @@ function SessionsDrawer(): ReactNode {
 
 function ChatRoute(): ReactNode {
   const { slots, sessionsOpen, setSessionsOpen } = useApp();
-  const activeSession = useActiveSession();
 
   useEffect(() => {
     if (!sessionsOpen) return;
@@ -122,19 +119,9 @@ function ChatRoute(): ReactNode {
     };
   }, [sessionsOpen, setSessionsOpen]);
 
-  // Auto-close on a committed selection change: SessionsPanel bridges its
-  // store's applySelection into chat's setActiveSession, the one path both a
-  // panel row click and `command.newSession` (create + select) already ride.
-  const lastSessionRef = useRef(activeSession);
-  useEffect(() => {
-    if (lastSessionRef.current === activeSession) return;
-    lastSessionRef.current = activeSession;
-    setSessionsOpen(false);
-  }, [activeSession, setSessionsOpen]);
-
   return (
-    <div className="relative flex min-h-0 flex-1">
-      <section data-oc-slot="chat" className="flex min-w-0 flex-1 flex-col">
+    <div className="relative flex min-h-0 flex-1 overflow-hidden">
+      <section data-oc-slot="chat" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {slots.chat ?? <DefaultChatSlot />}
       </section>
       <SessionsDrawer />

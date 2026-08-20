@@ -137,7 +137,8 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
     signal === undefined ? undefined : extractMentionQuery(signal.text, signal.caret);
   const mentionQuery = mention?.query;
   useEffect(() => {
-    search.setQuery(mentionQuery);
+    const searchToken = mentionQuery === undefined ? undefined : (mentionQuery.length === 0 ? "*" : mentionQuery);
+    search.setQuery(searchToken);
   }, [search, mentionQuery]);
 
   // Locate the composer textarea once (this row shares its composer box).

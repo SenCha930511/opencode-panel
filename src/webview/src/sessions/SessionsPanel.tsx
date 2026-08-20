@@ -62,5 +62,19 @@ export function SessionsPanel(): ReactNode {
     [store],
   );
 
+  let appState: ReturnType<typeof useApp> | null = null;
+  try {
+    appState = useApp();
+  } catch {
+    // Graceful fallback if outside provider
+  }
+
+  const sessionsOpen = appState?.sessionsOpen;
+  useEffect(() => {
+    if (sessionsOpen) {
+      store.refresh();
+    }
+  }, [sessionsOpen, store]);
+
   return <SessionList store={store} />;
 }

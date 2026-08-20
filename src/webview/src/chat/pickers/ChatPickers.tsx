@@ -44,6 +44,28 @@ export interface AgentPickerProps {
   readonly initialOpen?: boolean;
 }
 
+function RobotIcon(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="3" y="4" width="10" height="9" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M8 1.5V4M5 1.5h6M6 8h.01M10 8h.01M6 11h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SparkleIcon(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 1.5L9.5 6L14 7.5L9.5 9L8 13.5L6.5 9L2 7.5L6.5 6L8 1.5Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function AgentPicker(props: AgentPickerProps): ReactNode {
   const { t } = useStrings();
   const [open, setOpen] = useState(props.initialOpen === true);
@@ -59,6 +81,7 @@ export function AgentPicker(props: AgentPickerProps): ReactNode {
   return (
     <PickerDropdown
       title={t("picker.agent.title")}
+      icon={<RobotIcon />}
       groups={[{ rows }]}
       open={open}
       {...(props.value === undefined
@@ -132,6 +155,7 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
   return (
     <PickerDropdown
       title={t("picker.model.title")}
+      icon={<SparkleIcon />}
       groups={groups}
       open={open}
       {...(props.value === undefined ? {} : { currentLabel: props.value })}

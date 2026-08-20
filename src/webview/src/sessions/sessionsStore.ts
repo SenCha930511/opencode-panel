@@ -121,15 +121,7 @@ export class SessionsStore {
         this.applyList(toSessionEntries(event.payload));
       }
     });
-    // Proactive pull for the initial list (pushes cover later changes;
-    // offline ⇒ keep whatever init/push delivers).
-    void this.messenger
-      .request("listSessions", {})
-      .then((res: unknown) => {
-        const entries = toSessionEntries(res);
-        this.applyList(entries);
-      })
-      .catch(() => {});
+    this.refresh();
     const disposer: Disposable = {
       dispose: () => {
         offList();
@@ -137,6 +129,17 @@ export class SessionsStore {
       },
     };
     return disposer;
+  }
+
+  /** Pull fresh sessions list proactively. */
+  refresh(): void {
+    void this.messenger
+      .request("listSessions", {})
+      .then((res: unknown) => {
+        const entries = toSessionEntries(res);
+        this.applyList(entries);
+      })
+      .catch(() => {});
   }
 
   // -- Reads ------------------------------------------------------------------

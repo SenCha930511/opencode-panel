@@ -187,9 +187,10 @@ export function createVscodeEditorAccess(): EditorAccess {
     workspaceFindFiles: async (query) => {
       // Glob meta in the query must not become a pattern operator — it would
       // both break the search and widen it beyond the user's intent.
-      const escaped = query.replace(/[{}\[\]\\]/g, "\\$&").replace(/\*/g, "");
-      if (escaped.length === 0) return [];
-      const uris = await vscode.workspace.findFiles(`**/*${escaped}*`, undefined, SEARCH_RESULT_LIMIT, undefined);
+      if (query === "***") return [];
+      const escaped = (query ?? "").replace(/[{}\[\]\\]/g, "\\$&").replace(/\*/g, "");
+      const pattern = escaped.length === 0 ? "**/*" : `**/*${escaped}*`;
+      const uris = await vscode.workspace.findFiles(pattern, undefined, SEARCH_RESULT_LIMIT, undefined);
       return uris.map((uri) => uri.fsPath);
     },
   };

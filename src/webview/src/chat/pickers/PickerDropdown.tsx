@@ -24,6 +24,8 @@ export interface PickerGroup {
 export interface PickerDropdownProps {
   /** Localized aria label / placeholder (t() result from the caller). */
   readonly title: string;
+  /** Leading icon for the button. */
+  readonly icon?: ReactNode;
   /** Trigger text when a selection (or resolved default) exists. */
   readonly currentLabel?: string;
   /** Abbreviated display label on the button. */
@@ -36,13 +38,6 @@ export interface PickerDropdownProps {
   onClose(): void;
   onPick(key: string): void;
 }
-
-const TRIGGER_CLASS =
-  "flex max-w-32 sm:max-w-44 items-center gap-1 truncate rounded-full border border-card-border bg-card-bg/90 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0";
-const MENU_CLASS =
-  "absolute bottom-full left-0 z-50 mb-2 max-h-64 min-w-56 max-w-72 overflow-y-auto rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10";
-const ROW_CLASS =
-  "flex cursor-pointer select-none items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg data-[selected=true]:bg-accent/15 data-[selected=true]:text-accent font-medium";
 
 function ChevronIcon(): ReactNode {
   return (
@@ -82,7 +77,7 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
   return (
     <span
       ref={rootRef}
-      className="relative inline-flex min-w-0 shrink"
+      className="relative inline-flex min-w-0 shrink-0"
       onKeyDown={(event) => {
         if (event.key === "Escape" && props.open) {
           event.stopPropagation();
@@ -96,21 +91,27 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         aria-expanded={props.open}
         aria-label={props.title}
         title={hoverTooltip}
-        className={TRIGGER_CLASS}
+        className="flex max-w-[140px] sm:max-w-[200px] items-center gap-1.5 rounded-full border border-card-border/80 bg-card-bg/80 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink-0 min-w-0"
         onClick={props.onToggle}
       >
-        <span className="truncate min-w-0 flex-1">{textToShow}</span>
-        <span className="shrink-0 text-muted-fg"><ChevronIcon /></span>
+        {props.icon && <span className="shrink-0 text-muted-fg">{props.icon}</span>}
+        <span className="truncate min-w-0 flex-1 text-left">{textToShow}</span>
+        <span className="shrink-0 text-muted-fg/80"><ChevronIcon /></span>
       </button>
       {props.open ? (
-        <div role="listbox" aria-label={props.title} className={MENU_CLASS}>
+        <div
+          role="listbox"
+          aria-label={props.title}
+          className="absolute bottom-full left-0 z-50 mb-2 max-h-64 w-60 sm:w-72 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs"
+        >
           {props.groups.map((group, groupIndex) => (
             <div
               key={group.label ?? `g-${groupIndex}`}
+              className="flex flex-col gap-0.5"
               {...(group.label === undefined ? {} : { role: "group", "aria-label": group.label })}
             >
               {group.label === undefined ? null : (
-                <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-fg">
+                <div className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg border-b border-card-border/30 mb-0.5">
                   {group.label}
                 </div>
               )}
@@ -120,22 +121,31 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
                   role="option"
                   aria-selected={row.selected}
                   data-selected={row.selected}
-                  className={ROW_CLASS}
+                  className="flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg data-[selected=true]:bg-accent/15 data-[selected=true]:text-accent"
                   onMouseDown={(event) => {
                     // mousedown (not click) so the textarea blur race cannot eat it.
                     event.preventDefault();
                     props.onPick(row.key);
                   }}
                 >
-                  <span className="shrink-0">{row.primary}</span>
-                  {row.badge === undefined ? null : (
-                    <span className="rounded border border-border px-1 text-[10px] uppercase tracking-wide text-muted-fg">
-                      {row.badge}
-                    </span>
-                  )}
-                  {row.secondary === undefined ? null : (
-                    <span className="min-w-0 truncate text-muted-fg">{row.secondary}</span>
-                  )}
+                  <div className="flex min-w-0 flex-1 flex-col items-start">
+                    <div className="flex w-full items-center justify-between gap-1">
+                      <span className="font-medium text-fg truncate">{row.primary}</span>
+                      {row.selected ? (
+                        <span className="shrink-0 text-accent text-[11px] font-bold">✓</span>
+                      ) : null}
+                      {row.badge !== undefined ? (
+                        <span className="shrink-0 rounded border border-border/80 bg-card-bg px-1 py-0.2 text-[9px] uppercase tracking-wide text-muted-fg font-medium">
+                          {row.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                    {row.secondary !== undefined ? (
+                      <span className="w-full truncate text-[10px] text-muted-fg/70 font-mono text-start">
+                        {row.secondary}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
