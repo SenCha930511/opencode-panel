@@ -168,7 +168,7 @@ export function RecentSessionsTop(props?: {
 
   const recent = visible.slice(0, 3);
   return (
-    <div className="w-full px-3.5 pt-2 pb-1 text-xs">
+    <div className="w-full px-4.5 sm:px-5 pt-2 pb-1 text-xs">
       <div className="flex flex-col gap-0.5">
         {recent.map((entry) => {
           const relative = formatRelativeTime(entry.updatedAt, now, locale);

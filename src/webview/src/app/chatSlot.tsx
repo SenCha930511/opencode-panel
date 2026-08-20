@@ -47,7 +47,9 @@ import { SessionsPanel } from "../sessions/SessionsPanel.js";
 import { AttachmentsExtras, useAttachments } from "../chat/attachments/index.js";
 import { ChatCardsDock } from "../chat/cards/ChatCardsDock.js";
 import { Composer } from "../chat/Composer.js";
+import { DockStore } from "../chat/dock/dockStore.js";
 import { SessionDock } from "../chat/dock/SessionDock.js";
+import { TodoPinnedList } from "../chat/dock/TodoPinnedList.js";
 import { MessageList, useChatStore } from "../chat/MessageList.js";
 import { MessageStore } from "../chat/messageStore.js";
 import { SessionMenu } from "../chat/messageOps/SessionMenu.js";
@@ -57,8 +59,11 @@ import { useActiveSession } from "../chat/activeSession.js";
 import { useComposerPickers } from "../chat/pickers/composerIntegration.js";
 import { useApp, type AppSlots } from "./context.js";
 
-/** T13 order: list (flex-1) -> cards dock (above composer) -> composer. */
-function ProductionChatSection(props: { readonly store: MessageStore }): ReactNode {
+/** T13 order: list (flex-1) -> cards dock (above composer) -> todo strip -> composer. */
+function ProductionChatSection(props: {
+  readonly store: MessageStore;
+  readonly dockStore: DockStore;
+}): ReactNode {
   const app = useApp();
   const { t } = useStrings();
   const flags = useCapabilityFlags();
@@ -75,6 +80,7 @@ function ProductionChatSection(props: { readonly store: MessageStore }): ReactNo
           app.pushToast("warning", t("question.unavailable"));
         }}
       />
+      <TodoPinnedList store={props.dockStore} />
       <Composer
         store={props.store}
         attachments={attachments.chips}
@@ -99,6 +105,17 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
   const sessionId = useActiveSession();
   const flags = useCapabilityFlags();
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
+  // ONE DockStore feeds the rail dock and the inline todo strip alike (the
+  // rail keeps consuming the event stream; the strip renders read-only).
+  const dockStore = useMemo(
+    () =>
+      new DockStore({
+        onNotice: () => {
+          app.pushToast("info", t("capability.hidden"));
+        },
+      }),
+    [app, t],
+  );
   // FIX-D: the toolbar strip aggregates the SHARED todo-13 store (the one
   // the list + composer render), so the totals are exactly what is on screen.
   const usage = sumAssistantUsage(useChatStore(store).messages);
@@ -118,13 +135,11 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
         <SessionMenu sessionId={sessionId} />
       </div>
       <SessionDock
+        store={dockStore}
         todosEnabled={flags.todo || app.init.capabilities.todo}
-        onNotice={() => {
-          app.pushToast("info", t("capability.hidden"));
-        }}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <ProductionChatSection store={store} />
+        <ProductionChatSection store={store} dockStore={dockStore} />
       </div>
     </div>
   );

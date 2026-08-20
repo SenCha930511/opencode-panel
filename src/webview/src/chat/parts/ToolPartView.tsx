@@ -1,5 +1,6 @@
 import { useStrings } from "../../../lib/i18n.js";
 import type { StringId } from "../../../../shared/strings.js";
+import { isRecord } from "../../../../shared/protocol.js";
 import type { PartVM, ToolStatus } from "../types.js";
 import { ToolIcon, toolIconKind } from "./toolIcon.js";
 
@@ -12,12 +13,43 @@ const STATUS_LABEL: Readonly<Record<ToolStatus, StringId>> = {
   error: "tool.status.failed",
 };
 
+/** Terminal-status glyphs (no words): ✓ completed, ✗ failed. */
+const STATUS_GLYPH: Readonly<Partial<Record<ToolStatus, string>>> = {
+  completed: "✓",
+  error: "✗",
+};
+
 const STATUS_CLASS: Readonly<Record<ToolStatus, string>> = {
   pending: "text-muted-fg",
   running: "text-accent font-semibold",
   completed: "text-ok",
   error: "text-err font-semibold",
 };
+
+interface FileDiffStat {
+  readonly additions: number;
+  readonly deletions: number;
+}
+
+/**
+ * A file-editing tool reports its line delta through
+ * `state.metadata.filediff.{additions,deletions}` (opencode edit/write shape,
+ * data-driven: any tool emitting the same shape gets the counter — no tool
+ * name switching, per the card's OMO contract).
+ */
+export function readFileDiffStat(raw: Readonly<Record<string, unknown>>): FileDiffStat | undefined {
+  const state = isRecord(raw.state) ? raw.state : undefined;
+  const metadata = state !== undefined && isRecord(state.metadata) ? state.metadata : undefined;
+  const filediff = metadata !== undefined && isRecord(metadata.filediff) ? metadata.filediff : undefined;
+  if (
+    filediff === undefined ||
+    typeof filediff.additions !== "number" ||
+    typeof filediff.deletions !== "number"
+  ) {
+    return undefined;
+  }
+  return { additions: filediff.additions, deletions: filediff.deletions };
+}
 
 function prettyJson(value: unknown): string {
   if (value === undefined) return "";
@@ -76,25 +108,36 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
   const iconKind = toolIconKind(part.tool);
   const verb = verbForTool(part.tool);
   const isRunning = part.status === "running";
+  // Completed file edits headline their diff counters instead of a bare ✓.
+  const diffStat = part.status === "completed" ? readFileDiffStat(part.raw) : undefined;
 
   return (
-    <details className="group my-1 overflow-hidden rounded-lg text-xs transition-all">
-      <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 text-muted-fg hover:text-fg font-medium transition-colors">
-        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90">
+    <details className="group m-0 overflow-hidden rounded-lg text-xs transition-all">
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 pr-1.5 text-muted-fg hover:text-fg font-medium transition-colors">
+        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
           ▶
         </span>
-        <span className="text-muted-fg/80 font-normal">
+        <span className="text-muted-fg/80 font-normal shrink-0">
           {isRunning ? `${verb.replace(/ed$/, "ing")}...` : verb}
         </span>
         <ToolIcon kind={iconKind} />
-        <span className="font-semibold text-fg/90 truncate max-w-[calc(100%-130px)]">
+        <span className="font-semibold text-fg/90 truncate min-w-0 flex-1">
           {part.title !== undefined && part.title !== part.tool ? part.title : part.tool}
         </span>
         {isRunning ? (
-          <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse ml-0.5" />
+          <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse shrink-0 ml-1" />
+        ) : diffStat !== undefined ? (
+          <span className="flex shrink-0 items-center gap-1 ml-1 text-[10px] font-mono">
+            <span className="text-ok">+{diffStat.additions}</span>
+            <span className="text-err">−{diffStat.deletions}</span>
+          </span>
         ) : (
-          <span className={`ml-auto text-[10px] font-mono ${STATUS_CLASS[part.status]}`}>
-            {t(STATUS_LABEL[part.status])}
+          <span
+            aria-label={t(STATUS_LABEL[part.status])}
+            title={t(STATUS_LABEL[part.status])}
+            className={`shrink-0 ml-1 text-[11px] font-semibold leading-none ${STATUS_CLASS[part.status]}`}
+          >
+            {STATUS_GLYPH[part.status] ?? t(STATUS_LABEL[part.status])}
           </span>
         )}
       </summary>

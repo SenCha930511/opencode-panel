@@ -218,6 +218,42 @@ describe("capability-info refresh push", () => {
     ).toBe(true);
   });
 
+  it("prefers the live detect seam over the connect-time snapshot (mid-session additions)", async () => {
+    mock = await startMockServer(0);
+    const connection = await detectedConnection(mock.url);
+    const harness = syncHarness(staticSessionSource(connection));
+    // The baked snapshot predates a custom command; the live probe sees it.
+    const sync = new CapabilityInfoSync({
+      ...harness.deps,
+      detect: () =>
+        Promise.resolve({
+          ...BASE_CAPABILITIES,
+          agents: connection.capabilities.agents,
+          commands: [...connection.capabilities.commands, { name: "btw", description: "by the way" }],
+        }),
+      baseUrl: () => connection.baseUrl,
+    });
+
+    const payload = await sync.fetchPayload();
+
+    expect(payload?.commands.some((command) => command.name === "btw")).toBe(true);
+  });
+
+  it("a failing live probe falls back to the baked snapshot (never blanks the pickers)", async () => {
+    mock = await startMockServer(0);
+    const connection = await detectedConnection(mock.url);
+    const harness = syncHarness(staticSessionSource(connection));
+    const sync = new CapabilityInfoSync({
+      ...harness.deps,
+      detect: () => Promise.reject(new Error("probe blown")),
+      baseUrl: () => connection.baseUrl,
+    });
+
+    const payload = await sync.fetchPayload();
+
+    expect(payload?.commands.map((command) => command.name)).toEqual(["help", "init", "compact"]);
+  });
+
   it("degrades to empty providers/defaults when config routes are dead (never invents)", async () => {
     mock = await startMockServer(0);
     const capabilities: Capabilities = {

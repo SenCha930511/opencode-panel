@@ -68,7 +68,7 @@
 
 import type { OpencodeClient } from "@opencode-ai/sdk";
 import type { PanelLogger } from "../logger.js";
-import type { CapabilityDetector } from "../../server/CapabilityDetector.js";
+import type { Capabilities, CapabilityDetector } from "../../server/CapabilityDetector.js";
 import type { ServerManagerState } from "../../server/ServerManager.js";
 import type { Disposable } from "../config.js";
 import type { SessionClientSource } from "./sessions.js";
@@ -103,6 +103,15 @@ export interface CapabilityInfoSyncDeps {
   readonly source: SessionClientSource;
   readonly sink: ViewEventSink;
   readonly logger: PanelLogger;
+  /**
+   * Fresh detection override (invalidate + re-detect). The baked
+   * `connection.capabilities` snapshot is frozen at connect time — a
+   * mid-session change (user added a custom command) only surfaces through
+   * a live probe. When unset, the baked snapshot stands alone.
+   */
+  readonly detect?: { (baseUrl: string): Promise<Capabilities> };
+  /** The live baseUrl to probe, mirroring the manager's current state. */
+  readonly baseUrl?: { (): string | undefined };
 }
 
 export class CapabilityInfoSync {
@@ -119,17 +128,32 @@ export class CapabilityInfoSync {
     return this.inflight;
   }
 
+  /** Live-detected agent/command lists; null when no probe is wired/fails. */
+  private async freshLists(): Promise<Capabilities | null> {
+    if (this.deps.detect === undefined || this.deps.baseUrl === undefined) return null;
+    const baseUrl = this.deps.baseUrl();
+    if (baseUrl === undefined) return null;
+    try {
+      return await this.deps.detect(baseUrl);
+    } catch {
+      return null;
+    }
+  }
+
   async fetchPayload(): Promise<CapabilitiesRefreshPayload | undefined> {
     try {
-      const connection = await this.deps.source.connect();
+      const [connection, fresh] = await Promise.all([
+        this.deps.source.connect(),
+        this.freshLists(),
+      ]);
       const [providersResult, configResult] = await Promise.all([
         readConfigProbe(connection.client, "providers"),
         readConfigProbe(connection.client, "get"),
       ]);
       const defaultModel = toDefaultModel(configResult);
       return {
-        agents: connection.capabilities.agents,
-        commands: connection.capabilities.commands,
+        agents: fresh?.agents ?? connection.capabilities.agents,
+        commands: fresh?.commands ?? connection.capabilities.commands,
         providers: toProviderEntries(providersResult),
         defaultModels: toDefaultModels(providersResult),
         ...(defaultModel === undefined ? {} : { defaultModel }),
@@ -152,15 +176,18 @@ export class CapabilityInfoSync {
   }
 
   private async runRefresh(): Promise<void> {
-    const connection = await this.deps.source.connect();
+    const [connection, fresh] = await Promise.all([
+      this.deps.source.connect(),
+      this.freshLists(),
+    ]);
     const [providersResult, configResult] = await Promise.all([
       readConfigProbe(connection.client, "providers"),
       readConfigProbe(connection.client, "get"),
     ]);
     const defaultModel = toDefaultModel(configResult);
     const payload: CapabilitiesRefreshPayload = {
-      agents: connection.capabilities.agents,
-      commands: connection.capabilities.commands,
+      agents: fresh?.agents ?? connection.capabilities.agents,
+      commands: fresh?.commands ?? connection.capabilities.commands,
       providers: toProviderEntries(providersResult),
       defaultModels: toDefaultModels(providersResult),
       ...(defaultModel === undefined ? {} : { defaultModel }),
@@ -255,6 +282,13 @@ export function wireCapabilityInfo(deps: CapabilityInfoWiringDeps): CapabilityIn
     source: deps.source,
     sink: deps.events,
     logger: deps.logger,
+    detect: async (baseUrl) => {
+      // Fresh probe: the connect-time snapshot misses mid-session changes
+      // (custom agents/commands added while the server runs).
+      const connection = await deps.source.connect();
+      return deps.detector.detect(connection.client, baseUrl);
+    },
+    baseUrl: () => aliveBaseUrl(deps.getState()),
   };
   const sync = new CapabilityInfoSync(syncDeps);
 

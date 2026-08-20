@@ -45,6 +45,20 @@ export function subscribeCapabilitySnapshot(listener: Listener): () => void {
   };
 }
 
+/** Pull the current lists from the host and fold them into the snapshot. */
+export function requestCapabilityRefresh(messenger: WebviewMessenger): void {
+  void messenger
+    .request("getCapabilities", {})
+    .then((payload: unknown) => {
+      const parsed = parseCapabilitySnapshot(payload);
+      if (parsed !== undefined) {
+        snapshot = parsed;
+        emit();
+      }
+    })
+    .catch(() => {});
+}
+
 /** Subscribe the host event channel; repeats against one messenger no-op. */
 export function attachCapabilityStore(messenger: WebviewMessenger): void {
   if (attached.has(messenger)) return;
@@ -59,16 +73,7 @@ export function attachCapabilityStore(messenger: WebviewMessenger): void {
   // Proactive pull on attach (the push arrives on refresh; this covers the
   // already-connected case). Offline/unsupported ⇒ snapshot unchanged; the
   // init push and refresh push still deliver.
-  void messenger
-    .request("getCapabilities", {})
-    .then((payload: unknown) => {
-      const parsed = parseCapabilitySnapshot(payload);
-      if (parsed !== undefined) {
-        snapshot = parsed;
-        emit();
-      }
-    })
-    .catch(() => {});
+  requestCapabilityRefresh(messenger);
 }
 
 /** Test seam: drop the snapshot between suites (attach caches weaken out). */

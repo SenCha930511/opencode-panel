@@ -57,7 +57,7 @@ function createFixture(devMode = false, payload = sampleInitPayload()): Fixture 
 }
 
 async function flush(): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  await new Promise<void>((resolve) => setTimeout(resolve, 20));
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
@@ -78,6 +78,35 @@ describe("init handshake", () => {
     chat.resolveWebviewView(view, {}, {});
     await flush();
     expect(postedOfType(view, "init")).toHaveLength(0);
+  });
+
+  it("queues event posts until the SECOND (warm) ready, then flushes in FIFO order", async () => {
+    const { chat } = createFixture();
+    const view = new FakeWebviewView();
+    chat.resolveWebviewView(view, {}, {});
+    // A title-bar click before any listener survives: queued, never lost.
+    chat.postEvent("command.toggleHistory", null);
+    // First ready = the init handshake; the gate stays warm-pending.
+    view.webview.incoming.fire({ messageId: "m-ready-1", type: "ready", payload: {} });
+    await flush();
+    expect(postedOfType(view, "init")).toHaveLength(1);
+    expect(postedOfType(view, "event")).toHaveLength(0);
+    // Between handshake and provider attach: still queued.
+    chat.postEvent("command.newSession", null);
+    // Warm ready (the webview's post-subscribe ping) flushes everything.
+    view.webview.incoming.fire({ messageId: "m-ready-2", type: "ready", payload: {} });
+    await flush();
+    const events = postedOfType(view, "event");
+    expect(events.map((event) => event.payload.type)).toEqual([
+      "command.toggleHistory",
+      "command.newSession",
+    ]);
+    // Warm readies never re-post init.
+    expect(postedOfType(view, "init")).toHaveLength(1);
+    // Post-warm traffic flows straight through (no queue drag).
+    chat.postEvent("command.openSettings", null);
+    await flush();
+    expect(postedOfType(view, "event")).toHaveLength(3);
   });
 
   it("answers `ready` by posting the full init payload through the messenger", async () => {

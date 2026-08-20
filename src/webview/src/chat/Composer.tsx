@@ -70,6 +70,7 @@ import { createWebviewDraftStore, type DraftStore } from "./draftStore.js";
 import type { ChatEventSource } from "./events.js";
 import { MessageStore } from "./messageStore.js";
 import { MessageList, useChatStore } from "./MessageList.js";
+import { SlashCommandPalette, type SlashKeyHandler } from "./pickers/CommandPalette.js";
 
 export type { ComposerAttachment } from "./composerLogic.js";
 export { DefaultAttachmentChip } from "./composerChips.js";
@@ -96,8 +97,8 @@ export interface ComposerProps {
   readonly sessionId?: string;
 }
 
-/** Tailwind max-h-40 (10rem) — the JS-side cap for the autosize math. */
-const MAX_TEXTAREA_HEIGHT_PX = 160;
+/** Tailwind max-h-60 (15rem) — the JS-side cap for the autosize math. Keep in sync with the className below. */
+const MAX_TEXTAREA_HEIGHT_PX = 240;
 
 function SendIcon(): ReactNode {
   return (
@@ -130,6 +131,9 @@ export function Composer(props: ComposerProps): ReactNode {
   const drafts = useMemo(() => (props.drafts ?? createWebviewDraftStore()), [props.drafts]);
   const chips = props.attachments ?? [];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // Slash palette seam: the open menu publishes its key handler here and the
+  // textarea consults it before its own Enter-send handling.
+  const slashKeyRef = useRef<SlashKeyHandler | null>(null);
 
   const [text, setText] = useState<string>(() => {
     return sessionId === undefined ? "" : drafts.read(sessionId);
@@ -156,8 +160,10 @@ export function Composer(props: ComposerProps): ReactNode {
     };
   }, [drafts]);
 
-  // Autosize: grow with content, capped at MAX_TEXTAREA_HEIGHT_PX (CSS
-  // max-h-40 + overflow-y-auto is the visual backstop).
+  // Autosize: grow upward with content so every typed line stays visible,
+  // capped at MAX_TEXTAREA_HEIGHT_PX (CSS max-h-60 + overflow-y-auto is the
+  // visual backstop). The composer is bottom-anchored in the chat column, so
+  // growing the textarea pushes the card up over the message list.
   useEffect(() => {
     const element = textareaRef.current;
     if (element === null) return;
@@ -174,13 +180,71 @@ export function Composer(props: ComposerProps): ReactNode {
 
   const inputDisabled = composerDisabled(status);
   const [creating, setCreating] = useState(false);
+  const [queuedPrompt, setQueuedPrompt] = useState<{
+    text: string;
+    chips: readonly ComposerAttachment[];
+    agent?: string;
+    model?: string;
+  } | null>(null);
+
+  // Clear queue on session switch
+  useEffect(() => {
+    setQueuedPrompt(null);
+  }, [sessionId]);
+
+  // When model finishes outputting (busy -> false), automatically send queued prompt
+  useEffect(() => {
+    if (!busy && queuedPrompt && !inputDisabled) {
+      const promptToSend = queuedPrompt;
+      setQueuedPrompt(null);
+      void (async () => {
+        let target = sessionId;
+        if (target === undefined) {
+          setCreating(true);
+          try {
+            target = await ensureSessionForSend(app.messenger, sessionId);
+          } catch (error) {
+            setCreating(false);
+            reportError(error instanceof Error ? error.message : String(error));
+            return;
+          }
+          setCreating(false);
+        }
+        const payload = buildPromptPayload({
+          sessionId: target,
+          text: promptToSend.text,
+          attachments: promptToSend.chips,
+          ...(promptToSend.agent === undefined ? {} : { agent: promptToSend.agent }),
+          ...(promptToSend.model === undefined ? {} : { model: promptToSend.model }),
+        });
+        await submitPrompt(app.messenger, payload, reportError);
+      })();
+    }
+  }, [busy, queuedPrompt, inputDisabled, sessionId, app.messenger, reportError]);
+
   // No active session must not dead-key the send action: the first send from
   // the home screen creates a fresh chat and posts the prompt into it.
-  const canSend = !inputDisabled && !busy && !creating && text.trim().length > 0;
+  const canSend = !inputDisabled && !creating && text.trim().length > 0;
 
   const handleSend = useCallback(() => {
     if (!canSend) return;
     const effectiveText = expandMentionPaths(text);
+
+    // If model is currently outputting, queue the prompt to send once ready
+    if (busy) {
+      setQueuedPrompt({
+        text: effectiveText,
+        chips,
+        agent: props.agent,
+        model: props.model,
+      });
+      setText("");
+      if (sessionId !== undefined) {
+        drafts.clear(sessionId);
+      }
+      return;
+    }
+
     void (async () => {
       let target = sessionId;
       if (target === undefined) {
@@ -209,7 +273,7 @@ export function Composer(props: ComposerProps): ReactNode {
         drafts.clear(target);
       }
     })();
-  }, [app.messenger, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text]);
+  }, [app.messenger, busy, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text]);
 
   const handleAbort = useCallback(() => {
     if (sessionId === undefined) return;
@@ -224,15 +288,47 @@ export function Composer(props: ComposerProps): ReactNode {
     }
   };
 
+  // Slash-palette accept clears the consumed "/cmd" text (never sent — the
+  // command runs through runCommand instead) and drops the session draft.
+  const handleSlashAccepted = useCallback(() => {
+    setText("");
+    if (sessionId !== undefined) {
+      drafts.write(sessionId, "");
+    }
+  }, [drafts, sessionId]);
+
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>): void => {
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    // The open slash menu owns Enter/arrows/Escape before Enter means send.
+    if (slashKeyRef.current?.(event) === true) {
+      event.preventDefault();
+      return;
+    }
     if (!shouldSend(event)) return;
     event.preventDefault();
     handleSend();
   };
 
   return (
-    <div data-oc-composer className="border-t border-border/70 bg-bg/80 p-2.5 backdrop-blur-md">
+    <div data-oc-composer className="border-t border-border/70 bg-bg/80 px-4.5 py-3 sm:px-5 backdrop-blur-md">
       <div className="flex flex-col rounded-2xl border border-card-border bg-input-card-bg shadow-sm transition-all focus-within:border-focus-ring/80 focus-within:ring-1 focus-within:ring-focus-ring/25 p-3">
+        {queuedPrompt && (
+          <div className="mb-2 flex items-center justify-between rounded-xl bg-accent/10 px-2.5 py-1 text-xs text-accent">
+            <span className="truncate flex-1">
+              排隊等待中：{queuedPrompt.text}
+            </span>
+            <button
+              type="button"
+              className="ml-2 text-[11px] opacity-70 hover:opacity-100 hover:underline cursor-pointer"
+              onClick={() => {
+                setText(queuedPrompt.text);
+                setQueuedPrompt(null);
+              }}
+            >
+              取消
+            </button>
+          </div>
+        )}
         {chips.length > 0 && (
           <div data-oc-attachments className="mb-2 flex flex-wrap gap-1.5">
             {chips.map((chip) =>
@@ -244,47 +340,56 @@ export function Composer(props: ComposerProps): ReactNode {
             )}
           </div>
         )}
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          className="max-h-40 min-h-8 flex-1 resize-none overflow-y-auto bg-transparent px-0.5 text-sm sm:text-base text-fg outline-none placeholder:text-muted-fg/60 disabled:cursor-not-allowed disabled:opacity-50"
-          value={text}
-          placeholder={t(placeholderForStatus(status))}
-          disabled={inputDisabled}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-        />
+        {/* Slash palette anchor: the menu (absolute bottom-full) opens upward
+            over the input; the textarea lives inside the relative wrapper so
+            the anchor tracks it. */}
+        <div className="relative">
+          <SlashCommandPalette text={text} onAccepted={handleSlashAccepted} keyRef={slashKeyRef} />
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            className="max-h-60 min-h-8 w-full resize-none overflow-y-auto bg-transparent px-0.5 text-sm sm:text-base text-fg outline-none placeholder:text-muted-fg/60 disabled:cursor-not-allowed disabled:opacity-50"
+            value={text}
+            placeholder={t(placeholderForStatus(status))}
+            disabled={inputDisabled}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
 
-        {/* Row 1 (Actions): Attachments '+' on left, Stop/Send on right */}
+        {/* Row 1 (Actions): Attachments '+' on left, Send/Stop morphing button on right */}
         <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
           <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-visible py-0.5">
             {props.extras}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            {busy && (
+            {busy ? (
               <button
                 type="button"
                 data-oc-composer-stop
                 aria-label={t("composer.abort")}
-                className="flex items-center gap-1 rounded-full border border-err/40 bg-err/10 px-3 py-1 text-xs font-medium text-err transition-all hover:bg-err hover:text-white disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                title={t("composer.abort")}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-fg/15 text-fg shadow-xs transition-all hover:bg-err hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                 disabled={sessionId === undefined}
                 onClick={handleAbort}
               >
                 <StopIcon />
-                <span>{t("composer.abort")}</span>
+                <span className="sr-only">{t("composer.abort")}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-oc-composer-send
+                aria-label={t("composer.send")}
+                title={t("composer.send")}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                disabled={!canSend}
+                onClick={handleSend}
+              >
+                <SendIcon />
+                <span className="sr-only">{t("composer.send")}</span>
               </button>
             )}
-            <button
-              type="button"
-              data-oc-composer-send
-              aria-label={t("composer.send")}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-fg shadow-xs transition-all hover:bg-accent-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-              disabled={!canSend}
-              onClick={handleSend}
-            >
-              <SendIcon />
-              <span className="sr-only">{t("composer.send")}</span>
-            </button>
           </div>
         </div>
 

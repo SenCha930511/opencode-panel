@@ -226,6 +226,12 @@ export function MessageActionsMenu(props: MessageActionsMenuProps): ReactNode {
         messages: () => props.store?.getState().messages ?? [], // i18n-allow-literal
         messenger: app.messenger,
         reporter,
+        onReverted: (messageId) => {
+          props.store?.applyReverted(messageId);
+        },
+        onUnreverted: () => {
+          props.store?.clearReverted();
+        },
       }),
     [props.store, app.messenger, reporter],
   );
@@ -237,5 +243,88 @@ export function MessageActionsMenu(props: MessageActionsMenuProps): ReactNode {
       {...(props.className === undefined ? {} : { className: props.className })}
       {...(props.ConfirmDialog === undefined ? {} : { ConfirmDialog: props.ConfirmDialog })}
     />
+  );
+}
+
+function UndoCheckpointIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 6.5h6.25a3.25 3.25 0 0 1 3.25 3.25v0a3.25 3.25 0 0 1-3.25 3.25H5.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 4L3.5 6.5 6 9"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function UserCheckpointButton(props: {
+  readonly message: MessageVM;
+  readonly store?: MessageStore;
+}): ReactNode {
+  const app = useApp();
+  const { t } = useStrings();
+  const reporter: MessageOpReporter = {
+    unsupported: () => {
+      app.pushToast("warning", t("capability.hidden"));
+    },
+    error: (message) => {
+      app.pushToast("error", message);
+    },
+  };
+
+  const availability = resolveMessageOpAvailability(app.init.capabilities);
+  const controller = useMemo(
+    () =>
+      new MessageActionsController({
+        sessionId: getActiveSession,
+        messages: () => props.store?.getState().messages ?? [],
+        messenger: app.messenger,
+        reporter,
+        onReverted: (messageId) => {
+          props.store?.applyReverted(messageId);
+        },
+        onUnreverted: () => {
+          props.store?.clearReverted();
+        },
+      }),
+    [props.store, app.messenger],
+  );
+
+  const actions = useMessageActions(controller);
+  if (!availability.revert) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        title="回到此處 (Checkpoint)"
+        aria-label={t("messages.revert")}
+        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-fg/70 transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
+        onClick={() => {
+          actions.requestRevert(props.message.id);
+        }}
+      >
+        <UndoCheckpointIcon />
+      </button>
+      {actions.pending !== null ? (
+        <RevertConfirmDialog
+          copy={t("messages.revertConfirm")}
+          confirmLabel={t("common.confirm")}
+          cancelLabel={t("common.cancel")}
+          onConfirm={actions.confirm}
+          onCancel={actions.cancel}
+        />
+      ) : null}
+    </>
   );
 }

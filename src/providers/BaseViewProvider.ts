@@ -72,6 +72,15 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
   private messenger: HostMessenger | undefined;
   private subscriptions: Disposable[] = [];
   private readonly posted: HostMessage[] = [];
+  /**
+   * Post gating: events fire-and-forget into a loading webview evaporate
+   * (the iframe runs no message listeners until React mounts). Posts are
+   * queued until the view's SECOND `ready` — the warm one the webview sends
+   * after its AppProvider subscriptions attach — then flushed in FIFO order.
+   * The `init` handshake bypasses the gate (it IS the handshake).
+   */
+  private readyPhase: "cold" | "warming" | "warm" = "cold";
+  private readonly pendingPosts: HostMessage[] = [];
 
   protected constructor(deps: ViewProviderDeps) {
     this.deps = deps;
@@ -113,6 +122,8 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(view: PanelWebviewView, _context: unknown, _token: unknown): void {
     this.view = view;
+    this.readyPhase = "cold";
+    this.pendingPosts.length = 0;
     const mediaRoot = this.deps.joinPath(this.deps.extensionUri, "media");
     // enableCommandUris stays UNSET (plan todo 10 MUST-NOT); roots = media/.
     view.webview.options = {
@@ -132,12 +143,21 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
     const messenger = new HostMessenger(port);
     this.messenger = messenger;
     this.deps.handlers.applyInto(messenger);
-    // `ready` is protocol substrate owned here, not a domain handler: the
-    // webview's very first message triggers the init handshake.
+    // `ready` is protocol substrate owned here, not a domain handler. The
+    // webview's FIRST ready triggers the init handshake; its SECOND (warm)
+    // confirms the provider listeners attached and flushes the event queue.
     messenger.register("ready", async () => {
-      const payload = await this.deps.buildInitPayload();
-      this.post({ type: "init", payload });
-      this.deps.logger.debug("posted init payload to webview view");
+      if (this.readyPhase === "cold") {
+        this.readyPhase = "warming";
+        const payload = await this.deps.buildInitPayload();
+        this.post({ type: "init", payload });
+        this.deps.logger.debug("posted init payload to webview view");
+      } else {
+        this.readyPhase = "warm";
+        for (const queued of this.pendingPosts.splice(0)) {
+          this.post(queued);
+        }
+      }
       return null;
     });
 
@@ -175,6 +195,8 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
         if (this.view === view) {
           this.view = undefined;
           this.messenger = undefined;
+          this.readyPhase = "cold";
+          this.pendingPosts.length = 0;
         }
       }),
     );
@@ -198,6 +220,15 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
     }
     const view = this.view;
     if (view === undefined) return;
+    if (message.type !== "init" && message.type !== "streamChunk" && this.readyPhase !== "warm") {
+      // Cap: a flood pre-boot keeps only the tail (drop-oldest, FIFO intact).
+      if (this.pendingPosts.length >= 25) {
+        this.pendingPosts.shift();
+        this.deps.logger.debug("view post queue full: dropped the oldest pending message");
+      }
+      this.pendingPosts.push(message);
+      return;
+    }
     void view.webview.postMessage(message);
   }
 

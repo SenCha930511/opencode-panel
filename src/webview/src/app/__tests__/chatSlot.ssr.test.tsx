@@ -255,7 +255,7 @@ describe("composed chat pieces smoke", () => {
     // Then: every row wraps in the hover group and its menu rows render via t()
     expect(html).toContain("group relative");
     expect(html).toContain(SENTINELS.revert);
-    expect(html).toContain(SENTINELS.unrevert);
+    // Unrevert is no longer rendered inline — only a checkpoint button on user messages
     expect(html).toContain('data-role="assistant"');
     expect(html).toContain('data-role="user"');
   });

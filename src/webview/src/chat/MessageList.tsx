@@ -1,19 +1,3 @@
-/**
- * MessageList (todo 13, EXPORTED mount contract for T11's shell).
- *
- * T11 slots `<MessageList />` into the chat route; everything is optional:
- * - `store` / `source` / `actions` are dependency seams (tests inject fakes);
- *   defaults bind to the todo-3 webview messenger + the T9 `event` channel.
- * - Streaming, poll-sync merge, sanitizer and generic tool cards all live in
- *   `./messageStore`, `./events`, `./parts` — this file is composition only.
- *
- * Also exported for sibling todos: {@link MessageListBody} (virtuoso-free
- * row map, used by the node tests below AND as the item renderer contract),
- * {@link useChatStore} (T14's composer reads `status` for Stop/Regenerate
- * from the same store), plus the store/source/action types via ./types,
- * ./events, ./chatContext. The AutoScrollPark behavior lives in ./autoScroll.
- */
-
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { useStrings } from "../../lib/i18n.js";
@@ -23,6 +7,7 @@ import { ChatActionsProvider, type ChatActions } from "./chatContext.js";
 import { createMessengerEventSource, routeChatEvent, type ChatEventSource } from "./events.js";
 import { MessageStore, type ChatStoreState } from "./messageStore.js";
 import { MessageView } from "./MessageView.js";
+import { stickyUserMessage, StickyPromptBar } from "./StickyPromptBar.js";
 import { useActiveSession } from "./activeSession.js";
 import type { StringId } from "../../../shared/strings.js";
 import type { MessageVM } from "./types.js";
@@ -125,28 +110,14 @@ function WelcomeHero(props: { readonly emptyLabel: string }): ReactNode {
   );
 }
 
-function ScrollDownIcon(): ReactNode {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="M8 3v10M3.5 8.5L8 13l4.5-4.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function MessageList(props: MessageListProps) {
   const { t } = useStrings();
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
   const park = useRef(new AutoScrollPark());
   const virtuosoRef = useRef<VirtuosoHandle | null>(null);
-  const [atBottom, setAtBottom] = useState(true);
   const state = useChatStore(store);
   const activeSessionId = useActiveSession();
+  const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
 
   useEffect(() => {
     if (activeSessionId) {
@@ -176,16 +147,6 @@ export function MessageList(props: MessageListProps) {
     }
   }, [state.messages, state.status]);
 
-  const scrollToBottom = () => {
-    park.current.onAtBottomChange(true);
-    setAtBottom(true);
-    virtuosoRef.current?.scrollToIndex({
-      index: state.messages.length - 1,
-      align: "end",
-      behavior: "smooth",
-    });
-  };
-
   const body =
     state.messages.length === 0 ? (
       <WelcomeHero emptyLabel={t("messages.empty")} />
@@ -193,35 +154,40 @@ export function MessageList(props: MessageListProps) {
       <Virtuoso
         ref={virtuosoRef}
         data={state.messages}
-        className="h-full px-3 py-1"
+        className="h-full"
+        // Mount anchored at the tail: the opening view always lands at the
+        // bottom (the rAF scrollToIndex below only carries follow-up updates).
+        initialTopMostItemIndex={{ index: "LAST", align: "end" }}
         atBottomThreshold={80}
         followOutput={park.current.followFor}
         atBottomStateChange={(isBottom: boolean) => {
-          setAtBottom(isBottom);
           park.current.onAtBottomChange(isBottom);
         }}
-        itemContent={(_index, message) => <MessageView message={message} store={store} />}
+        rangeChanged={setVisibleRange}
+        itemContent={(_index, message) => (
+          <div className="px-4.5 py-1 sm:px-5 min-w-0 max-w-full overflow-hidden">
+            <MessageView message={message} store={store} />
+          </div>
+        )}
       />
     );
+
+  const sticky = stickyUserMessage(state.messages, visibleRange.startIndex);
 
   return (
     <ChatActionsProvider actions={props.actions ?? defaultActionsFallback}>
       <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden text-fg">
+        {sticky !== undefined && (
+          <StickyPromptBar
+            anchor={sticky}
+            onJump={(index) => {
+              virtuosoRef.current?.scrollToIndex({ index, align: "start", behavior: "smooth" });
+            }}
+          />
+        )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {body}
         </div>
-        {!atBottom && state.messages.length > 0 && (
-          <button
-            type="button"
-            data-scroll-bottom
-            title="捲動至最新訊息"
-            aria-label="Scroll to bottom"
-            className="absolute bottom-3 right-4 z-30 flex h-7 w-7 items-center justify-center rounded-full border border-card-border/80 bg-panel-bg/90 text-fg shadow-xl backdrop-blur-md transition-all hover:bg-hover-bg hover:scale-110 active:scale-95 cursor-pointer ring-1 ring-black/10"
-            onClick={scrollToBottom}
-          >
-            <ScrollDownIcon />
-          </button>
-        )}
       </div>
     </ChatActionsProvider>
   );

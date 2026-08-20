@@ -51,13 +51,17 @@ export interface KeyEventLike {
   readonly shiftKey: boolean;
   readonly metaKey: boolean;
   readonly ctrlKey: boolean;
+  readonly isComposing?: boolean;
+  readonly keyCode?: number;
 }
 
 /**
  * Enter = send; Shift+Enter = newline; Cmd/Ctrl+Enter = send (modifier beats
  * Shift per the plan's "also send"). Everything else is plain editing.
+ * During IME composition (e.g. Zhuyin/Pinyin candidate confirmation), do NOT send.
  */
 export function shouldSend(event: KeyEventLike): boolean {
+  if (event.isComposing || event.keyCode === 229) return false;
   if (event.key !== "Enter") return false;
   if (event.metaKey || event.ctrlKey) return true;
   return !event.shiftKey;

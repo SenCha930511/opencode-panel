@@ -36,19 +36,25 @@ export function FilePartView(props: { readonly part: FilePart }) {
 
   if (isImage && props.part.url) {
     return (
-      <div className="my-1.5 inline-block max-w-full overflow-hidden rounded-xl border border-card-border/80 bg-black/20 shadow-2xs">
+      <div className="relative inline-block max-w-full overflow-hidden rounded-xl border border-card-border/80 bg-black/20 shadow-2xs">
         <img
           src={props.part.url}
           alt={name}
-          className="max-h-40 max-w-full rounded-lg object-contain"
+          className="max-h-80 max-w-full object-contain"
           loading="lazy"
         />
+        <span
+          title={name}
+          className="absolute bottom-1.5 right-1.5 max-w-[75%] truncate rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-2xs"
+        >
+          {name}
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="my-1 inline-flex items-center gap-1.5 rounded-lg border border-card-border/70 bg-card-bg/60 px-2.5 py-1 text-xs">
+    <div className="inline-flex items-center gap-1.5 rounded-lg border border-card-border/70 bg-card-bg/60 px-2.5 py-1 text-xs">
       <FileIcon />
       <span className="max-w-64 truncate font-medium text-fg">{name}</span>
       {props.part.mime !== undefined ? (

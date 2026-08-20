@@ -181,6 +181,11 @@ export function AppProvider(props: {
         setSessionsOpen((current) => !current);
       }
     });
+    // Warm ready: the host gates non-init posts until this SECOND ready —
+    // it proves the subscriptions above are live, so queued events (e.g. a
+    // title-bar toggleHistory clicked during boot) flush into listeners that
+    // exist. A reject only means the host is not listening; harmless.
+    void messenger.request("ready").catch(() => {});
     return () => {
       offToast();
       offEvent();

@@ -440,6 +440,74 @@ describe("confirm-gated controller", () => {
     expect(controller.requestRegenerate()).toBe(false);
     expect(controller.getPending()).toBeNull();
   });
+
+  it("onReverted fires with the target id only after a proven-successful revert", async () => {
+    const host = new ScriptedHost();
+    const { messenger } = host.connect();
+    const reverted: string[] = [];
+    { // success path
+      const controller = new MessageActionsController({
+        sessionId: () => "ses_1",
+        messages: () => [],
+        messenger,
+        reporter: recordingReporter(),
+        onReverted: (messageId) => reverted.push(messageId),
+      });
+      controller.requestRevert("msg_target");
+      expect(await controller.confirm()).toBe(true);
+    }
+    expect(reverted).toEqual(["msg_target"]);
+
+    host.failWith("revert", "Error: blown (HTTP 500)");
+    { // failure path: the marker callback must NOT fire
+      const controller = new MessageActionsController({
+        sessionId: () => "ses_1",
+        messages: () => [],
+        messenger,
+        reporter: recordingReporter(),
+        onReverted: (messageId) => reverted.push(messageId),
+      });
+      controller.requestRevert("msg_again");
+      expect(await controller.confirm()).toBe(false);
+    }
+    expect(reverted).toEqual(["msg_target"]);
+  });
+
+  it("regenerate success also reports the revert point; failure does not", async () => {
+    const host = new ScriptedHost();
+    const { messenger } = host.connect();
+    const reverted: string[] = [];
+    const controller = new MessageActionsController({
+      sessionId: () => "ses_1",
+      messages: () => [SOME_MESSAGE],
+      messenger,
+      reporter: recordingReporter(),
+      onReverted: (messageId) => reverted.push(messageId),
+    });
+    expect(controller.requestRegenerate()).toBe(true);
+    expect(await controller.confirm()).toBe(true);
+    expect(reverted).toEqual(["msg_u"]);
+  });
+
+  it("onUnreverted fires only after a proven-successful unrevert", async () => {
+    const host = new ScriptedHost();
+    const { messenger } = host.connect();
+    let restored = 0;
+    const controller = new MessageActionsController({
+      sessionId: () => "ses_1",
+      messages: () => [],
+      messenger,
+      reporter: recordingReporter(),
+      onUnreverted: () => {
+        restored += 1;
+      },
+    });
+    expect(await controller.unrevert()).toBe(true);
+    expect(restored).toBe(1);
+    host.failWith("unrevert", "Error: blown (HTTP 500)");
+    expect(await controller.unrevert()).toBe(false);
+    expect(restored).toBe(1);
+  });
 });
 
 describe("share copy", () => {

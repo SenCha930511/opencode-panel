@@ -9,23 +9,38 @@
  * presentational layer must render every row through renderToStaticMarkup):
  * - {@link CommandPalette} — pure presentational rows (listbox + options +
  *   empty state), all state in props.
- * - {@link SlashCommandPalette} — the container T14 anchors next to its
- *   textarea: derives the query from `text`, subscribes the capability
- *   store, and on select runs {@link runSlashSelection}. COMPOSITION
- *   CONTRACT for T14's composer: render it as a sibling directly above the
- *   textarea (its menu opens upward), pass the live text, and clear the text
- *   in `onAccepted` (the selected command text is consumed, not sent as a
- *   prompt). There is deliberately no active-session write here — without a
- *   session the select is a no-op (documented, tested).
+ * - {@link SlashCommandPalette} — the container the Composer anchors in a
+ *   relative wrapper directly around its textarea (the menu opens upward):
+ *   derives the query from `text`, subscribes the capability store, and on
+ *   select runs {@link runSlashSelection}. The composer passes its live
+ *   text, clears it in `onAccepted` (the selected command is consumed, not
+ *   sent as a prompt), and routes keystrokes through the optional `keyRef`
+ *   handler while the menu is open. There is deliberately no active-session
+ *   write here — without a session the select is a no-op (documented,
+ *   tested).
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
 import { useApp, type AppContextValue } from "../../app/context.js";
 import { useActiveSession } from "../activeSession.js";
 import type { CommandEntry } from "./constants.js";
-import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
-import { detectSlashQuery, filterCommands } from "./logic.js";
+import {
+  attachCapabilityStore,
+  requestCapabilityRefresh,
+  useCapabilitySnapshot,
+} from "./capabilityStore.js";
+import { detectSlashQuery, filterCommands, slashKeyAction } from "./logic.js";
+
+/**
+ * Keyboard seam between the composer and the open palette. The composer asks
+ * before its own Enter/send handling; true = the palette consumed the key
+ * (composer must preventDefault and stop). Decided by {@link slashKeyAction}.
+ */
+export type SlashKeyHandler = { (event: { key: string; shiftKey: boolean }): boolean };
+export interface SlashKeyRef {
+  current: SlashKeyHandler | null;
+}
 
 const MENU_CLASS =
   "absolute bottom-full left-0 z-50 mb-1 max-h-60 min-w-48 overflow-y-auto rounded border border-border bg-panel-bg p-1 shadow-lg";
@@ -100,6 +115,12 @@ export interface SlashCommandPaletteProps {
   readonly text: string;
   /** T14 hook: called after a selection fires (clear the consumed text). */
   onAccepted?(): void;
+  /**
+   * Composer-side keyboard seam: the palette publishes its key handler here
+   * so the textarea's Enter/arrows/Escape drive the open menu instead of
+   * sending the raw "/..." text. Optional (standalone use stays mouse-only).
+   */
+  readonly keyRef?: SlashKeyRef;
 }
 
 export function SlashCommandPalette(props: SlashCommandPaletteProps): ReactNode {
@@ -107,6 +128,8 @@ export function SlashCommandPalette(props: SlashCommandPaletteProps): ReactNode 
   const sessionId = useActiveSession();
   const snapshot = useCapabilitySnapshot();
   const [activeIndex, setActiveIndex] = useState(0);
+  // Escape hides the menu until the query changes (typing reopens it).
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     attachCapabilityStore(messenger);
@@ -115,9 +138,19 @@ export function SlashCommandPalette(props: SlashCommandPaletteProps): ReactNode 
   const query = detectSlashQuery(props.text);
   useEffect(() => {
     setActiveIndex(0);
+    setDismissed(false);
   }, [query]);
 
-  if (query === null) return null;
+  const open = query !== null && !dismissed;
+  const matches = filterCommands(snapshot?.commands ?? [], query ?? "");
+
+  // Fresh lists on open: commands added mid-session (config edit while the
+  // server runs) are absent from the connect-time snapshot until pulled.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open && !wasOpen.current) requestCapabilityRefresh(messenger);
+    wasOpen.current = open;
+  }, [open, messenger]);
 
   const select = (name: string): void => {
     runSlashSelection({ send, sessionId }, name);
@@ -125,10 +158,42 @@ export function SlashCommandPalette(props: SlashCommandPaletteProps): ReactNode 
     props.onAccepted?.();
   };
 
+  // Publish the composer's key handler. Runs every render so the closure
+  // always sees the live matches/index; cleared on unmount.
+  const keyRef = props.keyRef;
+  useEffect(() => {
+    if (keyRef === undefined) return undefined;
+    keyRef.current = (event) => {
+      const action = slashKeyAction({
+        key: event.key,
+        shiftKey: event.shiftKey,
+        open,
+        matchCount: matches.length,
+      });
+      if (action === null) return false;
+      if (action.type === "move") {
+        setActiveIndex((index) =>
+          Math.min(Math.max(index + action.delta, 0), Math.max(matches.length - 1, 0)),
+        );
+      } else if (action.type === "accept") {
+        const target = matches[Math.min(activeIndex, matches.length - 1)];
+        if (target !== undefined) select(target.name);
+      } else {
+        setDismissed(true);
+      }
+      return true;
+    };
+    return () => {
+      if (keyRef.current !== null) keyRef.current = null;
+    };
+  });
+
+  if (!open) return null;
+
   return (
     <CommandPalette
       commands={snapshot?.commands ?? []}
-      query={query}
+      query={query ?? ""}
       activeIndex={activeIndex}
       onSelect={select}
       onHover={setActiveIndex}

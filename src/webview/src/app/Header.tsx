@@ -3,7 +3,9 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import type { ReactNode } from "react";
 import { useStrings } from "../../lib/i18n.js";
 import { McpPopover, OldServerBanner } from "../mcp/index.js";
-import { useApp, type ServerStatus } from "./context";
+import { useApp, type ServerStatus } from "./context.js";
+import { setActiveSession } from "../chat/activeSession.js";
+import { getSharedSessionsStore } from "../sessions/sessionsStore.js";
 
 /**
  * Shell header (plan todo 11): sessions-history drawer toggle (chat-first
@@ -267,8 +269,19 @@ export function Header(): ReactNode {
                   type="button"
                   aria-label={t("sessions.new")}
                   className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
-                  onClick={() => {
-                    void send("createSession", {});
+                  onClick={async () => {
+                    setSessionsOpen(false);
+                    navigate("chat");
+                    try {
+                      const res = await send("createSession", {});
+                      if (res?.id) {
+                        setActiveSession(res.id);
+                        const store = getSharedSessionsStore();
+                        store?.select(res.id);
+                      }
+                    } catch {
+                      // ignore
+                    }
                   }}
                 >
                   <EditPenIcon />

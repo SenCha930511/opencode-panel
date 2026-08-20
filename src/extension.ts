@@ -55,6 +55,8 @@ import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { registerSettingsHandlers } from "./host/handlers/settings.js";
 import { createHealthProbe } from "./host/handlers/settingsProbe.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
+import { buildInitStrings } from "./host/locale.js";
+import type { ToastLevel } from "./shared/protocol.js";
 import { createPanelClient } from "./server/clientFactory.js";
 import { buildWebviewHtml } from "./providers/html.js";
 import { createInitPayloadBuilder } from "./providers/initPayload.js";
@@ -180,15 +182,22 @@ export function activate(
   // Todo-18: todos/diffs dock — openDiff/openFile handlers, poll-sync riding
   // the todo-12 InvalidationHub (todos+sessions kinds), one-shot capability
   // guards, and the read-only opencode-panel-diff:// document provider that
-  // backs native vscode.diff previews.
+  // backs native vscode.diff previews. openDiff always acknowledges the
+  // click: empty diff set -> info toast, any failure -> error toast.
   const dockSurface = createVscodeDockSurface();
+  const dockToasts = buildInitStrings(vscode.env.language).strings;
+  const dockNotify = (level: ToastLevel, text: string): void => {
+    panel.chat.postToast(level, text);
+  };
   const dockService = createDockService({
     source: managerSessionSource(manager),
     renderer: dockSurface.renderer,
     opener: dockSurface.opener,
     logger,
+    notify: dockNotify,
+    emptyDiffText: dockToasts["dock.diffs.empty"],
   });
-  registerDockHandlers(panel.registerHandler, { service: dockService });
+  registerDockHandlers(panel.registerHandler, { service: dockService, notify: dockNotify });
   const dockSync = new DockSync({
     source: managerSessionSource(manager),
     sink: panel.chat,

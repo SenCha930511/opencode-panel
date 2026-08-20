@@ -29,9 +29,9 @@ function BrainIcon(): ReactNode {
 export function ReasoningPartView(props: { readonly part: Extract<PartVM, { kind: "reasoning" }> }) {
   const { t } = useStrings();
   return (
-    <details className="group my-1 overflow-hidden rounded-lg text-xs transition-all">
-      <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 text-muted-fg hover:text-fg font-medium transition-colors">
-        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90">
+    <details className="group m-0 overflow-hidden rounded-lg text-xs transition-all">
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 pr-1.5 text-muted-fg hover:text-fg font-medium transition-colors">
+        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
           ▶
         </span>
         <BrainIcon />

@@ -177,6 +177,14 @@ export interface MessageActionsControllerDeps {
   readonly messenger: WebviewMessenger;
   readonly reporter: MessageOpReporter;
   readonly regenerateVerbs?: RegenerateVerbs;
+  /**
+   * Fires after a PROVEN-successful revert (or regenerate, whose first step
+   * is a revert): the caller mirrors the marker into the MessageStore so the
+   * messages below the point leave the visible list immediately.
+   */
+  readonly onReverted?: { (messageId: string): void };
+  /** Fires after a proven-successful unrevert (restores the visible tail). */
+  readonly onUnreverted?: { (): void };
 }
 
 export class MessageActionsController {
@@ -227,17 +235,23 @@ export class MessageActionsController {
     const sessionId = this.deps.sessionId();
     if (sessionId === undefined) return false;
     switch (pending.kind) {
-      case "revert":
-        return requestRevert(
+      case "revert": {
+        const ok = await requestRevert(
           this.deps.messenger,
           { id: sessionId, messageID: pending.messageId },
           this.deps.reporter,
         );
-      case "regenerate":
-        return runRegenerate(
+        if (ok) this.deps.onReverted?.(pending.messageId);
+        return ok;
+      }
+      case "regenerate": {
+        const ok = await runRegenerate(
           this.defaultedRegenerateVerbs(),
           { sessionId, messageId: pending.messageId, text: pending.text },
         );
+        if (ok) this.deps.onReverted?.(pending.messageId);
+        return ok;
+      }
       default: {
         const exhaustive: never = pending;
         return exhaustive;
@@ -249,7 +263,9 @@ export class MessageActionsController {
   async unrevert(): Promise<boolean> {
     const sessionId = this.deps.sessionId();
     if (sessionId === undefined) return false;
-    return requestUnrevert(this.deps.messenger, { id: sessionId }, this.deps.reporter);
+    const ok = await requestUnrevert(this.deps.messenger, { id: sessionId }, this.deps.reporter);
+    if (ok) this.deps.onUnreverted?.();
+    return ok;
   }
 
   private defaultedRegenerateVerbs(): RegenerateVerbs {

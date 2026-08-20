@@ -22,7 +22,7 @@ export function PatchPartView(props: { readonly part: PatchPart }) {
   const actions = useChatActions();
   const sessionId = props.part.sessionID ?? "";
   return (
-    <div className="my-1.5 flex items-center">
+    <div className="flex items-center">
       <button
         type="button"
         className="inline-flex items-center gap-2 rounded-xl border border-card-border/80 bg-card-bg/90 px-3 py-1.5 text-xs font-medium text-fg shadow-2xs transition-all hover:bg-hover-bg hover:border-focus-ring/60 active:scale-98 cursor-pointer group"

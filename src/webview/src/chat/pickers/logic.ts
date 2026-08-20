@@ -47,6 +47,39 @@ export function detectSlashQuery(text: string): string | null {
 }
 
 /**
+ * Keyboard decision for the open slash palette, kept pure so the container
+ * stays a thin state shell (and SSR tests can pin every branch):
+ * - ArrowDown / ArrowUp  -> move (the container clamps into [0, matches-1])
+ * - Enter (no shift)     -> accept the active row — consumed so the composer
+ *   NEVER sends the raw "/..." text as a prompt; no matches = pass through
+ *   so "/zzz" can still be edited/sent as plain text
+ * - Escape               -> dismiss (the palette hides until the query
+ *   changes) — the text itself is untouched
+ * Anything else is null: the composer's normal key handling proceeds.
+ */
+export type SlashKeyAction =
+  | { readonly type: "move"; readonly delta: 1 | -1 }
+  | { readonly type: "accept" }
+  | { readonly type: "dismiss" };
+
+export function slashKeyAction(input: {
+  readonly key: string;
+  readonly shiftKey: boolean;
+  /** Only consume keys while the palette is actually showing rows. */
+  readonly open: boolean;
+  readonly matchCount: number;
+}): SlashKeyAction | null {
+  if (!input.open) return null;
+  if (input.key === "Escape") return { type: "dismiss" };
+  if (input.key === "ArrowDown" && input.matchCount > 0) return { type: "move", delta: 1 };
+  if (input.key === "ArrowUp" && input.matchCount > 0) return { type: "move", delta: -1 };
+  if (input.key === "Enter" && !input.shiftKey && input.matchCount > 0) {
+    return { type: "accept" };
+  }
+  return null;
+}
+
+/**
  * Name matching, case-insensitive: prefix matches rank before contains
  * matches; order within each tier is the server's own (stable). An empty
  * query returns every command. Descriptions are display data, not match keys.

@@ -1,4 +1,4 @@
-import { MessageActionsMenu } from "./messageOps/MessageActionsMenu.js";
+import { UserCheckpointButton } from "./messageOps/MessageActionsMenu.js";
 import type { MessageStore } from "./messageStore.js";
 import type { MessageVM, PartVM } from "./types.js";
 import { TextPartView } from "./parts/TextPartView.js";
@@ -39,11 +39,8 @@ const ROLE_CLASS: Readonly<Record<string, string>> = {
 /**
  * One `{info, parts}` row: role marker + every part in payload order.
  *
- * T19 INTEGRATION (FIX-E, additive): the todo-19 documented mount site for
- * the per-message hover menu — `<article class="group relative">` plus the
- * menu absolutely anchored, hover-revealed via the group. `store` is the
- * optional regenerate seam (MessageList threads its own store through;
- * without it the Regenerate row hides, per the T19 contract).
+ * User messages render as rounded cards with a subtle checkpoint (revert)
+ * icon on hover. Assistant messages render borderless with no actions menu.
  */
 export function MessageView(props: {
   readonly message: MessageVM;
@@ -67,13 +64,15 @@ export function MessageView(props: {
           <PartView key={part.id} part={part} />
         ))}
       </div>
-      <div className="mt-1 flex items-center justify-end">
-        <MessageActionsMenu
-          message={message}
-          {...(props.store === undefined ? {} : { store: props.store })}
-          className="hidden group-hover:flex"
-        />
-      </div>
+      {isUser && (
+        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <UserCheckpointButton
+            message={message}
+            {...(props.store === undefined ? {} : { store: props.store })}
+          />
+        </div>
+      )}
     </article>
   );
 }
+

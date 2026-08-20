@@ -64,9 +64,17 @@ export function registerPanelViews(
   };
   const chat = new ChatViewProvider(shared);
   const sessions = new SessionsViewProvider(shared);
+  // retainContextWhenHidden: keep the webview DOM alive across hide/show so
+  // a re-shown panel keeps its React state (scroll anchor, drawer state)
+  // instead of remounting — the remount raced initial scroll-top landing
+  // and dropped title-bar command events (toggleHistory/newSession).
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(CHAT_VIEW_ID, chat),
-    vscode.window.registerWebviewViewProvider(SESSIONS_VIEW_ID, sessions),
+    vscode.window.registerWebviewViewProvider(CHAT_VIEW_ID, chat, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+    vscode.window.registerWebviewViewProvider(SESSIONS_VIEW_ID, sessions, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
   );
   return {
     chat,

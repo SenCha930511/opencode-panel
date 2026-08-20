@@ -39,15 +39,18 @@ import {
   DiffDocumentStore,
   DOCK_DIFF_SCHEME,
   DockDiffUnsupportedError,
+  DockOpenDiffError,
   DockOpenFileError,
   DockSync,
   diffsForSession,
+  mergeSummaryDiffs,
   parseDockFileDiffs,
   parseDockTodos,
   registerDockHandlers,
   resolveDockFilePath,
   TODOS_SYNC_EVENT_TYPE,
   todosForSession,
+  unifiedToBeforeAfter,
   type DiffsSyncPayload,
   type DockDiffRenderer,
   type DockFileOpener,
@@ -649,6 +652,27 @@ describe("DockService.openDiff", () => {
     expect(channel.joined()).toContain("no changed files");
   });
 
+  it("an empty diff set also acknowledges the click via the notify seam", async () => {
+    mock = await startMockServer(0);
+    const sessionId = await createMockSession(mock.url);
+    const toasts: Array<{ readonly level: string; readonly text: string }> = [];
+    const service = createDockService({
+      source: staticSessionSource(craftedConnection(mock.url, BASE_CAPABILITIES)),
+      renderer: stubRenderer(new DiffDocumentStore(), []),
+      opener: NOOP_OPENER,
+      logger: silentLogger(new CapturingChannel()),
+      notify: (level, text) => {
+        toasts.push({ level, text });
+      },
+      emptyDiffText: "此工作階段尚無檔案變更",
+    });
+
+    await service.openDiff({ sessionId });
+
+    // The localized text crosses verbatim (host resolves it from the shared tables).
+    expect(toasts).toEqual([{ level: "info", text: "此工作階段尚無檔案變更" }]);
+  });
+
   it("rejects with DockDiffUnsupportedError on a route-absent 404 (scripted)", async () => {
     const { connection } = scriptedConnection(BASE_CAPABILITIES, (request) => {
       const url = new URL(request.url);
@@ -674,6 +698,110 @@ describe("DockService.openDiff", () => {
     await expect(service.openDiff({ sessionId: "ses_nope" })).rejects.toMatchObject({
       name: "DockOpenDiffError",
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Diff aggregation (the live-server fallback): unified-patch reconstruction,
+// message-summary merge, and the session-scope fallback path.
+
+describe("unifiedToBeforeAfter", () => {
+  it("rebuilds both sides from a full-file unified patch", () => {
+    const patch = [
+      "Index: src/a.ts",
+      "===================================================================",
+      "--- src/a.ts",
+      "+++ src/a.ts",
+      "@@ -1,3 +1,3 @@",
+      " const a = 1;",
+      "-const b = 2;",
+      "+const b = 3;",
+      " const c = 4;",
+    ].join("\n");
+    expect(unifiedToBeforeAfter(patch)).toEqual({
+      before: "const a = 1;\nconst b = 2;\nconst c = 4;",
+      after: "const a = 1;\nconst b = 3;\nconst c = 4;",
+    });
+  });
+
+  it("handles added files (no removed/context lines to a before side)", () => {
+    const patch = ["Index: new.ts", "====", "--- /dev/null", "+++ new.ts", "@@ -0,0 +1,2 @@", "+a", "+b"].join(
+      "\n",
+    );
+    expect(unifiedToBeforeAfter(patch)).toEqual({ before: "", after: "a\nb" });
+  });
+
+  it("reports undefined on a malformed patch so fallbacks stay honest", () => {
+    expect(unifiedToBeforeAfter("")).toBeUndefined();
+    expect(unifiedToBeforeAfter("@@ -1,1 +1,1 @@\nnot-a-diff-line")).toBeUndefined();
+  });
+});
+
+describe("parseDockFileDiffs patch fallback", () => {
+  it("prefers verbatim before/after; reconstructs from `patch` only when empty", () => {
+    const parsed = parseDockFileDiffs([
+      { file: "a.ts", before: "B", after: "A", additions: 1, deletions: 1, patch: "@@ -1,1 +1,1 @@\n-x\n+y" },
+      { file: "b.ts", additions: 2, deletions: 0, patch: "@@ -0,0 +1,2 @@\n+p\n+q" },
+    ]);
+    expect(parsed).toEqual([
+      { file: "a.ts", before: "B", after: "A", additions: 1, deletions: 1 },
+      { file: "b.ts", before: "", after: "p\nq", additions: 2, deletions: 0 },
+    ]);
+  });
+});
+
+describe("mergeSummaryDiffs + session-scope fallback", () => {
+  it("merges per-file: first before, last after, counters summed", () => {
+    const payload = [
+      {
+        info: { id: "m1", summary: { diffs: [
+          { file: "a.ts", before: "b0", after: "a1", additions: 3, deletions: 2 },
+          { file: "b.ts", before: "x", after: "y", additions: 1, deletions: 0 },
+        ] } },
+        parts: [],
+      },
+      { info: { id: "m2" }, parts: [] },
+      {
+        info: { id: "m3", summary: { diffs: [{ file: "a.ts", before: "a1", after: "a2", additions: 4, deletions: 1 }] } },
+        parts: [],
+      },
+    ];
+    expect(mergeSummaryDiffs(payload)).toEqual([
+      { file: "a.ts", before: "b0", after: "a2", additions: 7, deletions: 3 },
+      { file: "b.ts", before: "x", after: "y", additions: 1, deletions: 0 },
+    ]);
+  });
+
+  it("falls back to message-summary aggregation when the session diff route answers empty", async () => {
+    const { connection } = scriptedConnection(BASE_CAPABILITIES, (request) => {
+      const url = new URL(request.url);
+      if (url.pathname.endsWith("/diff")) return jsonResponse(200, []);
+      if (url.pathname.endsWith("/message")) {
+        return jsonResponse(200, [
+          {
+            info: { id: "m1", sessionID: "ses_x", role: "user", summary: { diffs: [
+              { file: "a.ts", before: "old", after: "new", additions: 2, deletions: 1 },
+            ] } },
+            parts: [],
+          },
+        ]);
+      }
+      return jsonResponse(404, { name: "NotFoundError", data: { message: "route not found" } });
+    });
+    const outcome = await diffsForSession(connection, "ses_x");
+    expect(outcome.ok && outcome.items).toEqual([
+      { file: "a.ts", before: "old", after: "new", additions: 2, deletions: 1 },
+    ]);
+  });
+
+  it("a message-scoped fetch never falls back (per-message empties are honest)", async () => {
+    const { connection } = scriptedConnection(BASE_CAPABILITIES, (request) => {
+      const url = new URL(request.url);
+      if (url.pathname.endsWith("/diff")) return jsonResponse(200, []);
+      return jsonResponse(404, { name: "NotFoundError", data: { message: "route not found" } });
+    });
+    const outcome = await diffsForSession(connection, "ses_x", "msg_q");
+    expect(outcome.ok && outcome.items).toEqual([]);
   });
 });
 
@@ -771,5 +899,53 @@ describe("registerDockHandlers", () => {
       { method: "openFile", arg: "src/a.ts" },
     ]);
     expect(await openFileResult).toBeNull();
+  });
+
+  it("openDiff folds a service failure into an error toast, never a rejection", async () => {
+    const failing: DockService = {
+      openDiff: () => Promise.reject(new DockOpenDiffError("blown (HTTP 500)", undefined)),
+      openFile: () => Promise.resolve(),
+    };
+    const toasts: Array<{ readonly level: string; readonly text: string }> = [];
+    const handlers = new Map<string, (payload: never, ctx: HandlerContext) => unknown>();
+    registerDockHandlers(
+      (type, handler) => {
+        handlers.set(type, handler as (payload: never, ctx: HandlerContext) => unknown);
+      },
+      {
+        service: failing,
+        notify: (level, text) => {
+          toasts.push({ level, text });
+        },
+      },
+    );
+    const openDiff = handlers.get("openDiff");
+    if (openDiff === undefined) throw new Error("handlers missing");
+
+    // The webview callers fire with `void`: the handler must RESOLVE and let
+    // the toast carry the feedback.
+    expect(await openDiff({ sessionId: "ses_1" } as never, undefined as never)).toBeNull();
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.level).toBe("error");
+    expect(toasts[0]?.text).toContain("blown");
+  });
+
+  it("openDiff without a notify seam still propagates failures (test/dev path)", async () => {
+    const failing: DockService = {
+      openDiff: () => Promise.reject(new DockOpenDiffError("blown", undefined)),
+      openFile: () => Promise.resolve(),
+    };
+    const handlers = new Map<string, (payload: never, ctx: HandlerContext) => unknown>();
+    registerDockHandlers(
+      (type, handler) => {
+        handlers.set(type, handler as (payload: never, ctx: HandlerContext) => unknown);
+      },
+      { service: failing },
+    );
+    const openDiff = handlers.get("openDiff");
+    if (openDiff === undefined) throw new Error("handlers missing");
+    await expect(openDiff({ sessionId: "ses_1" } as never, undefined as never)).rejects.toMatchObject({
+      name: "DockOpenDiffError",
+    });
   });
 });

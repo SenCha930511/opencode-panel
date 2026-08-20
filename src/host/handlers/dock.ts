@@ -73,7 +73,7 @@ import type { InvalidateSink } from "../../server/eventBridge.js";
 import type { ServerConnection } from "../../server/ServerManager.js";
 import type { Capabilities } from "../../server/capabilities.js";
 import { probeDoc } from "../../server/docProbe.js";
-import { isRecord, type FromWebviewResponse } from "../../shared/protocol.js";
+import { isRecord, type FromWebviewResponse, type ToastLevel } from "../../shared/protocol.js";
 import type { RegisterHandler, SessionClientSource } from "./sessions.js";
 import type { ViewEventSink } from "./sync.js";
 
@@ -137,6 +137,48 @@ export function parseDockTodos(payload: unknown): DockTodo[] {
   return todos;
 }
 
+/**
+ * Rebuild before/after contents from a unified-diff `patch` (current
+ * servers ship `{file, patch, status}` with NO before/after fields, and the
+ * patches are full-file — context + removed = the before side, context +
+ * added = the after side). `undefined` on a malformed/empty patch so the
+ * caller keeps its empty-string fallback rather than a fabricated half-doc.
+ */
+export function unifiedToBeforeAfter(
+  patch: string,
+): { readonly before: string; readonly after: string } | undefined {
+  const before: string[] = [];
+  const after: string[] = [];
+  let inHunk = false;
+  let sawLine = false;
+  for (const raw of patch.split("\n")) {
+    if (raw.startsWith("@@")) {
+      inHunk = true;
+      continue;
+    }
+    if (!inHunk) continue;
+    if (raw.startsWith("\\")) continue; // "\ No newline at end of file"
+    if (raw.startsWith("+")) {
+      after.push(raw.slice(1));
+      sawLine = true;
+      continue;
+    }
+    if (raw.startsWith("-")) {
+      before.push(raw.slice(1));
+      sawLine = true;
+      continue;
+    }
+    // Context (" " prefix) and the tail-empty line after the last hunk row.
+    const context = raw.startsWith(" ") ? raw.slice(1) : raw.length === 0 ? raw : null;
+    if (context === null) continue;
+    before.push(context);
+    after.push(context);
+    sawLine = true;
+  }
+  if (!sawLine) return undefined;
+  return { before: before.join("\n"), after: after.join("\n") };
+}
+
 /** Defensive parse; numeric counters must actually be numbers. */
 export function parseDockFileDiffs(payload: unknown): DockFileDiff[] {
   if (!Array.isArray(payload)) return [];
@@ -144,10 +186,21 @@ export function parseDockFileDiffs(payload: unknown): DockFileDiff[] {
   for (const item of payload) {
     if (!isRecord(item) || typeof item.file !== "string") continue;
     if (typeof item.additions !== "number" || typeof item.deletions !== "number") continue;
+    let before = typeof item.before === "string" ? item.before : "";
+    let after = typeof item.after === "string" ? item.after : "";
+    if ((before.length === 0 || after.length === 0) && typeof item.patch === "string") {
+      // Patch-only wire shape (newer servers): rebuild the sides so the
+      // native diff preview shows real content instead of two empty buffers.
+      const sides = unifiedToBeforeAfter(item.patch);
+      if (sides !== undefined) {
+        if (before.length === 0) before = sides.before;
+        if (after.length === 0) after = sides.after;
+      }
+    }
     diffs.push({
       file: item.file,
-      before: typeof item.before === "string" ? item.before : "",
-      after: typeof item.after === "string" ? item.after : "",
+      before,
+      after,
       additions: item.additions,
       deletions: item.deletions,
     });
@@ -215,8 +268,45 @@ export async function todosForSession(
 }
 
 /**
+ * Merge every message block's `info.summary.diffs` into one per-file view:
+ * FIRST `before`, LAST `after`, counters summed across the blocks that
+ * touched the file (re-edits keep the net before/after chain; the counters
+ * are cumulative by design — the opened diff shows the net content).
+ */
+export function mergeSummaryDiffs(payload: unknown): DockFileDiff[] {
+  if (!Array.isArray(payload)) return [];
+  const byFile = new Map<string, DockFileDiff>();
+  for (const entry of payload) {
+    if (!isRecord(entry) || !isRecord(entry.info) || !isRecord(entry.info.summary)) continue;
+    const diffs = parseDockFileDiffs(entry.info.summary.diffs);
+    for (const diff of diffs) {
+      const previous = byFile.get(diff.file);
+      byFile.set(
+        diff.file,
+        previous === undefined
+          ? diff
+          : {
+              file: diff.file,
+              before: previous.before,
+              after: diff.after,
+              additions: previous.additions + diff.additions,
+              deletions: previous.deletions + diff.deletions,
+            },
+      );
+    }
+  }
+  return [...byFile.values()];
+}
+
+/**
  * `GET /session/:id/diff?messageID=` via the onboarded SDK client,
  * boundary-parsed. Same outcome semantics as {@link todosForSession}.
+ *
+ * SESSION-SCOPE FALLBACK: current servers answer the no-messageID route with
+ * `[]` even for edit-heavy sessions (verified live) — the per-message
+ * `summary.diffs` data is the authoritative source there. An empty
+ * session-scope result therefore re-derives from the message list instead
+ * of declaring "no changes".
  */
 export async function diffsForSession(
   connection: ServerConnection,
@@ -235,7 +325,20 @@ export async function diffsForSession(
   if (result.error !== undefined || result.data === undefined) {
     return { ok: false, kind: classifyFetchFailure(result), error: result.error };
   }
-  return { ok: true, items: parseDockFileDiffs(result.data) };
+  const items = parseDockFileDiffs(result.data);
+  if (items.length > 0 || messageID !== undefined) {
+    return { ok: true, items };
+  }
+  try {
+    const messages = await connection.client.session.messages({ path: { id: sessionId } });
+    if (messages.error !== undefined || messages.data === undefined) {
+      return { ok: true, items };
+    }
+    return { ok: true, items: mergeSummaryDiffs(messages.data) };
+  } catch {
+    // Aggregation is best-effort: the (empty) route answer stands.
+    return { ok: true, items };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -636,6 +739,10 @@ export interface DockServiceDeps {
   readonly renderer: DockDiffRenderer;
   readonly opener: DockFileOpener;
   readonly logger: PanelLogger;
+  /** User-visible toast seam (the empty-set path has no other signal). */
+  readonly notify?: { (level: ToastLevel, text: string): void };
+  /** Localized body for the empty-diff toast (defaults to the en table). */
+  readonly emptyDiffText?: string;
 }
 
 export interface DockService {
@@ -647,7 +754,8 @@ export interface DockService {
  * Click-path semantics: fetch the session's diff set and open ONE native
  * `vscode.diff` editor per changed file (sequential, so tab order matches
  * the file order). An empty set is not an error — the panel row cannot be
- * clicked then, so at most arrive here via a stale patch button; logged.
+ * clicked then, so at most arrive here via a stale patch button; logged AND
+ * toasted (the click must never feel dead).
  */
 export function createDockService(deps: DockServiceDeps): DockService {
   return {
@@ -665,6 +773,7 @@ export function createDockService(deps: DockServiceDeps): DockService {
       }
       if (outcome.items.length === 0) {
         deps.logger.debug(`dock: openDiff for session ${sessionId}: no changed files`);
+        deps.notify?.("info", deps.emptyDiffText ?? "No file changes in this session");
         return;
       }
       for (const diff of outcome.items) {
@@ -690,12 +799,15 @@ export function createDockService(deps: DockServiceDeps): DockService {
 
 export interface DockDomainDeps {
   readonly service: DockService;
+  /** Error-toast seam: every openDiff failure becomes visible feedback. */
+  readonly notify?: { (level: ToastLevel, text: string): void };
 }
 
 /**
  * Register the frozen todo-3 `openDiff`/`openFile` handlers. Success replies
- * null (the operation's contract IS the reply); failures throw the typed
- * errors above, becoming protocol-level error replies.
+ * null (the operation's contract IS the reply). openDiff failures are folded
+ * into an error toast instead of a protocol error reply — every webview
+ * caller fires the request with `void`, so a rejection would be invisible.
  */
 export function registerDockHandlers(register: RegisterHandler, deps: DockDomainDeps): void {
   const { service } = deps;
@@ -703,7 +815,13 @@ export function registerDockHandlers(register: RegisterHandler, deps: DockDomain
   register(
     "openDiff",
     async ({ sessionId, messageID }): Promise<FromWebviewResponse["openDiff"]> => {
-      await service.openDiff(messageID === undefined ? { sessionId } : { sessionId, messageID });
+      try {
+        await service.openDiff(messageID === undefined ? { sessionId } : { sessionId, messageID });
+      } catch (error) {
+        // User feedback beats protocol purity here: the click surfaced dead.
+        if (deps.notify === undefined) throw error;
+        deps.notify("error", errorSummary(error));
+      }
       return null;
     },
   );

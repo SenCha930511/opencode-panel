@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.7.6",
+  "version": "0.8.3",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -110,12 +110,12 @@
     "menus": {
       "view/title": [
         {
-          "command": "opencodePanel.toggleHistory",
+          "command": "opencodePanel.newSession",
           "when": "view == opencodePanel.chatView",
           "group": "navigation@1"
         },
         {
-          "command": "opencodePanel.newSession",
+          "command": "opencodePanel.toggleHistory",
           "when": "view == opencodePanel.chatView",
           "group": "navigation@2"
         },

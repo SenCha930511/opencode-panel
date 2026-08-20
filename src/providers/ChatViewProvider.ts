@@ -5,7 +5,7 @@
  * (todo-14's composer consumes `command.newSession`).
  */
 
-import type { EventPayload } from "../shared/protocol.js";
+import type { EventPayload, ToastLevel, ToastPayload } from "../shared/protocol.js";
 import { BaseViewProvider, type ViewProviderDeps } from "./BaseViewProvider.js";
 
 export class ChatViewProvider extends BaseViewProvider {
@@ -17,5 +17,11 @@ export class ChatViewProvider extends BaseViewProvider {
   postEvent(type: string, payload: unknown): void {
     const event: EventPayload = { type, payload };
     this.post({ type: "event", payload: event });
+  }
+
+  /** Surfaces a host-originated toast in the chat webview's toast viewport. */
+  postToast(level: ToastLevel, text: string): void {
+    const payload: ToastPayload = { level, text };
+    this.post({ type: "toast", payload });
   }
 }

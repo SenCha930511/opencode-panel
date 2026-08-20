@@ -150,6 +150,10 @@ describe("shouldSend", () => {
     expect(shouldSend({ key: "a", shiftKey: false, metaKey: false, ctrlKey: false })).toBe(false);
     expect(shouldSend({ key: "Enter" , shiftKey: false, metaKey: false, ctrlKey: false })).toBe(true);
   });
+  it("IME composition does NOT send (Zhuyin/Pinyin candidate confirmation)", () => {
+    expect(shouldSend({ ...enter, isComposing: true })).toBe(false);
+    expect(shouldSend({ ...enter, keyCode: 229 })).toBe(false);
+  });
 });
 
 describe("buildPromptPayload", () => {
@@ -258,12 +262,12 @@ describe("Composer rendering", () => {
     expect(html).toContain("data-oc-composer");
     expect(html).toContain("data-oc-composer-send");
     expect(html).not.toContain("data-oc-composer-stop");
-    expect(html).toContain("Enter to send, Shift+Enter for a new line");
+    expect(html).toContain("Ask opencode anything...");
   });
 
-  it("busy renders Send DISABLED plus the Stop button", () => {
+  it("busy morphs the action button into the Stop button", () => {
     const html = renderComposer({ store: busyStore("ses_1") });
-    expect(/data-oc-composer-send[^>]*disabled/.test(html)).toBe(true);
+    expect(html).not.toContain("data-oc-composer-send");
     expect(html).toContain("data-oc-composer-stop");
     expect(html).toContain("Stop generating");
   });
@@ -289,6 +293,32 @@ describe("Composer rendering", () => {
     expect(html).toContain("restored draft body");
   });
 
+  it("anchors the slash palette: a '/' draft opens the command listbox", () => {
+    const state = new FakeState();
+    const drafts = new DraftStore(state);
+    drafts.write("ses_1", "/he");
+    drafts.flush();
+    const html = renderComposer({ drafts });
+    // Capability snapshot is empty under SSR, so the menu shows its
+    // localized empty state — the anchor + open state are what is pinned.
+    expect(html).toContain('role="listbox"');
+    expect(html).toContain("No matching commands");
+  });
+
+  it("keeps the slash palette closed for ordinary text", () => {
+    const html = renderComposer({});
+    expect(html).not.toContain('role="listbox"');
+  });
+
+  it("sizes the textarea for autosize growth (full width, 15rem cap, no flex sizing)", () => {
+    const html = renderComposer({});
+    const textarea = html.match(/<textarea[^>]*class="([^"]*)"/)?.[1] ?? "";
+    expect(textarea).toContain("w-full");
+    expect(textarea).toContain("max-h-60");
+    expect(textarea).toContain("min-h-8");
+    expect(textarea).not.toContain("flex-1");
+  });
+
   it("renders staged attachment chips through the default renderer", () => {
     const html = renderWithProviders(
       <Composer
@@ -301,6 +331,23 @@ describe("Composer rendering", () => {
     );
     expect(html).toContain("data-oc-attachments");
     expect(html).toContain("notes.md");
+  });
+
+  it("renders a thumbnail preview for pasted image chips, not for plain files", () => {
+    const html = renderWithProviders(
+      <Composer
+        store={new MessageStore()}
+        drafts={new DraftStore(new FakeState())}
+        sessionId="ses_1"
+        attachments={[
+          { id: "c1", name: "shot.png", mimeType: "image/png", url: "data:image/png;base64,AAAA" },
+          { id: "c2", name: "notes.md", mimeType: "text/markdown", url: "file:///n.md" },
+        ]}
+        onRemoveAttachment={() => undefined}
+      />,
+    );
+    expect(html).toContain('<img src="data:image/png;base64,AAAA"');
+    expect(html).not.toContain('<img src="file:///n.md"');
   });
 
   it("ChatDock mounts MessageList + Composer against one store", () => {

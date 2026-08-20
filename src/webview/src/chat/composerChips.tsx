@@ -23,6 +23,37 @@ export function DefaultAttachmentChip(props: {
   readonly onRemove: { (attachmentId: string): void } | undefined;
 }): ReactNode {
   const { attachment, onRemove } = props;
+  const imagePreview =
+    attachment.mimeType.startsWith("image/") && attachment.url.length > 0 ? attachment.url : null; // i18n-allow-literal
+
+  if (imagePreview !== null) {
+    // Tile form: the preview carries the name (bottom-right) and the remove
+    // button (top-right) as overlays.
+    return (
+      <span className="relative inline-flex shrink-0 overflow-hidden rounded-lg border border-card-border bg-card-bg/90 shadow-2xs">
+        <img src={imagePreview} alt={attachment.name} className="h-20 w-20 object-cover" />
+        <span
+          title={attachment.name}
+          className="absolute bottom-0 right-0 max-w-full truncate rounded-tl-md bg-black/60 px-1 py-0.5 text-[9px] font-medium text-white/90"
+        >
+          {attachment.name}
+        </span>
+        {onRemove !== undefined && (
+          <button
+            type="button"
+            aria-label={attachment.name}
+            className="absolute top-0.5 right-0.5 rounded bg-black/60 p-0.5 text-white/80 transition-colors hover:bg-err hover:text-white"
+            onClick={() => {
+              onRemove(attachment.id);
+            }}
+          >
+            <CloseIcon />
+          </button>
+        )}
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-card-border bg-card-bg/90 px-2 py-0.5 text-[11px] font-medium text-fg shadow-2xs">
       <span className="max-w-44 truncate">{attachment.name}</span>

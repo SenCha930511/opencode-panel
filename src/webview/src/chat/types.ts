@@ -30,7 +30,17 @@ export interface DeltaBatchEntry {
 export type ToolStatus = "pending" | "running" | "completed" | "error";
 
 export type PartVM =
-  | { readonly kind: "text"; readonly id: string; text: string }
+  | {
+      readonly kind: "text";
+      readonly id: string;
+      text: string;
+      /**
+       * opencode's hide-from-display flag for injected (non-user-authored)
+       * text — OMO writes its internal directives/reminders through
+       * `synthetic: true` parts, which the TUI never renders.
+       */
+      readonly synthetic?: boolean;
+    }
   | { readonly kind: "reasoning"; readonly id: string; text: string }
   | {
       readonly kind: "tool";
@@ -98,7 +108,12 @@ export function parsePart(value: unknown, fallbackId: string): PartVM {
   const id = stringOr(value.id) ?? fallbackId;
   switch (value.type) {
     case "text":
-      return { kind: "text", id, text: stringOr(value.text) ?? "" };
+      return {
+        kind: "text",
+        id,
+        text: stringOr(value.text) ?? "",
+        ...(value.synthetic === true ? { synthetic: true } : {}), // i18n-allow-literal
+      };
     case "reasoning":
       return { kind: "reasoning", id, text: stringOr(value.text) ?? "" };
     case "tool": {

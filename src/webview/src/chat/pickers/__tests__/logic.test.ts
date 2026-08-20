@@ -15,6 +15,7 @@ import {
   filterCommands,
   isCustomAgent,
   resolveInitialModel,
+  slashKeyAction,
 } from "../logic.js";
 import type { CommandEntry, ProviderEntry } from "../constants.js";
 
@@ -46,6 +47,47 @@ describe("detectSlashQuery", () => {
     expect(detectSlashQuery("hello /x")).toBeNull();
     expect(detectSlashQuery("/he arg")).toBeNull();
     expect(detectSlashQuery("a/b")).toBeNull();
+  });
+});
+
+describe("slashKeyAction", () => {
+  it("consumes nothing while the palette is closed", () => {
+    expect(slashKeyAction({ key: "Enter", shiftKey: false, open: false, matchCount: 3 })).toBeNull();
+    expect(slashKeyAction({ key: "ArrowDown", shiftKey: false, open: false, matchCount: 3 })).toBeNull();
+    expect(slashKeyAction({ key: "Escape", shiftKey: false, open: false, matchCount: 3 })).toBeNull();
+  });
+
+  it("arrows move only when there are rows to land on", () => {
+    expect(slashKeyAction({ key: "ArrowDown", shiftKey: false, open: true, matchCount: 2 })).toEqual({
+      type: "move",
+      delta: 1,
+    });
+    expect(slashKeyAction({ key: "ArrowUp", shiftKey: false, open: true, matchCount: 2 })).toEqual({
+      type: "move",
+      delta: -1,
+    });
+    expect(slashKeyAction({ key: "ArrowDown", shiftKey: false, open: true, matchCount: 0 })).toBeNull();
+  });
+
+  it("Enter accepts a row — plain Enter only, and never into an empty list", () => {
+    expect(slashKeyAction({ key: "Enter", shiftKey: false, open: true, matchCount: 1 })).toEqual({
+      type: "accept",
+    });
+    // Shift+Enter stays a composer newline.
+    expect(slashKeyAction({ key: "Enter", shiftKey: true, open: true, matchCount: 1 })).toBeNull();
+    // No match: "/zzz" must stay sendable/editable as plain text.
+    expect(slashKeyAction({ key: "Enter", shiftKey: false, open: true, matchCount: 0 })).toBeNull();
+  });
+
+  it("Escape dismisses while leaving the text untouched", () => {
+    expect(slashKeyAction({ key: "Escape", shiftKey: false, open: true, matchCount: 0 })).toEqual({
+      type: "dismiss",
+    });
+  });
+
+  it("plain typing keys fall through to the composer", () => {
+    expect(slashKeyAction({ key: "a", shiftKey: false, open: true, matchCount: 3 })).toBeNull();
+    expect(slashKeyAction({ key: "Backspace", shiftKey: false, open: true, matchCount: 3 })).toBeNull();
   });
 });
 

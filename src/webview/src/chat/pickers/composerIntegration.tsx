@@ -21,18 +21,13 @@
  * selection on its triggers, so the visible value and the payload value can
  * never drift apart.
  *
- * SLASH PALETTE PLACEMENT (documented, awaiting T14's one-line anchor): the
- * palette must observe the live textarea text, which T14's Composer owns
- * internally today — no honest mount exists from this side of the file
- * boundary. T14 anchors it INSIDE the input row with:
- *   <span className="relative">
- *     <SlashCommandPalette text={text} onAccepted={clearText} />
- *   </span>
- * (menu opens upward above the textarea; onAccepted clears the consumed
- * command text). The component is fully controlled and shipped ready in
- * ./CommandPalette.tsx; until that anchor lands the CANONICAL trigger flow
- * is: type "/" -> palette lists commands -> click -> runCommand (the
- * component + wire path are acceptance-tested here regardless of anchor).
+ * SLASH PALETTE PLACEMENT: anchored inside the Composer itself (the only
+ * owner of the live textarea text) — mounted in a relative wrapper above the
+ * textarea with `text={text}`, `onAccepted` clearing the consumed command
+ * text, and the composer's keydown routed through the palette while it is
+ * open (Enter accepts, arrows move, Escape dismisses). The component lives
+ * in ./CommandPalette.tsx; the CANONICAL trigger flow is: type "/" ->
+ * palette lists commands -> click/Enter -> runCommand.
  */
 
 import { useEffect, type ReactNode } from "react";

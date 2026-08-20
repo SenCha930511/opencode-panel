@@ -21,6 +21,7 @@ import { resetActiveSessionForTest, setActiveSession } from "../../activeSession
 import type { ChatEventSource, Unsubscribe } from "../../events.js";
 import type { WebviewStateLike } from "../../draftStore.js";
 import { DiffFileRow, DiffsPanel, SessionDock, TodosPanel, type DockActions } from "../SessionDock.js";
+import { TodoPinnedList } from "../TodoPinnedList.js";
 import { DockStateStore, DockStore } from "../dockStore.js";
 import type { DockDiffFileVM, DockTodoVM } from "../dockTypes.js";
 
@@ -248,5 +249,45 @@ describe("SessionDock SSR", () => {
     openButton?.click();
     expect(openedDiffs).toEqual([{ sessionId: "ses_1" }]);
     expect(openedFiles).toEqual(["src/example.ts"]);
+  });
+});
+
+describe("TodoPinnedList SSR", () => {
+  it("renders the active session's todos with status glyphs and the done counter", () => {
+    setActiveSession("ses_1");
+    const html = render(<TodoPinnedList store={loadedStore()} />);
+    expect(html).toContain("data-oc-todo-pinned");
+    expect(html).toContain("Replay scripted deltas");
+    expect(html).toContain("Complete assistant message");
+    // 1 of 2 rows is terminal (completed).
+    expect(html).toContain("1/2");
+    expect(html).toContain("✓");
+    expect(html).toContain("▶");
+    expect(html).toContain("line-through");
+  });
+
+  it("renders nothing without an active session, an empty list, or the unsupported latch", () => {
+    // No active session: the strip must not leak another session's list.
+    expect(render(<TodoPinnedList store={loadedStore()} />)).toBe("");
+
+    setActiveSession("ses_1");
+    expect(render(<TodoPinnedList store={new DockStore()} />)).toBe("");
+
+    const latched = loadedStore();
+    latched.applyEvent({ type: "todos.sync", payload: { sessionId: "ses_1", unsupported: true } });
+    expect(render(<TodoPinnedList store={latched} />)).toBe("");
+  });
+
+  it("tracks the SHARED store live (one store, two surfaces contract)", () => {
+    setActiveSession("ses_1");
+    const store = new DockStore();
+    expect(render(<TodoPinnedList store={store} />)).toBe("");
+    store.applyEvent({
+      type: "todo.updated",
+      payload: { sessionID: "ses_1", todos: [todo("t9", "Ship the gate", "pending")] },
+    });
+    const html = render(<TodoPinnedList store={store} />);
+    expect(html).toContain("Ship the gate");
+    expect(html).toContain("○");
   });
 });
