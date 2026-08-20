@@ -113,6 +113,7 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(view: PanelWebviewView, _context: unknown, _token: unknown): void {
     this.view = view;
+    view.title = this.viewKind() === "sessions" ? "歷程記錄" : "OpenCode";
     const mediaRoot = this.deps.joinPath(this.deps.extensionUri, "media");
     // enableCommandUris stays UNSET (plan todo 10 MUST-NOT); roots = media/.
     view.webview.options = {

@@ -13,7 +13,7 @@ import type { StringId } from "../../../shared/strings.js";
 import type { SettingsSecretsWire } from "./settingsWire.js";
 
 const SECRET_INPUT_CLASS =
-  "w-full rounded border border-border bg-input-bg px-2 py-1 text-xs text-fg outline-none focus:border-focus-ring disabled:opacity-50";
+  "w-full rounded-xl border border-card-border bg-input-card-bg px-3 py-1.5 text-xs text-fg transition-all focus:border-focus-ring/80 focus:ring-1 focus:ring-focus-ring/25 outline-none disabled:opacity-50";
 
 export interface SecretRowProps {
   readonly kind: "password" | "username";
@@ -47,12 +47,12 @@ function SecretRow(props: SecretRowProps): ReactNode {
   };
 
   return (
-    <div className="flex flex-col gap-1" data-oc-secret={props.kind}>
+    <div className="flex flex-col gap-1.5 py-1" data-oc-secret={props.kind}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-fg">{t(props.labelId)}</span>
+        <span className="text-xs font-medium text-fg/90">{t(props.labelId)}</span>
         <span
-          className={`rounded px-1.5 py-0.5 text-[10px] ${
-            props.isSet ? "bg-ok/15 text-ok" : "bg-hover-bg text-muted-fg"
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            props.isSet ? "bg-ok/15 text-ok" : "bg-card-bg text-muted-fg/80 border border-card-border"
           }`}
         >
           {props.isSet ? t("settings.secret.isSet") : t("settings.secret.notSet")}
@@ -72,7 +72,7 @@ function SecretRow(props: SecretRowProps): ReactNode {
         />
         <button
           type="button"
-          className="shrink-0 rounded bg-accent px-2 py-1 text-xs font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-50"
+          className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           disabled={props.disabled || busy || value.length === 0}
           onClick={save}
         >
@@ -81,7 +81,7 @@ function SecretRow(props: SecretRowProps): ReactNode {
         {props.isSet ? (
           <button
             type="button"
-            className="shrink-0 rounded border border-border px-2 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg disabled:opacity-50"
+            className="shrink-0 rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer"
             disabled={props.disabled || busy}
             onClick={clear}
           >
@@ -100,7 +100,7 @@ export function SettingsSecretsPanel(props: {
   onClear(kind: "password" | "username"): Promise<boolean>;
 }): ReactNode {
   return (
-    <div className="flex flex-col gap-3 border-t border-border pt-3">
+    <div className="flex flex-col gap-2 border-t border-card-border/60 pt-3 mt-1">
       <SecretRow
         kind="password"
         labelId="settings.field.serverPassword"

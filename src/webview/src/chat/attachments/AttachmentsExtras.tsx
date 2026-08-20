@@ -29,6 +29,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useApp } from "../../app/context.js";
 import { composerDisabled } from "../composerLogic.js";
 import type { AttachmentsController } from "./controller.js";
@@ -46,7 +47,7 @@ import { createMentionSearch } from "./search.js";
 const COPY = {
   bannerLead: "Sensitive files staged — review before sending:",
   imageAttachLabel: "Attach image",
-  readFailed: "Could not read that image.",
+  readFailed: "Could not read that file.",
 } as const;
 
 interface TextareaSignal {
@@ -54,15 +55,48 @@ interface TextareaSignal {
   readonly caret: number;
 }
 
-function PaperclipIcon(): ReactNode {
+function PlusIcon(): ReactNode {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FileIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
-        d="M4.5 8.5l4.95-4.95a2.12 2.12 0 013 3L7 11l-2.5 2.5a1.41 1.41 0 01-2-2L7 7"
+        d="M3.5 2.5h6l3.5 3.5v7.5a1 1 0 0 1-1 1h-8.5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.2"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+      <path d="M9.5 2.5v3.5h3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ImageIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" />
+      <path d="M13.5 10.5l-3.5-3.5-5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AtIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M11 8v1.5a1.5 1.5 0 0 0 3 0V8a6 6 0 1 0-2.5 4.9"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -75,7 +109,6 @@ export interface AttachmentsExtrasProps {
 export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
   const app = useApp();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [textarea, setTextarea] = useState<HTMLTextAreaElement | null>(null);
   const [signal, setSignal] = useState<TextareaSignal | undefined>(undefined);
 
@@ -180,11 +213,38 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
     [props.controller, search, textarea],
   );
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+  const ingestGeneralFiles = useCallback(
+    (files: readonly File[]): void => {
+      for (const file of files) {
+        if (file.type.startsWith("image/")) {
+          ingestImageFiles([file]);
+          continue;
+        }
+        void readFileAsDataUrl(file).then(
+          (dataUrl) => {
+            props.controller.add({
+              name: file.name,
+              mimeType: file.type || "text/plain",
+              url: dataUrl,
+            });
+          },
+          () => {
+            app.pushToast("error", COPY.readFailed);
+          },
+        );
+      }
+    },
+    [app, ingestImageFiles, props.controller],
+  );
+
   const flagged = props.controller.chips.filter((chip) => chip.sensitive !== undefined);
   const inputDisabled = composerDisabled(app.serverStatus);
 
   return (
-    <div ref={containerRef} data-oc-attachments-extras>
+    <div ref={containerRef} data-oc-attachments-extras className="flex items-center">
       {flagged.length > 0 && (
         <div
           data-oc-sensitive-banner
@@ -204,20 +264,75 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
         <MentionPalette rows={rows} onPick={handlePick} />
       )}
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          data-oc-attach-image
-          aria-label={COPY.imageAttachLabel}
-          className="rounded-sm border border-border bg-panel-bg px-1.5 py-1 text-muted-fg hover:text-fg disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={inputDisabled}
-          onClick={() => {
-            fileInputRef.current?.click();
-          }}
-        >
-          <PaperclipIcon />
-        </button>
+        <DropdownMenu.Root modal={false}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              data-oc-attach-image
+              aria-label={COPY.imageAttachLabel}
+              className="flex h-6 w-6 items-center justify-center rounded-full border border-card-border bg-card-bg/90 text-muted-fg transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={inputDisabled}
+            >
+              <PlusIcon />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              side="top"
+              align="start"
+              sideOffset={8}
+              className="z-50 min-w-44 rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs"
+            >
+              <DropdownMenu.Item
+                className="flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg outline-none"
+                onSelect={() => {
+                  fileInputRef.current?.click();
+                }}
+              >
+                <FileIcon />
+                <span>選擇檔案...</span>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className="flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg outline-none"
+                onSelect={() => {
+                  imageInputRef.current?.click();
+                }}
+              >
+                <ImageIcon />
+                <span>附加圖片...</span>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className="flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg outline-none"
+                onSelect={() => {
+                  if (textarea !== null) {
+                    const current = textarea.value;
+                    const prefix = current.length > 0 && !current.endsWith(" ") ? " " : "";
+                    setTextareaValue(textarea, `${current}${prefix}@`, current.length + prefix.length + 1);
+                    textarea.focus();
+                  }
+                }}
+              >
+                <AtIcon />
+                <span>提及工作區檔案 (@)</span>
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
         <input
           ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(event) => {
+            const files = event.currentTarget.files;
+            if (files !== null) {
+              ingestGeneralFiles(Array.from(files));
+            }
+            event.currentTarget.value = "";
+          }}
+        />
+        <input
+          ref={imageInputRef}
           type="file"
           accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
           multiple
@@ -225,8 +340,6 @@ export function AttachmentsExtras(props: AttachmentsExtrasProps): ReactNode {
           onChange={(event) => {
             const files = event.currentTarget.files;
             if (files !== null) {
-              // No pre-filter here (unlike paste): an explicit pick of a
-              // blocked format gets the gate's format toast, never silence.
               ingestImageFiles(Array.from(files));
             }
             event.currentTarget.value = "";

@@ -173,6 +173,13 @@ export function AppProvider(props: {
       if (isServerLostEvent(payload.type)) {
         setServerLost(true);
       }
+      if (payload.type === "command.openSettings") {
+        setSessionsOpen(false);
+        setRoute("settings");
+      }
+      if (payload.type === "command.toggleHistory") {
+        setSessionsOpen((current) => !current);
+      }
     });
     return () => {
       offToast();

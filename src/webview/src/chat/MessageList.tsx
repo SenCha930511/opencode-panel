@@ -82,22 +82,33 @@ import { RecentSessionsTop } from "../sessions/SessionList.js";
 
 function CodexCloudWatermark(): ReactNode {
   return (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-muted-fg/20">
-      <path
-        d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8.5 13.5l1.5 1.5-1.5 1.5M12.5 16.5h3"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <div className="flex flex-col items-center gap-2.5 select-none pointer-events-none opacity-30 hover:opacity-60 transition-opacity duration-300">
+      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-card-border/50 bg-card-bg/30 p-2.5 shadow-2xs backdrop-blur-xs">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-fg">
+          <path
+            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
+            stroke="currentColor"
+            strokeWidth="1.3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8.5 12l2 2-2 2"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12.5 16h3"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+      <span className="text-[11px] font-medium text-muted-fg/70 tracking-wider uppercase">OpenCode</span>
+    </div>
   );
 }
 

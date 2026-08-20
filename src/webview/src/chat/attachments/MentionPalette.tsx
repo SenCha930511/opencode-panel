@@ -1,15 +1,3 @@
-// i18n-allow-literal — strings.ts is frozen for todo 17, so the palette's
-// hint copy lives behind this pragma (the todo-11 SETTINGS_PLACEHOLDER_NOTE
-// precedent); it MUST move into STRING_IDS when the table opens.
-/**
- * @-mention palette (plan todo 17, webview side): the rows the debounced
- * `searchFiles` flow produced. SSR-safe (no effects, no DOM reads at render)
- * so node tests assert the row markup directly — every row carries its full
- * path in `title` per the acceptance contract. Keyboard handling belongs to
- * the textarea's own editing (the composer owns Enter); a pick delivers the
- * path to the consumer's `onPick`.
- */
-
 import type { ReactNode } from "react";
 import { baseNameOfPath } from "./logic.js";
 
@@ -18,30 +6,58 @@ export interface MentionPaletteProps {
   readonly onPick?: { (path: string): void };
 }
 
+function FileGlyph(props: { readonly path: string }): ReactNode {
+  const ext = props.path.split(".").pop()?.toLowerCase() ?? "";
+  let colorClass = "bg-muted-fg/15 text-muted-fg";
+  if (["ts", "tsx", "js", "jsx"].includes(ext)) colorClass = "bg-blue-500/15 text-blue-400";
+  else if (["py"].includes(ext)) colorClass = "bg-amber-500/15 text-amber-400";
+  else if (["json", "yaml", "yml"].includes(ext)) colorClass = "bg-emerald-500/15 text-emerald-400";
+  else if (["md", "txt", "doc"].includes(ext)) colorClass = "bg-purple-500/15 text-purple-400";
+  else if (["png", "jpg", "jpeg", "svg", "webp"].includes(ext)) colorClass = "bg-pink-500/15 text-pink-400";
+  else if (["css", "scss", "html"].includes(ext)) colorClass = "bg-cyan-500/15 text-cyan-400";
+  return (
+    <span className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded text-[9px] font-bold uppercase tracking-tight ${colorClass}`}>
+      {ext.slice(0, 3) || "F"}
+    </span>
+  );
+}
+
 export function MentionPalette(props: MentionPaletteProps): ReactNode {
   return (
-    <ul
+    <div
       data-oc-mention-palette
       role="listbox"
-      className="mb-1 max-h-44 overflow-y-auto rounded-sm border border-border bg-panel-bg text-xs"
+      className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-56 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10 text-xs"
     >
-      {props.rows.map((row) => (
-        <li key={row}>
-          <button
-            type="button"
-            role="option"
-            aria-selected="false"
-            title={row}
-            className="flex w-full items-baseline gap-2 px-2 py-1 text-start hover:bg-hover-bg"
-            onClick={() => {
-              props.onPick?.(row);
-            }}
-          >
-            <span className="shrink-0 font-medium text-fg">{baseNameOfPath(row)}</span>
-            <span className="truncate text-muted-fg">{row}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
+      <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
+        <span className="flex items-center gap-1.5">
+          <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-accent/20 text-accent text-[9px] font-bold">@</span>
+          <span>提及檔案或符號 (Mention Context)</span>
+        </span>
+        <span className="text-[10px] text-muted-fg/60">共 {props.rows.length} 項</span>
+      </div>
+      <ul className="flex flex-col gap-0.5">
+        {props.rows.map((row) => (
+          <li key={row}>
+            <button
+              type="button"
+              role="option"
+              aria-selected="false"
+              title={row}
+              className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-start transition-colors hover:bg-hover-bg cursor-pointer group"
+              onClick={() => {
+                props.onPick?.(row);
+              }}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <FileGlyph path={row} />
+                <span className="shrink-0 font-medium text-fg">{baseNameOfPath(row)}</span>
+              </div>
+              <span className="truncate text-[11px] text-muted-fg/70 font-mono group-hover:text-muted-fg text-end">{row}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

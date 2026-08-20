@@ -160,16 +160,14 @@ export function ChatPickers(): ReactNode {
         agents={snapshot.agents}
         {...(selection.agent === undefined ? {} : { value: selection.agent })}
         onPick={(name) => {
-          if (sessionId === undefined) return;
-          setAgentSelection(sessionId, name);
+          setAgentSelection(sessionId ?? "", name);
         }}
       />
       <ModelPicker
         providers={snapshot.providers}
         {...(modelValue === undefined ? {} : { value: modelValue })}
         onPick={(id) => {
-          if (sessionId === undefined) return;
-          setModelSelection(sessionId, id);
+          setModelSelection(sessionId ?? "", id);
         }}
       />
     </div>

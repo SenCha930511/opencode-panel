@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.2.7",
+  "version": "0.5.0",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -24,94 +24,105 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "opencodePanel",
-          "title": "%opencodePanel.viewsContainer.opencodePanel%",
+          "id": "opencode-panel",
+          "title": "OpenCode Panel",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "opencodePanel": [
+      "opencode-panel": [
         {
           "id": "opencodePanel.chatView",
-          "name": "%opencodePanel.views.chatView%",
+          "name": "OpenCode Panel",
           "type": "webview"
         }
       ]
     },
     "commands": [
       {
+        "command": "opencodePanel.toggleHistory",
+        "title": "歷程記錄",
+        "category": "OpenCode Panel",
+        "icon": "$(history)"
+      },
+      {
         "command": "opencodePanel.newSession",
-        "title": "%opencodePanel.commands.newSession%",
-        "category": "%opencodePanel.category%",
+        "title": "新對話",
+        "category": "OpenCode Panel",
         "icon": "$(add)"
       },
       {
         "command": "opencodePanel.openSettings",
-        "title": "%opencodePanel.commands.openSettings%",
-        "category": "%opencodePanel.category%",
+        "title": "設定",
+        "category": "OpenCode Panel",
         "icon": "$(gear)"
       },
       {
         "command": "opencodePanel.startServer",
-        "title": "%opencodePanel.commands.startServer%",
-        "category": "%opencodePanel.category%",
+        "title": "啟動伺服器",
+        "category": "OpenCode Panel",
         "icon": "$(play)"
       },
       {
         "command": "opencodePanel.stopServer",
-        "title": "%opencodePanel.commands.stopServer%",
-        "category": "%opencodePanel.category%",
+        "title": "停止伺服器",
+        "category": "OpenCode Panel",
         "icon": "$(debug-stop)"
       },
       {
         "command": "opencodePanel.restartServer",
-        "title": "%opencodePanel.commands.restartServer%",
-        "category": "%opencodePanel.category%",
+        "title": "重啟伺服器",
+        "category": "OpenCode Panel",
         "icon": "$(debug-restart)"
       },
       {
         "command": "opencodePanel.openTui",
-        "title": "%opencodePanel.commands.openTui%",
-        "category": "%opencodePanel.category%",
+        "title": "開啟 TUI",
+        "category": "OpenCode Panel",
         "icon": "$(terminal)"
       },
       {
         "command": "opencodePanel.attachSelection",
-        "title": "%opencodePanel.commands.attachSelection%",
-        "category": "%opencodePanel.category%",
+        "title": "附加選取內容",
+        "category": "OpenCode Panel",
         "icon": "$(selection)"
       },
       {
         "command": "opencodePanel.attachFile",
-        "title": "%opencodePanel.commands.attachFile%",
-        "category": "%opencodePanel.category%",
+        "title": "附加檔案",
+        "category": "OpenCode Panel",
         "icon": "$(file)"
       },
       {
         "command": "opencodePanel.exportTranscript",
-        "title": "%opencodePanel.commands.exportTranscript%",
-        "category": "%opencodePanel.category%",
+        "title": "匯出對話紀錄",
+        "category": "OpenCode Panel",
         "icon": "$(export)"
       },
       {
         "command": "opencodePanel.openLogs",
-        "title": "%opencodePanel.commands.openLogs%",
-        "category": "%opencodePanel.category%",
+        "title": "開啟記錄",
+        "category": "OpenCode Panel",
         "icon": "$(output)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "opencodePanel.newSession",
+          "command": "opencodePanel.toggleHistory",
           "when": "view == opencodePanel.chatView",
           "group": "navigation@1"
         },
         {
-          "command": "opencodePanel.openSettings",
+          "command": "opencodePanel.newSession",
           "when": "view == opencodePanel.chatView",
           "group": "navigation@2"
+        },
+        {
+          "command": "opencodePanel.openSettings",
+          "when": "view == opencodePanel.chatView",
+          "group": "navigation@3"
         },
         {
           "command": "opencodePanel.startServer",
@@ -147,7 +158,7 @@
       ]
     },
     "configuration": {
-      "title": "%opencodePanel.configuration.title%",
+      "title": "OpenCode",
       "properties": {
         "opencodePanel.serverUrl": {
           "type": "string",

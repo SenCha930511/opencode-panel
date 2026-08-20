@@ -303,10 +303,15 @@ export function activate(
     },
     { dispose: () => config.dispose() },
     { dispose: () => manager.dispose() },
+    vscode.commands.registerCommand("opencodePanel.toggleHistory", () => {
+      panel.chat.postEvent("command.toggleHistory", null);
+    }),
     vscode.commands.registerCommand("opencodePanel.newSession", () => {
       panel.chat.postEvent("command.newSession", null);
     }),
-    vscode.commands.registerCommand("opencodePanel.openSettings", comingLater),
+    vscode.commands.registerCommand("opencodePanel.openSettings", () => {
+      panel.chat.postEvent("command.openSettings", null);
+    }),
     vscode.commands.registerCommand("opencodePanel.startServer", async () => {
       const result = await manager.start();
       if (!result.ok) {

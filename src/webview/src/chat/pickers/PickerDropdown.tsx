@@ -34,11 +34,11 @@ export interface PickerDropdownProps {
 }
 
 const TRIGGER_CLASS =
-  "flex max-w-56 items-center gap-1.5 truncate rounded-full border border-card-border bg-card-bg/90 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer";
+  "flex max-w-28 sm:max-w-40 items-center gap-1 truncate rounded-full border border-card-border bg-card-bg/90 px-2.5 py-1 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0";
 const MENU_CLASS =
-  "absolute bottom-full left-0 z-50 mb-2 max-h-64 min-w-56 overflow-y-auto rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10";
+  "absolute bottom-full left-0 z-50 mb-2 max-h-64 min-w-56 max-w-72 overflow-y-auto rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/10";
 const ROW_CLASS =
-  "flex cursor-pointer select-none items-baseline gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg data-[selected=true]:bg-accent/15 data-[selected=true]:text-accent font-medium";
+  "flex cursor-pointer select-none items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs text-fg transition-colors hover:bg-hover-bg data-[selected=true]:bg-accent/15 data-[selected=true]:text-accent font-medium";
 
 function ChevronIcon(): ReactNode {
   return (
@@ -76,7 +76,7 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
   return (
     <span
       ref={rootRef}
-      className="relative inline-flex"
+      className="relative inline-flex min-w-0 shrink"
       onKeyDown={(event) => {
         if (event.key === "Escape" && props.open) {
           event.stopPropagation();
@@ -89,11 +89,12 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         aria-haspopup="listbox"
         aria-expanded={props.open}
         aria-label={props.title}
+        title={props.currentLabel ?? props.title}
         className={TRIGGER_CLASS}
         onClick={props.onToggle}
       >
-        <span className="truncate">{props.currentLabel ?? props.title}</span>
-        <ChevronIcon />
+        <span className="truncate min-w-0 flex-1">{props.currentLabel ?? props.title}</span>
+        <span className="shrink-0 text-muted-fg"><ChevronIcon /></span>
       </button>
       {props.open ? (
         <div role="listbox" aria-label={props.title} className={MENU_CLASS}>

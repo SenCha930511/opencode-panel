@@ -1,5 +1,6 @@
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useApp } from "../app/context.js";
 import { useStrings } from "../../lib/i18n.js";
 import type { SessionEntry } from "./constants.js";
 import { DeleteSessionDialog, RenameSessionDialog } from "./sessionDialogs.js";
@@ -139,6 +140,12 @@ export function RecentSessionsTop(props?: {
   readonly onViewAll?: () => void;
 }): ReactNode {
   const { locale, t } = useStrings();
+  let appState: ReturnType<typeof useApp> | null = null;
+  try {
+    appState = useApp();
+  } catch {
+    // Graceful fallback if outside provider
+  }
   const store = props?.store ?? getSharedSessionsStore();
   const snapshot = useSyncExternalStore(
     store ? store.subscribe : () => () => {},
@@ -179,10 +186,8 @@ export function RecentSessionsTop(props?: {
         onClick={() => {
           if (props?.onViewAll) {
             props.onViewAll();
-          } else {
-            // default toggle
-            const btn = document.querySelector('[aria-label="Session history"]') as HTMLButtonElement | null;
-            btn?.click();
+          } else if (appState) {
+            appState.setSessionsOpen(true);
           }
         }}
       >

@@ -226,7 +226,7 @@ export function Header(): ReactNode {
   const { t } = useStrings();
   return (
     <>
-      <header className="flex h-10 shrink-0 items-center justify-between border-b border-border/70 bg-panel-bg/80 px-3 backdrop-blur-md">
+      <header className="hidden" aria-hidden="true">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-fg tracking-tight">{t("sessions.title")}</span>
           <ServerStatusBadge />

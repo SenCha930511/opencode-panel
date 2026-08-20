@@ -66,6 +66,42 @@ export function SettingsPage(props: { readonly store?: SettingsFormStore }): Rea
   return <SettingsForm store={ownedStore} />;
 }
 
+function ServerIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2" y="3" width="12" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="2" y="8.5" width="12" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="4.5" cy="5.2" r="0.6" fill="currentColor" />
+      <circle cx="4.5" cy="10.7" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function PaletteIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M8 2a6 6 0 0 0 0 12V2z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function PulseIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2.5 8h3l2-4 3 8 2-4h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ZapIcon(): ReactNode {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8.5 1.5L3 9h5l-1 5.5 6.5-7.5h-5l1-5.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
   const { init, messenger, send, pushToast, navigate } = useApp();
   const { t, locale } = useStrings();
@@ -92,14 +128,25 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
     }
   };
 
+  const getSectionIcon = (section: SettingSectionId): ReactNode => {
+    switch (section) {
+      case "server":
+        return <ServerIcon />;
+      case "appearance":
+        return <PaletteIcon />;
+      case "diagnostics":
+        return <PulseIcon />;
+    }
+  };
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <h2 className="text-sm font-semibold">{t("settings.title")}</h2>
+    <div className="flex min-h-0 flex-1 flex-col bg-bg">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/70 bg-panel-bg/90 px-3.5 py-2.5 backdrop-blur-md">
+        <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-50"
+            className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             disabled={!dirty || store.hasErrors() || disabled}
             onClick={() => {
               void store.apply(send).then((ok) => {
@@ -111,7 +158,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           </button>
           <button
             type="button"
-            className="rounded border border-border px-2.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg disabled:opacity-50"
+            className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             disabled={!dirty || disabled}
             onClick={() => {
               store.revert();
@@ -124,7 +171,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           </button>
           <button
             type="button"
-            className="rounded border border-border px-2.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg"
+            className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
             onClick={() => {
               navigate("chat");
             }}
@@ -134,31 +181,36 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
         </div>
       </div>
       {view.saveFailed ? (
-        <p role="alert" className="border-b border-border px-3 py-1.5 text-[10px] text-err">
+        <p role="alert" className="border-b border-err/30 bg-err/10 px-3.5 py-2 text-xs text-err font-medium">
           {t("settings.saveFailed")}
         </p>
       ) : null}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3.5">
         {SECTION_ORDER.map((section) => (
-          <section key={section} className="flex flex-col gap-3">
-            <h3 className="text-xs font-semibold text-muted-fg">{t(SECTION_TITLE[section])}</h3>
-            {settingFieldsForSection(section).map((field) => (
-              <SettingFieldRow
-                key={`${field.shortKey}:${String(resetSignal)}`}
-                field={field}
-                value={settingFieldValue(view.draft, field)}
-                error={store.fieldError(field.shortKey)}
-                scope={view.scope[field.shortKey] ?? "global"}
-                disabled={disabled}
-                locale={locale}
-                onValueChange={(next) => {
-                  store.setValue(field.shortKey, next);
-                }}
-                onScopeChange={(choice) => {
-                  store.setScopeChoice(field.shortKey, choice);
-                }}
-              />
-            ))}
+          <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+            <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
+              <span className="text-muted-fg">{getSectionIcon(section)}</span>
+              <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
+            </div>
+            <div className="flex flex-col gap-3">
+              {settingFieldsForSection(section).map((field) => (
+                <SettingFieldRow
+                  key={`${field.shortKey}:${String(resetSignal)}`}
+                  field={field}
+                  value={settingFieldValue(view.draft, field)}
+                  error={store.fieldError(field.shortKey)}
+                  scope={view.scope[field.shortKey] ?? "global"}
+                  disabled={disabled}
+                  locale={locale}
+                  onValueChange={(next) => {
+                    store.setValue(field.shortKey, next);
+                  }}
+                  onScopeChange={(choice) => {
+                    store.setScopeChoice(field.shortKey, choice);
+                  }}
+                />
+              ))}
+            </div>
             {section === "server" ? (
               <>
                 <SettingsSecretsPanel
@@ -167,11 +219,11 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                   onSave={(kind, value) => runSecret(kind, value)}
                   onClear={(kind) => runSecret(kind, "")}
                 />
-                <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                <div className="flex flex-col gap-2 border-t border-card-border/50 pt-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      className="rounded border border-border px-2.5 py-1 text-xs text-muted-fg hover:bg-hover-bg hover:text-fg disabled:opacity-50"
+                      className="rounded-xl border border-card-border bg-card-bg/80 px-3 py-1.5 text-xs font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer shadow-2xs"
                       disabled={disabled}
                       onClick={() => {
                         void store.testConnection(send);
@@ -181,13 +233,18 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                     </button>
                     {view.serverHealth === null ? null : (
                       <span
-                        className={`text-[10px] ${view.serverHealth.status === "ok" ? "text-ok" : "text-err"}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                          view.serverHealth.status === "ok" ? "bg-ok/15 text-ok border border-ok/30" : "bg-err/15 text-err border border-err/30"
+                        }`}
                       >
-                        {view.serverHealth.status === "ok"
-                          ? t("settings.connectionOk")
-                          : t("settings.connectionFailed")}
-                        {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
-                        {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
+                        <span className={`h-1.5 w-1.5 rounded-full ${view.serverHealth.status === "ok" ? "bg-ok" : "bg-err"}`} />
+                        <span>
+                          {view.serverHealth.status === "ok"
+                            ? t("settings.connectionOk")
+                            : t("settings.connectionFailed")}
+                          {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
+                          {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -195,28 +252,41 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               </>
             ) : null}
             {section === "diagnostics" ? (
-              <div className="flex flex-col gap-1 border-t border-border pt-3">
-                <p className="text-[10px] leading-snug text-muted-fg">
-                  {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
-                  {init.server.version === null ? "" : ` — ${init.server.version}`}
-                </p>
-                <p className="text-[10px] leading-snug text-muted-fg">{t("settings.serverActionsHint")}</p>
+              <div className="flex flex-col gap-1.5 border-t border-card-border/50 pt-3">
+                <div className="flex items-center gap-2 text-xs font-medium text-fg/80">
+                  <span className="h-2 w-2 rounded-full bg-ok animate-pulse" />
+                  <span className="font-mono text-[11px]">
+                    {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
+                    {init.server.version === null ? "" : ` — ${init.server.version}`}
+                  </span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-muted-fg">{t("settings.serverActionsHint")}</p>
               </div>
             ) : null}
           </section>
         ))}
-        <section className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold text-muted-fg">{t("settings.section.capabilities")}</h3>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+          <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
+            <span className="text-accent"><ZapIcon /></span>
+            <h3 className="text-xs font-semibold text-fg/90">{t("settings.section.capabilities")}</h3>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
             {Object.entries(init.capabilities).map(([name, enabled]) => (
-              <span key={name} className="flex items-center gap-1 text-[10px] text-muted-fg">
+              <span
+                key={name}
+                className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                  enabled
+                    ? "border-ok/30 bg-ok/10 text-ok"
+                    : "border-card-border/60 bg-card-bg/60 text-muted-fg/60"
+                }`}
+              >
                 <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-ok" : "bg-off"}`} />
-                {name}
+                <span>{name}</span>
               </span>
             ))}
           </div>
           {capabilities === undefined ? null : (
-            <p className="text-[10px] leading-snug text-muted-fg">
+            <p className="text-[11px] font-medium leading-relaxed text-muted-fg/80 pt-1 border-t border-card-border/30">
               {`${capabilities.agents.length} agents / ${capabilities.commands.length} commands / ${capabilities.providers.length} providers`}
             </p>
           )}

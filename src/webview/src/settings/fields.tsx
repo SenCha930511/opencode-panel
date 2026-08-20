@@ -24,7 +24,7 @@ import {
 } from "../../../shared/settingsSchema.js";
 
 const INPUT_CLASS =
-  "w-full rounded border border-border bg-input-bg px-2 py-1 text-xs text-fg outline-none focus:border-focus-ring disabled:opacity-50";
+  "w-full rounded-xl border border-card-border bg-input-card-bg px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/60 focus:border-focus-ring/80 focus:ring-1 focus:ring-focus-ring/25 outline-none disabled:opacity-50";
 
 export interface FieldRowProps {
   readonly field: SettingField;
@@ -48,7 +48,7 @@ function ScopeChip(props: {
   return (
     <select
       aria-label={t(props.labelId)}
-      className="cursor-pointer rounded border border-border bg-input-bg px-1 py-0.5 text-[10px] text-muted-fg outline-none focus:border-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-lg border border-card-border bg-card-bg/80 px-2 py-0.5 text-[10px] text-muted-fg font-medium outline-none transition-colors hover:border-focus-ring/60 hover:text-fg focus:border-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
       disabled={props.disabled}
       value={props.scope}
       onChange={(event) => {
@@ -209,9 +209,9 @@ export function SettingFieldRow(props: FieldRowProps): ReactNode {
     props.locale === "zh-TW" ? props.field.description.zhTW : props.field.description.en;
   const error = textError ?? props.error;
   return (
-    <div className="flex flex-col gap-1" data-oc-setting={props.field.shortKey}>
+    <div className="flex flex-col gap-1.5 py-1" data-oc-setting={props.field.shortKey}>
       <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-medium text-fg">{t(labelId)}</label>
+        <label className="text-xs font-medium text-fg/90">{t(labelId)}</label>
         <ScopeChip
           labelId={labelId}
           scope={props.scope}
@@ -225,9 +225,9 @@ export function SettingFieldRow(props: FieldRowProps): ReactNode {
           setTextError(reason);
         }}
       />
-      <p className="text-[10px] leading-snug text-muted-fg">{description}</p>
+      <p className="text-[11px] leading-relaxed text-muted-fg/80">{description}</p>
       {error === null ? null : (
-        <p role="alert" className="text-[10px] text-err">
+        <p role="alert" className="text-[11px] text-err font-medium">
           {t("settings.validationFailed")}: {error}
         </p>
       )}

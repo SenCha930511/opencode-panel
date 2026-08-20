@@ -110,7 +110,11 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
     <div data-oc-chat className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div
         data-oc-chat-toolbar
-        className="flex shrink-0 items-center justify-between gap-2 border-b border-border/70 bg-bg/50 px-2 py-0.5 backdrop-blur-xs"
+        className={
+          usage !== null
+            ? "flex shrink-0 items-center justify-between gap-2 border-b border-border/70 bg-bg/50 px-2 py-0.5 backdrop-blur-xs"
+            : "hidden"
+        }
       >
         <span className="flex min-w-0 flex-1 items-center">
           <UsageStrip usage={usage} />

@@ -235,7 +235,7 @@ export function Composer(props: ComposerProps): ReactNode {
           onKeyDown={handleKeyDown}
         />
         <div className="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-card-border/40">
-          <div data-oc-composer-extras className="flex flex-1 flex-wrap min-w-0 items-center gap-1.5">
+          <div data-oc-composer-extras className="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar py-0.5">
             {props.extras}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
