@@ -76,6 +76,7 @@ export function buildPromptPayload(input: {
   readonly attachments: readonly ComposerAttachment[];
   readonly agent?: string;
   readonly model?: string;
+  readonly variant?: string;
 }): SendPromptPayload {
   return {
     text: input.text,
@@ -90,6 +91,7 @@ export function buildPromptPayload(input: {
     }),
     ...(input.agent === undefined ? {} : { agent: input.agent }),
     ...(input.model === undefined ? {} : { model: input.model }),
+    ...(input.variant === undefined ? {} : { variant: input.variant }),
   };
 }
 

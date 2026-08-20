@@ -51,6 +51,8 @@ export interface PromptRequestBody {
   readonly parts: PromptPartInput[];
   readonly model?: PromptModelRef;
   readonly agent?: string;
+  /** Reasoning-effort variant name the composer picked (opencode prompt body). */
+  readonly variant?: string;
 }
 
 export type PromptRoute = "prompt_async" | "sync";
@@ -112,6 +114,7 @@ export function buildPromptBody(payload: SendPromptPayload): PromptRequestBody {
     parts,
     ...(model === undefined ? {} : { model }),
     ...(payload.agent === undefined ? {} : { agent: payload.agent }),
+    ...(payload.variant === undefined ? {} : { variant: payload.variant }),
   };
 }
 
@@ -157,7 +160,8 @@ async function dispatchSync(
   const result = await client.session.prompt({
     path: { id },
     body: { parts: body.parts, ...(body.model === undefined ? {} : { model: body.model }),
-      ...(body.agent === undefined ? {} : { agent: body.agent }) },
+      ...(body.agent === undefined ? {} : { agent: body.agent }),
+      ...(body.variant === undefined ? {} : { variant: body.variant }) },
   });
   if (result.error !== undefined || result.data === undefined) {
     const error = result.error;

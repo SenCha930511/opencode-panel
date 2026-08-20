@@ -185,6 +185,18 @@ describe("buildPromptPayload", () => {
       model: "mock-provider/mock-large",
     });
   });
+
+  it("carries the reasoning variant only when the input sets it", () => {
+    const withVariant = buildPromptPayload({
+      sessionId: "ses_1",
+      text: "hi",
+      attachments: [],
+      variant: "max",
+    });
+    expect(withVariant).toEqual({ text: "hi", sessionId: "ses_1", attachments: [], variant: "max" });
+    const without = buildPromptPayload({ sessionId: "ses_1", text: "hi", attachments: [] });
+    expect("variant" in without).toBe(false);
+  });
 });
 
 describe("server status placeholder/disable mapping", () => {

@@ -263,6 +263,12 @@ export function Composer(props: ComposerProps): ReactNode {
   }, [selectedModelEntry, modelVariants]);
 
   const currentEffort = useModelEffort(activeModelId, defaultModelEffort);
+  const currentVariant: string | undefined =
+    selectedModelEntry !== undefined &&
+    selectedModelEntry.model.variants !== undefined &&
+    selectedModelEntry.model.variants.includes(currentEffort)
+      ? currentEffort
+      : undefined;
 
   const [text, setText] = useState<string>(() => {
     return sessionId === undefined ? "" : drafts.read(sessionId);
@@ -345,6 +351,7 @@ export function Composer(props: ComposerProps): ReactNode {
           attachments: promptToSend.chips,
           ...(promptToSend.agent === undefined ? {} : { agent: promptToSend.agent }),
           ...(promptToSend.model === undefined ? {} : { model: promptToSend.model }),
+          ...(currentVariant === undefined ? {} : { variant: currentVariant }),
         });
         await submitPrompt(app.messenger, payload, reportError);
       })();
@@ -393,6 +400,7 @@ export function Composer(props: ComposerProps): ReactNode {
         attachments: chips,
         ...(props.agent === undefined ? {} : { agent: props.agent }),
         ...(props.model === undefined ? {} : { model: props.model }),
+        ...(currentVariant === undefined ? {} : { variant: currentVariant }),
       });
       // Fire-and-observe: the reply only gates the draft clear; streamed state
       // arrives via the todo-9/13 channel, so the UI never blocks here.

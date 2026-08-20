@@ -351,6 +351,18 @@ describe("pipeline pure mapping", () => {
     expect("agent" in body).toBe(false);
   });
 
+  it("buildPromptBody passes a reasoning variant through; absent stays absent", () => {
+    const withVariant = buildPromptBody({
+      text: "hello",
+      sessionId: "ses_1",
+      attachments: [],
+      variant: "max",
+    });
+    expect(withVariant.variant).toBe("max");
+    const without = buildPromptBody({ text: "hello", sessionId: "ses_1", attachments: [] });
+    expect("variant" in without).toBe(false);
+  });
+
   it("a 204 whose body throws on read still resolves (nothing awaited past the status)", async () => {
     // Own properties shadow the prototype readers; any read is a test failure.
     const throwing = (): never => {

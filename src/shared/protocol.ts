@@ -67,6 +67,7 @@ export interface FromWebviewProtocol {
     readonly sessionId: string;
     readonly agent?: string;
     readonly model?: string;
+    readonly variant?: string;
     readonly attachments: readonly Attachment[];
   };
   readonly abort: { readonly sessionId: string };
@@ -105,6 +106,7 @@ export interface FromWebviewProtocol {
   readonly selectSession: { readonly sessionId: string };
   readonly listSessions: Record<string, never>;
   readonly getCapabilities: Record<string, never>;
+  readonly setSessionAuto: { readonly sessionId: string; readonly enabled: boolean };
   readonly openSettingsTab: Record<string, never>;
   readonly closeSettingsTab: Record<string, never>;
 }
@@ -139,6 +141,7 @@ export interface FromWebviewResponse {
   readonly listSessions: SessionListPayload;
   /** The capabilities.refresh payload, or null when nothing is connected/readable. */
   readonly getCapabilities: CapabilitiesRefreshPayload | null;
+  readonly setSessionAuto: null;
   readonly openSettingsTab: null;
   readonly closeSettingsTab: null;
 }
@@ -280,6 +283,7 @@ export const FROM_WEBVIEW_MESSAGE_TYPES = [
   "selectSession",
   "listSessions",
   "getCapabilities",
+  "setSessionAuto",
   "openSettingsTab",
   "closeSettingsTab",
 ] as const;
