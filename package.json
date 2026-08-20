@@ -91,6 +91,12 @@
         "title": "%opencodePanel.commands.attachFile%",
         "category": "%opencodePanel.category%",
         "icon": "$(file)"
+      },
+      {
+        "command": "opencodePanel.exportTranscript",
+        "title": "%opencodePanel.commands.exportTranscript%",
+        "category": "%opencodePanel.category%",
+        "icon": "$(export)"
       }
     ],
     "menus": {

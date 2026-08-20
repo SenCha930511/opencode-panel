@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { mkdir, writeFile } from "node:fs/promises";
 import {
   createVscodeConfigAccessor,
   createVscodeDockSurface,
@@ -24,8 +25,18 @@ import {
   registerDockHandlers,
 } from "./host/handlers/dock.js";
 import { wireMcpInfo } from "./host/handlers/mcpInfo.js";
+import {
+  createMessageOpsService,
+  registerMessageOpsHandlers,
+} from "./host/handlers/messageOps.js";
 import { registerSessionHandlers } from "./host/handlers/sessions.js";
 import { managerSessionSource, wireSessionsDomain } from "./host/handlers/sync.js";
+import {
+  createExportTranscriptCommand,
+  exportTranscript,
+  type ExportFs,
+  type SaveDialog,
+} from "./host/exportTranscript.js";
 
 /**
  * Activation (todo 10): vscode-backed ServerManager + both webview view
@@ -124,6 +135,47 @@ export function activate(context: vscode.ExtensionContext): void {
     logger,
     events: panel.chat,
   });
+  // Todo-19: message ops (revert/unrevert via the webview confirm-gated menu,
+  // summarize with the config default model, shell with the first advertised
+  // primary agent) + the additive export-transcript command (no todo-3 wire
+  // type fits; the palette/view-menu route is the invocation path).
+  const messageOpsSource = managerSessionSource(manager);
+  registerMessageOpsHandlers(panel.registerHandler, {
+    service: createMessageOpsService({ source: messageOpsSource, logger }),
+    sync: sessionsDomain.deps.sync,
+  });
+  const exportFs: ExportFs = {
+    mkdir: (path, options) => mkdir(path, options),
+    writeFile: (path, contents) => writeFile(path, contents, "utf8"),
+  };
+  const exportDialog: SaveDialog = {
+    show: async (defaultUri) => {
+      const uri = await vscode.window.showSaveDialog(
+        defaultUri === undefined ? {} : { defaultUri: vscode.Uri.file(defaultUri) },
+      );
+      return uri?.fsPath;
+    },
+  };
+  const exportCommand = createExportTranscriptCommand({
+    run: (args) =>
+      exportTranscript(
+        {
+          source: messageOpsSource,
+          logger,
+          fs: exportFs,
+          dialog: exportDialog,
+          workspaceFolder: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+          clock: { now: () => Date.now() },
+        },
+        args,
+      ),
+    info: (message) => {
+      void vscode.window.showInformationMessage(message);
+    },
+    error: (message) => {
+      void vscode.window.showErrorMessage(message);
+    },
+  });
 
   context.subscriptions.push(
     channel,
@@ -188,6 +240,9 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
     }),
+    vscode.commands.registerCommand("opencodePanel.exportTranscript", (args?: unknown) =>
+      exportCommand(args),
+    ),
   );
   logger.info("opencode-panel activated");
 }

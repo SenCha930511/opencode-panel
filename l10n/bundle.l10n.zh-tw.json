@@ -11,6 +11,7 @@
   "opencodePanel.commands.openTui": "開啟 opencode TUI",
   "opencodePanel.commands.attachSelection": "將選取範圍附加到聊天",
   "opencodePanel.commands.attachFile": "將檔案附加到聊天",
+  "opencodePanel.commands.exportTranscript": "匯出工作階段對話紀錄",
   "opencodePanel.configuration.title": "OpenCode Panel",
   "opencodePanel.config.serverUrl.markdownDescription": "已在執行中的 opencode 伺服器完整網址（例如 `http://127.0.0.1:4096`）。留空時，擴充套件會以 `opencodePanel.hostname` 與 `opencodePanel.port` 組成端點，並可視需要自行啟動受管理的伺服器。",
   "opencodePanel.config.port.markdownDescription": "擴充套件連線（以及啟動時，`opencodePanel.autoStartServer` 開啟時）opencode 伺服器使用的連接埠。設定 `opencodePanel.serverUrl` 時忽略此項。",
