@@ -36,6 +36,8 @@ export interface CommandEntry {
 export interface ProviderModelEntry {
   readonly id: string;
   readonly name: string;
+  /** Context-window size in tokens when the server reports `limit.context`. */
+  readonly contextWindow?: number;
 }
 
 /** Provider group for the model dropdown; `models` may be empty. */
@@ -81,9 +83,14 @@ function toCommandEntry(value: unknown): CommandEntry | undefined {
 
 function toModelEntry(value: unknown): ProviderModelEntry | undefined {
   if (!isRecord(value) || typeof value.id !== "string" || value.id.length === 0) return undefined;
+  const contextWindow =
+    typeof value.contextWindow === "number" && Number.isFinite(value.contextWindow)
+      ? value.contextWindow
+      : undefined;
   return {
     id: value.id,
     name: typeof value.name === "string" && value.name.length > 0 ? value.name : value.id,
+    ...(contextWindow === undefined ? {} : { contextWindow }),
   };
 }
 

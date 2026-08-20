@@ -36,35 +36,38 @@ const LIST = [
 ];
 
 describe("stickyUserMessage", () => {
-  it("no anchor while the first visible row is the list start", () => {
+  it("no anchor when viewing a user message at the top", () => {
+    // m1 is a user message visible at the top itself — nothing pinned
     expect(stickyUserMessage(LIST, 0)).toBeUndefined();
-    // m1 is visible at the top itself — nothing above to pin.
-    expect(stickyUserMessage(LIST, 1)).toBeUndefined();
+    // m3 is a user message at the top (定點) — shows original text in place
+    expect(stickyUserMessage(LIST, 2)).toBeUndefined();
   });
 
   it("anchors the closest user message above the first visible row", () => {
-    expect(stickyUserMessage(LIST, 3)).toEqual({ index: 2, messageId: "m3", text: "second ask with a newline" });
-    expect(stickyUserMessage(LIST, 5)).toEqual({ index: 2, messageId: "m3", text: "second ask with a newline" });
+    // viewing m2 (assistant reply to m1) -> pins m1
+    expect(stickyUserMessage(LIST, 1)).toEqual({ index: 0, messageId: "m1", text: "first ask" });
+    // viewing m4 / m5 (assistant reply to m3) -> pins m3
+    expect(stickyUserMessage(LIST, 3)).toEqual({ index: 2, messageId: "m3", text: "second ask\nwith a newline" });
+    expect(stickyUserMessage(LIST, 4)).toEqual({ index: 2, messageId: "m3", text: "second ask\nwith a newline" });
   });
 
-  it("switches to the previous prompt once the first visible row climbs past this one (merge rule)", () => {
-    // firstVisible 2 = m3 itself is at the top — the bar MERGES (no anchor
-    // on/above it); the previous user message m1 takes over.
-    expect(stickyUserMessage(LIST, 2)).toEqual({ index: 0, messageId: "m1", text: "first ask" });
+  it("switches to the previous prompt once scrolling further up past the user message", () => {
+    // firstVisible 1 = assistant reply to m1 — pins m1
+    expect(stickyUserMessage(LIST, 1)).toEqual({ index: 0, messageId: "m1", text: "first ask" });
   });
 
-  it("skips in-flight placeholders and text-free user rows", () => {
+  it("skips text-free user placeholder rows", () => {
     const ragged = [
       message("m1", "user", "real ask"),
       { ...message("m2", "user", ""), parts: [] },
-      message("m3", "user", "streaming", true),
+      { ...message("m3", "user", ""), parts: [] },
     ];
     expect(stickyUserMessage(ragged, 3)).toEqual({ index: 0, messageId: "m1", text: "real ask" });
   });
 
-  it("collapses whitespace runs so multi-line prompts pin as one line", () => {
+  it("preserves full multi-line prompt text without flattening newlines", () => {
     const anchor = stickyUserMessage(LIST, 3);
-    expect(anchor?.text.includes("\n")).toBe(false);
+    expect(anchor?.text).toBe("second ask\nwith a newline");
   });
 });
 

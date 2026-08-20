@@ -10,13 +10,11 @@ import {
   createVscodeSettingsSurface,
 } from "./host/vscode-adapter.js";
 import {
-  createVscodeStatusBarController,
   createVscodeTuiTerminalFactory,
 } from "./host/vscode-adapter-ide.js";
-import { STATUS_BAR_MENU_COMMAND_ID } from "./host/statusBar.js";
 import { TuiLauncher } from "./host/tui.js";
 import type { ServerStartError } from "./server/ServerManager.js";
-import { registerPanelViews } from "./providers/registration.js";
+import { CHAT_VIEW_ID, registerPanelViews } from "./providers/registration.js";
 import {
   applyTestServerOverride,
   exposeTestAttach,
@@ -284,12 +282,6 @@ export function activate(
     },
     t: (text) => vscode.l10n.t(text),
   });
-  const statusBar = createVscodeStatusBarController({
-    getState: () => manager.state,
-    onDidChangeState: (listener) => manager.onDidChangeState(listener),
-    t: (text) => vscode.l10n.t(text),
-  });
-
   const initPayloadBuilder = createInitPayloadBuilder({
     envLanguage: vscode.env.language,
     config,
@@ -364,9 +356,7 @@ export function activate(
 
   context.subscriptions.push(
     channel,
-    statusBar,
     tui,
-    vscode.commands.registerCommand(STATUS_BAR_MENU_COMMAND_ID, () => statusBar.showMenu()),
     vscode.commands.registerCommand("opencodePanel.openLogs", () => {
       channel.show();
     }),
@@ -390,10 +380,15 @@ export function activate(
     },
     { dispose: () => config.dispose() },
     { dispose: () => manager.dispose() },
-    vscode.commands.registerCommand("opencodePanel.toggleHistory", () => {
+    vscode.commands.registerCommand("opencodePanel.toggleHistory", async () => {
+      // Focus first: guarantees the chat view is RESOLVED before the event
+      // posts (an unresolved view drops it outright — the first click from a
+      // cold window then does nothing).
+      await vscode.commands.executeCommand(`${CHAT_VIEW_ID}.focus`);
       panel.chat.postEvent("command.toggleHistory", null);
     }),
-    vscode.commands.registerCommand("opencodePanel.newSession", () => {
+    vscode.commands.registerCommand("opencodePanel.newSession", async () => {
+      await vscode.commands.executeCommand(`${CHAT_VIEW_ID}.focus`);
       panel.chat.postEvent("command.newSession", null);
     }),
     vscode.commands.registerCommand("opencodePanel.openSettings", () => {

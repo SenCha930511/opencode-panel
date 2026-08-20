@@ -35,6 +35,7 @@
  */
 
 import type { OpencodeClient, Session } from "@opencode-ai/sdk";
+import { isRecord } from "../../shared/protocol.js";
 import type { PanelLogger } from "../logger.js";
 import type { Handler } from "../messenger.js";
 import type { ServerConnection } from "../../server/ServerManager.js";
@@ -137,6 +138,13 @@ function errorDetail(error: unknown): string {
       if (typeof message === "string") return message;
     }
     if (typeof record.message === "string") return record.message;
+    // Plain error objects (e.g. {_tag:"InternalServerError"}) must never
+    // reach the UI as "[object Object]".
+    try {
+      return JSON.stringify(record);
+    } catch {
+      // fall through to String below
+    }
   }
   return String(error);
 }
@@ -189,6 +197,26 @@ export function isSubagentSession(session: { title?: string; parentID?: string }
   return false;
 }
 
+/**
+ * The session's already-issued share link, if any (used to fold the
+ * duplicate-share 500 into a successful idempotent reply). A lookup failure
+ * or an unshared session yields undefined — the original error stands then.
+ */
+async function existingShareUrl(
+  deps: SessionServiceDeps,
+  id: string,
+): Promise<string | undefined> {
+  try {
+    const connection = await deps.source.connect();
+    const result = await connection.client.session.get({ path: { id } });
+    if (result.error !== undefined || !isRecord(result.data)) return undefined;
+    const share = isRecord(result.data.share) ? result.data.share : undefined;
+    return share !== undefined && typeof share.url === "string" ? share.url : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function createSessionService(deps: SessionServiceDeps): SessionService {
   return {
     async listSessions() {
@@ -214,16 +242,26 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
     },
 
     async shareSession(id) {
-      const session = await fromSdk(deps, "share", (client) =>
-        client.session.share({ path: { id } }),
-      );
-      const url = session.share?.url;
-      if (url === undefined) {
-        // A 200 share reply without share.url is a server contract violation;
-        // surface it honestly rather than handing the UI an empty link.
-        throw new SessionOperationError("share", "server reply carried no share url", undefined);
+      try {
+        const session = await fromSdk(deps, "share", (client) =>
+          client.session.share({ path: { id } }),
+        );
+        const url = session.share?.url;
+        if (url === undefined) {
+          // A 200 share reply without share.url is a server contract violation;
+          // surface it honestly rather than handing the UI an empty link.
+          throw new SessionOperationError("share", "server reply carried no share url", undefined);
+        }
+        return { url };
+      } catch (error) {
+        // The server 500s when the session is ALREADY shared (verified live).
+        // Sharing is idempotent in spirit: an existing link IS the answer.
+        if (error instanceof SessionOperationError) {
+          const existing = await existingShareUrl(deps, id);
+          if (existing !== undefined) return { url: existing };
+        }
+        throw error;
       }
-      return { url };
     },
 
     async unshareSession(id) {

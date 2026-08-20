@@ -27,22 +27,15 @@ export function DefaultAttachmentChip(props: {
     attachment.mimeType.startsWith("image/") && attachment.url.length > 0 ? attachment.url : null; // i18n-allow-literal
 
   if (imagePreview !== null) {
-    // Tile form: the preview carries the name (bottom-right) and the remove
-    // button (top-right) as overlays.
+    // Compact tile form: small preview with overlaid remove button so it doesn't crowd the composer.
     return (
-      <span className="relative inline-flex shrink-0 overflow-hidden rounded-lg border border-card-border bg-card-bg/90 shadow-2xs">
-        <img src={imagePreview} alt={attachment.name} className="h-20 w-20 object-cover" />
-        <span
-          title={attachment.name}
-          className="absolute bottom-0 right-0 max-w-full truncate rounded-tl-md bg-black/60 px-1 py-0.5 text-[9px] font-medium text-white/90"
-        >
-          {attachment.name}
-        </span>
+      <span className="relative group inline-flex shrink-0 overflow-hidden rounded-xl border border-card-border bg-card-bg/90 shadow-2xs">
+        <img src={imagePreview} alt={attachment.name} className="h-11 w-11 object-cover" />
         {onRemove !== undefined && (
           <button
             type="button"
             aria-label={attachment.name}
-            className="absolute top-0.5 right-0.5 rounded bg-black/60 p-0.5 text-white/80 transition-colors hover:bg-err hover:text-white"
+            className="absolute top-0.5 right-0.5 rounded-full bg-black/70 p-0.5 text-white/90 transition-all hover:bg-err hover:text-white cursor-pointer"
             onClick={() => {
               onRemove(attachment.id);
             }}

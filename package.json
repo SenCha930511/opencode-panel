@@ -2,7 +2,7 @@
   "name": "opencode-panel",
   "displayName": "OpenCode Panel",
   "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -11,6 +11,9 @@
   },
   "main": "./dist/extension.js",
   "l10n": "./l10n",
+  "activationEvents": [
+    "*"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/SenCha930511/opencode-panel.git"

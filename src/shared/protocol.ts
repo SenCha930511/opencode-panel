@@ -95,7 +95,7 @@ export interface FromWebviewProtocol {
     readonly questionID: string;
     readonly answers: readonly string[];
   };
-  readonly openDiff: { readonly sessionId: string; readonly messageID?: string };
+  readonly openDiff: { readonly sessionId: string; readonly messageID?: string; readonly file?: string };
   readonly openFile: { readonly path: string };
   readonly getSettings: Record<string, never>;
   readonly setSettings: { readonly patch: SettingsPatch };
@@ -192,6 +192,8 @@ export interface CommandSummary {
 export interface CapabilityModelEntry {
   readonly id: string;
   readonly name: string;
+  /** Model's context-window size in tokens (`limit.context`) when the server reports it. */
+  readonly contextWindow?: number;
 }
 
 /** One provider group; `models` may be empty (the webview hides the group). */

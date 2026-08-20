@@ -10,7 +10,7 @@ import { getWebviewMessenger } from "../../lib/messenger.js";
 
 export interface ChatActions {
   openFile(path: string): void;
-  openDiff(input: { readonly sessionId: string; readonly messageID?: string }): void;
+  openDiff(input: { readonly sessionId: string; readonly messageID?: string; readonly file?: string }): void;
 }
 
 /** Lazy singleton-backed actions: messenger resolves only on first use. */
@@ -18,11 +18,12 @@ const defaultActions: ChatActions = {
   openFile: (path) => {
     void getWebviewMessenger().request("openFile", { path });
   },
-  openDiff: ({ sessionId, messageID }) => {
-    void getWebviewMessenger().request(
-      "openDiff",
-      messageID === undefined ? { sessionId } : { sessionId, messageID },
-    );
+  openDiff: ({ sessionId, messageID, file }) => {
+    void getWebviewMessenger().request("openDiff", {
+      sessionId,
+      ...(messageID !== undefined ? { messageID } : {}),
+      ...(file !== undefined ? { file } : {}),
+    });
   },
 };
 

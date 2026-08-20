@@ -32,6 +32,13 @@ export type {
 /** Event-channel type carrying {@link CapabilitiesRefreshPayload}. */
 export const CAPABILITIES_REFRESH_EVENT = "capabilities.refresh";
 
+/** `limit.context` when the server reports it as a finite number. */
+function contextWindowOf(value: unknown): number | undefined {
+  if (!isRecord(value) || !isRecord(value.limit)) return undefined;
+  const context = value.limit.context;
+  return typeof context === "number" && Number.isFinite(context) && context > 0 ? context : undefined;
+}
+
 export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[] {
   if (Array.isArray(payload)) {
     const models: CapabilityModelEntry[] = [];
@@ -40,7 +47,8 @@ export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[
       const id = typeof item.id === "string" ? item.id : "";
       if (id.length === 0) continue;
       const name = typeof item.name === "string" && item.name.length > 0 ? item.name : id;
-      models.push({ id, name });
+      const contextWindow = contextWindowOf(item);
+      models.push({ id, name, ...(contextWindow === undefined ? {} : { contextWindow }) });
     }
     return models;
   }
@@ -52,7 +60,8 @@ export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[
       isRecord(value) && typeof value.name === "string" && value.name.length > 0
         ? value.name
         : id;
-    models.push({ id, name });
+    const contextWindow = contextWindowOf(value);
+    models.push({ id, name, ...(contextWindow === undefined ? {} : { contextWindow }) });
   }
   return models;
 }

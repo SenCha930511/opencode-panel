@@ -33,9 +33,9 @@ export class ActiveSessionEmitter implements ActiveSession {
     };
   }
 
-  /** Commit a new selection; no-op (and no emission) when unchanged. */
-  set(id: string | null): void {
-    if (this.id === id) return;
+  /** Commit a new selection; emits whenever changed or forced. */
+  set(id: string | null, force = false): void {
+    if (this.id === id && !force) return;
     this.id = id;
     for (const listener of [...this.listeners]) {
       listener(id);

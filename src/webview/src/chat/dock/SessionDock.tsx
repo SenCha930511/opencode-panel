@@ -53,17 +53,18 @@ import {
 import { todoDone, todoDotClass, type DockDiffFileVM, type DockTodoVM } from "./dockTypes.js";
 
 export interface DockActions {
-  openDiff(input: { readonly sessionId: string; readonly messageID?: string }): void;
+  openDiff(input: { readonly sessionId: string; readonly messageID?: string; readonly file?: string }): void;
   openFile(path: string): void;
 }
 
 /** Provider fallback only; the real defaults resolve lazily at click time. */
 const defaultActions: DockActions = {
-  openDiff: ({ sessionId, messageID }) => {
-    void getWebviewMessenger().request(
-      "openDiff",
-      messageID === undefined ? { sessionId } : { sessionId, messageID },
-    );
+  openDiff: ({ sessionId, messageID, file }) => {
+    void getWebviewMessenger().request("openDiff", {
+      sessionId,
+      ...(messageID !== undefined ? { messageID } : {}),
+      ...(file !== undefined ? { file } : {}),
+    });
   },
   openFile: (path) => {
     void getWebviewMessenger().request("openFile", { path });
@@ -74,11 +75,13 @@ export interface SessionDockProps {
   readonly store?: DockStore;
   readonly stateStore?: DockStateStore;
   readonly source?: ChatEventSource;
+  readonly sessionId?: string;
   readonly actions?: DockActions;
-  /** Todo-7 `hasTodo` bit (init.capabilities.todo); hides the dock when false. */
   readonly todosEnabled?: boolean;
   onNotice?(notice: DockNotice): void;
 }
+
+export const OPENCODE_COLLAPSE_SESSION_DOC = "opencode.collapseSessionDoc";
 
 function ChevronIcon(props: { readonly open: boolean }): ReactNode {
   return (
@@ -151,7 +154,6 @@ export function DiffsPanel(props: {
           diff={diff}
           sessionId={props.sessionId}
           actions={props.actions}
-          openDiffLabel={t("dock.diffs.openDiff")}
           openFileLabel={t("dock.diffs.openFile")}
         />
       ))}
@@ -162,13 +164,14 @@ export function DiffsPanel(props: {
 /**
  * Hook-free file-change row: labels are resolved by the hook-driven parent.
  * Exported as the direct-invocation click-walk target (todo-16
- * PermissionReplyButtons test pattern).
+ * PermissionReplyButtons test pattern). The row's primary action opens the
+ * FILE — the native-diff entry was retired, the +/− counters and open-file
+ * affordance carry the value now.
  */
 export function DiffFileRow(props: {
   readonly diff: DockDiffFileVM;
   readonly sessionId: string | undefined;
   readonly actions: DockActions;
-  readonly openDiffLabel: string;
   readonly openFileLabel: string;
 }): ReactNode {
   const { diff } = props;
@@ -176,15 +179,11 @@ export function DiffFileRow(props: {
     <li className="flex items-center justify-between gap-2 rounded-xl border border-card-border/60 bg-card-bg/60 px-2.5 py-1.5 text-xs transition-colors hover:bg-hover-bg/80">
       <button
         type="button"
-        data-diff-file={diff.file}
+        data-open-file={diff.file}
         title={diff.file}
-        aria-label={props.openDiffLabel}
-        disabled={props.sessionId === undefined}
-        className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-start font-medium text-fg/90 hover:text-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-        onClick={() => {
-          if (props.sessionId === undefined) return;
-          props.actions.openDiff({ sessionId: props.sessionId });
-        }}
+        aria-label={props.openFileLabel}
+        className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-start font-medium text-fg/90 hover:text-accent cursor-pointer"
+        onClick={() => props.actions.openFile(diff.file)}
       >
         <span className="shrink-0 text-muted-fg"><FileIcon /></span>
         <span className="truncate">{diff.file}</span>
@@ -192,16 +191,6 @@ export function DiffFileRow(props: {
       <div className="flex shrink-0 items-center gap-1.5 font-mono text-[11px]">
         <span className="shrink-0 text-ok">+{diff.additions}</span>
         <span className="shrink-0 text-err">−{diff.deletions}</span>
-        <button
-          type="button"
-          data-open-file={diff.file}
-          title={diff.file}
-          aria-label={props.openFileLabel}
-          className="rounded p-1 text-muted-fg hover:bg-hover-bg hover:text-fg cursor-pointer transition-colors"
-          onClick={() => props.actions.openFile(diff.file)}
-        >
-          <FileIcon />
-        </button>
       </div>
     </li>
   );

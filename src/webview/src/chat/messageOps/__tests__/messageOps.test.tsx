@@ -656,41 +656,30 @@ describe("session menu (model + SSR items)", () => {
   };
 
   it("model: capability flags and session presence drive the rows", () => {
-    const full = sessionMenuModel({ availability: available, hasSession: true, hasExport: false });
-    expect(full).toEqual({
-      summarize: true,
-      shell: true,
-      export: { visible: true, enabled: false },
-      share: true,
-    });
-    expect(sessionMenuModel({ availability: available, hasSession: false, hasExport: true })).toEqual({
+    const full = sessionMenuModel({ availability: available, hasSession: true });
+    expect(full).toEqual({ summarize: true, share: true });
+    expect(sessionMenuModel({ availability: available, hasSession: false })).toEqual({
       summarize: false,
-      shell: false,
-      export: { visible: true, enabled: false },
       share: false,
     });
     const oldServerish = sessionMenuModel({
       availability: { revert: false, unrevert: false, summarize: false, shell: false },
       hasSession: true,
-      hasExport: true,
     });
     expect(oldServerish.summarize).toBe(false);
-    expect(oldServerish.shell).toBe(false);
-    expect(oldServerish.export.enabled).toBe(true);
+    expect(oldServerish.share).toBe(true);
   });
 
-  it("SSR: items render per model and Export is disabled without the seam", () => {
+  it("SSR: items render per model (summarize + share only; shell/export retired)", () => {
     const labels = {
       summarize: en["messages.summarize"],
-      shell: en["messages.shell"],
-      export: en["messages.export"],
       share: en["sessions.share"],
     };
     const html = render(
       <DropdownMenu.Root open modal={false}>
         <DropdownMenu.Content forceMount>
           <SessionMenuItems
-            model={sessionMenuModel({ availability: available, hasSession: true, hasExport: false })}
+            model={sessionMenuModel({ availability: available, hasSession: true })}
             labels={labels}
             onSelect={() => undefined}
           />
@@ -698,17 +687,15 @@ describe("session menu (model + SSR items)", () => {
       </DropdownMenu.Root>,
     );
     expect(html).toContain(en["messages.summarize"]);
-    expect(html).toContain(en["messages.shell"]);
-    expect(html).toContain(en["messages.export"]);
     expect(html).toContain(en["sessions.share"]);
-    expect(html).toContain('aria-disabled="true"');
+    expect(html).not.toContain(en["messages.shell"]);
+    expect(html).not.toContain(en["messages.export"]);
+    expect(html).not.toContain('aria-disabled="true"');
   });
 
   it("SSR: hidden rows stay out (old-server capability shape)", () => {
     const labels = {
       summarize: en["messages.summarize"],
-      shell: en["messages.shell"],
-      export: en["messages.export"],
       share: en["sessions.share"],
     };
     const html = render(
@@ -718,7 +705,6 @@ describe("session menu (model + SSR items)", () => {
             model={sessionMenuModel({
               availability: { revert: false, unrevert: false, summarize: false, shell: false },
               hasSession: true,
-              hasExport: true,
             })}
             labels={labels}
             onSelect={() => undefined}
@@ -728,7 +714,7 @@ describe("session menu (model + SSR items)", () => {
     );
     expect(html).not.toContain(en["messages.summarize"]);
     expect(html).not.toContain(en["messages.shell"]);
-    expect(html).toContain(en["messages.export"]);
+    expect(html).not.toContain(en["messages.export"]);
     expect(html).toContain(en["sessions.share"]);
   });
 });

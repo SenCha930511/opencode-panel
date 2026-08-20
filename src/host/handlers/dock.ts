@@ -184,8 +184,18 @@ export function parseDockFileDiffs(payload: unknown): DockFileDiff[] {
   if (!Array.isArray(payload)) return [];
   const diffs: DockFileDiff[] = [];
   for (const item of payload) {
-    if (!isRecord(item) || typeof item.file !== "string") continue;
+    if (!isRecord(item)) continue;
+    const file =
+      typeof item.file === "string"
+        ? item.file
+        : typeof item.path === "string"
+          ? item.path
+          : typeof item.filename === "string"
+            ? item.filename
+            : undefined;
+    if (file === undefined) continue;
     if (typeof item.additions !== "number" || typeof item.deletions !== "number") continue;
+
     let before = typeof item.before === "string" ? item.before : "";
     let after = typeof item.after === "string" ? item.after : "";
     if ((before.length === 0 || after.length === 0) && typeof item.patch === "string") {
@@ -196,9 +206,16 @@ export function parseDockFileDiffs(payload: unknown): DockFileDiff[] {
         if (before.length === 0) before = sides.before;
         if (after.length === 0) after = sides.after;
       }
+    } else if (before.length === 0 && after.length === 0 && typeof item.diff === "string") {
+      const sides = unifiedToBeforeAfter(item.diff);
+      if (sides !== undefined) {
+        if (before.length === 0) before = sides.before;
+        if (after.length === 0) after = sides.after;
+      }
     }
+
     diffs.push({
-      file: item.file,
+      file,
       before,
       after,
       additions: item.additions,
@@ -268,15 +285,60 @@ export async function todosForSession(
 }
 
 /**
- * Merge every message block's `info.summary.diffs` into one per-file view:
- * FIRST `before`, LAST `after`, counters summed across the blocks that
- * touched the file (re-edits keep the net before/after chain; the counters
- * are cumulative by design — the opened diff shows the net content).
+ * Merge message block's `info.summary.diffs` into a per-file view:
+ * When user prompt turns exist in the payload, restricts the diff aggregation
+ * to the target turn (or latest user turn by default), matching the pinned
+ * prompt behavior.
  */
-export function mergeSummaryDiffs(payload: unknown): DockFileDiff[] {
+export function mergeSummaryDiffs(payload: unknown, messageID?: string): DockFileDiff[] {
   if (!Array.isArray(payload)) return [];
+
+  let targetEntries = payload;
+  const hasUserRoles = payload.some(
+    (e) => isRecord(e) && (e.role === "user" || (isRecord(e.info) && e.info.role === "user")),
+  );
+
+  if (hasUserRoles) {
+    if (messageID !== undefined) {
+      const idx = payload.findIndex(
+        (e) =>
+          isRecord(e) &&
+          (e.id === messageID || (isRecord(e.info) && e.info.id === messageID)),
+      );
+      if (idx >= 0) {
+        let end = payload.length;
+        for (let i = idx + 1; i < payload.length; i++) {
+          const item = payload[i];
+          if (
+            isRecord(item) &&
+            (item.role === "user" || (isRecord(item.info) && item.info.role === "user"))
+          ) {
+            end = i;
+            break;
+          }
+        }
+        targetEntries = payload.slice(idx, end);
+      }
+    } else {
+      let lastUserIdx = -1;
+      for (let i = payload.length - 1; i >= 0; i--) {
+        const item = payload[i];
+        if (
+          isRecord(item) &&
+          (item.role === "user" || (isRecord(item.info) && item.info.role === "user"))
+        ) {
+          lastUserIdx = i;
+          break;
+        }
+      }
+      if (lastUserIdx >= 0) {
+        targetEntries = payload.slice(lastUserIdx);
+      }
+    }
+  }
+
   const byFile = new Map<string, DockFileDiff>();
-  for (const entry of payload) {
+  for (const entry of targetEntries) {
     if (!isRecord(entry) || !isRecord(entry.info) || !isRecord(entry.info.summary)) continue;
     const diffs = parseDockFileDiffs(entry.info.summary.diffs);
     for (const diff of diffs) {
@@ -334,7 +396,7 @@ export async function diffsForSession(
     if (messages.error !== undefined || messages.data === undefined) {
       return { ok: true, items };
     }
-    return { ok: true, items: mergeSummaryDiffs(messages.data) };
+    return { ok: true, items: mergeSummaryDiffs(messages.data, messageID) };
   } catch {
     // Aggregation is best-effort: the (empty) route answer stands.
     return { ok: true, items };
@@ -732,6 +794,7 @@ export function createFileOpener<TUri, TDocument>(deps: {
 export interface OpenDiffInput {
   readonly sessionId: string;
   readonly messageID?: string;
+  readonly file?: string;
 }
 
 export interface DockServiceDeps {
@@ -759,7 +822,7 @@ export interface DockService {
  */
 export function createDockService(deps: DockServiceDeps): DockService {
   return {
-    async openDiff({ sessionId, messageID }) {
+    async openDiff({ sessionId, messageID, file }) {
       const connection = await deps.source.connect();
       const outcome = await diffsForSession(connection, sessionId, messageID);
       if (!outcome.ok) {
@@ -776,7 +839,17 @@ export function createDockService(deps: DockServiceDeps): DockService {
         deps.notify?.("info", deps.emptyDiffText ?? "No file changes in this session");
         return;
       }
-      for (const diff of outcome.items) {
+      const targetItems = file
+        ? outcome.items.filter(
+            (item) =>
+              item.file === file ||
+              item.file.endsWith(`/${file}`) ||
+              file.endsWith(`/${item.file}`),
+          )
+        : outcome.items;
+      const itemsToOpen = targetItems.length > 0 ? targetItems : outcome.items;
+
+      for (const diff of itemsToOpen) {
         try {
           await deps.renderer.open(diff);
         } catch (error) {
@@ -814,9 +887,9 @@ export function registerDockHandlers(register: RegisterHandler, deps: DockDomain
 
   register(
     "openDiff",
-    async ({ sessionId, messageID }): Promise<FromWebviewResponse["openDiff"]> => {
+    async (payload): Promise<FromWebviewResponse["openDiff"]> => {
       try {
-        await service.openDiff(messageID === undefined ? { sessionId } : { sessionId, messageID });
+        await service.openDiff(payload);
       } catch (error) {
         // User feedback beats protocol purity here: the click surfaced dead.
         if (deps.notify === undefined) throw error;

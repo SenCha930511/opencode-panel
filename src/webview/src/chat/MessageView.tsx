@@ -55,14 +55,18 @@ export function MessageView(props: {
       data-in-flight={message.inFlight}
       className={`group relative text-[13px] transition-all break-words [overflow-wrap:anywhere] ${
         isUser
-          ? "my-2.5 w-full rounded-2xl border border-card-border/80 bg-card-bg/60 p-3 shadow-2xs text-fg"
-          : "my-2 w-full px-0.5 py-1 text-fg"
+          ? "my-1.5 w-full rounded-2xl border border-card-border/80 bg-card-bg/90 p-3 shadow-2xs text-fg"
+          : "my-1.5 w-full px-0.5 py-1 text-fg"
       }`}
     >
       <div className="space-y-1.5 min-w-0 max-w-full overflow-hidden text-[13px] break-words [overflow-wrap:anywhere]">
-        {message.parts.map((part) => (
-          <PartView key={part.id} part={part} />
-        ))}
+        {message.parts
+          // Whitespace-only text parts render as empty rows that leak stray
+          // spacing between real blocks; nothing meaningful is dropped.
+          .filter((part) => part.kind !== "text" || part.text.trim().length > 0)
+          .map((part) => (
+            <PartView key={part.id} part={part} />
+          ))}
       </div>
       {isUser && (
         <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">

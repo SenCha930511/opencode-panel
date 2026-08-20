@@ -265,11 +265,21 @@ describe("Composer rendering", () => {
     expect(html).toContain("Ask opencode anything...");
   });
 
-  it("busy morphs the action button into the Stop button", () => {
+  it("busy morphs the action button into the Stop button when text is empty", () => {
     const html = renderComposer({ store: busyStore("ses_1") });
     expect(html).not.toContain("data-oc-composer-send");
     expect(html).toContain("data-oc-composer-stop");
     expect(html).toContain("Stop generating");
+  });
+
+  it("busy with typed text shows Send button to allow queuing", () => {
+    const state = new FakeState();
+    const drafts = new DraftStore(state);
+    drafts.write("ses_1", "queued message text");
+    drafts.flush();
+    const html = renderComposer({ store: busyStore("ses_1"), drafts });
+    expect(html).toContain("data-oc-composer-send");
+    expect(html).not.toContain("data-oc-composer-stop");
   });
 
   it("stopped server disables the textarea with the status placeholder", () => {

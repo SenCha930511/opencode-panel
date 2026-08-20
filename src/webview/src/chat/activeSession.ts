@@ -24,9 +24,9 @@ function emit(): void {
 
 /** T12 contract: the selected session everything chat-scoped renders. */
 export function setActiveSession(sessionId: string): void {
-  if (activeSessionId === sessionId) return;
+  const changed = activeSessionId !== sessionId;
   activeSessionId = sessionId;
-  emit();
+  if (changed) emit();
   try {
     void getWebviewMessenger().request("selectSession", { sessionId });
   } catch {

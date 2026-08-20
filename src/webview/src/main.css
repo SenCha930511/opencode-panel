@@ -111,7 +111,7 @@ body {
 }
 
 .prose-oc pre {
-  margin: 0.4rem 0;
+  margin: 0.3rem 0;
   padding: 0.5rem 0.65rem;
   border-radius: 0.5rem;
   background: var(--oc-input-card-bg);
@@ -141,7 +141,7 @@ body {
 
 .prose-oc ul,
 .prose-oc ol {
-  margin: 0.25rem 0;
+  margin: 0.3rem 0;
   padding-left: 1.15rem;
 }
 

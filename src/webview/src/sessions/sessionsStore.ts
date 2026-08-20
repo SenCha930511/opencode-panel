@@ -161,7 +161,7 @@ export class SessionsStore {
   }
 
   select(id: string | null): void {
-    this.applySelection(id);
+    this.applySelection(id, true);
   }
 
   clearError(): void {
@@ -224,13 +224,13 @@ export class SessionsStore {
     if (nextSelection !== selectedId) this.setSelectionEverywhere(null);
   }
 
-  applySelection(id: string | null): void {
+  applySelection(id: string | null, force = false): void {
     this.commit({ ...this.snapshotValue, selectedId: id });
-    this.setSelectionEverywhere(id);
+    this.setSelectionEverywhere(id, force);
   }
 
-  setSelectionEverywhere(id: string | null): void {
-    this.active.set(id);
+  setSelectionEverywhere(id: string | null, force = false): void {
+    this.active.set(id, force);
     this.persist();
   }
 

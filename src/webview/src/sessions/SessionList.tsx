@@ -14,6 +14,7 @@ import {
 } from "./sessionsStore.js";
 import { formatRelativeTime } from "./time.js";
 import { useNow } from "./useNow.js";
+import { setActiveSession } from "../chat/activeSession.js";
 
 /**
  * Sessions rail (todo 12): search-filtered session list with per-row context
@@ -178,6 +179,7 @@ export function RecentSessionsTop(props?: {
               type="button"
               className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-start transition-colors hover:bg-hover-bg/70 group cursor-pointer"
               onClick={() => {
+                setActiveSession(entry.id);
                 store.select(entry.id);
               }}
             >
@@ -276,6 +278,7 @@ export function SessionList(props: { readonly store: SessionsStore }): ReactNode
                 now={now}
                 locale={locale}
                 onSelect={() => {
+                  setActiveSession(entry.id);
                   props.store.select(entry.id);
                   appState?.setSessionsOpen(false);
                 }}

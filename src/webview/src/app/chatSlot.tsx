@@ -53,10 +53,12 @@ import { TodoPinnedList } from "../chat/dock/TodoPinnedList.js";
 import { MessageList, useChatStore } from "../chat/MessageList.js";
 import { MessageStore } from "../chat/messageStore.js";
 import { SessionMenu } from "../chat/messageOps/SessionMenu.js";
-import { sumAssistantUsage } from "../chat/usage/usageMath.js";
 import { UsageStrip } from "../chat/usage/UsageStrip.js";
 import { useActiveSession } from "../chat/activeSession.js";
 import { useComposerPickers } from "../chat/pickers/composerIntegration.js";
+import { buildPromptExtras } from "../chat/composerState.js";
+import { useCapabilitySnapshot } from "../chat/pickers/capabilityStore.js";
+import { contextWindowForModel, latestContextTokens } from "../chat/usage/usageMath.js";
 import { useApp, type AppSlots } from "./context.js";
 
 /** T13 order: list (flex-1) -> cards dock (above composer) -> todo strip -> composer. */
@@ -79,6 +81,12 @@ function ProductionChatSection(props: {
         onNotice={() => {
           app.pushToast("warning", t("question.unavailable"));
         }}
+      />
+      {/* Todos/diffs rail moved to the bottom: it expands right above the
+          pinned todo strip instead of pushing the conversation down. */}
+      <SessionDock
+        store={props.dockStore}
+        todosEnabled={flags.todo || app.init.capabilities.todo}
       />
       <TodoPinnedList store={props.dockStore} />
       <Composer
@@ -116,28 +124,29 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
       }),
     [app, t],
   );
-  // FIX-D: the toolbar strip aggregates the SHARED todo-13 store (the one
-  // the list + composer render), so the totals are exactly what is on screen.
-  const usage = sumAssistantUsage(useChatStore(store).messages);
+  // Context strip: latest assistant turn's prompt footprint from the SHARED
+  // todo-13 store + the active model's window from the capability snapshot.
+  const chatState = useChatStore(store);
+  const used = latestContextTokens(chatState.messages);
+  const snapshot = useCapabilitySnapshot();
+  const contextWindow = snapshot === undefined
+    ? undefined
+    : contextWindowForModel(buildPromptExtras(sessionId ?? "", snapshot).model, snapshot.providers);
   return (
     <div data-oc-chat className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div
         data-oc-chat-toolbar
         className={
-          usage !== null
+          used !== null
             ? "flex shrink-0 items-center justify-between gap-2 border-b border-border/70 bg-bg/50 px-2 py-0.5 backdrop-blur-xs"
             : "hidden"
         }
       >
         <span className="flex min-w-0 flex-1 items-center">
-          <UsageStrip usage={usage} />
+          <UsageStrip used={used} {...(contextWindow === undefined ? {} : { contextWindow })} />
         </span>
         <SessionMenu sessionId={sessionId} />
       </div>
-      <SessionDock
-        store={dockStore}
-        todosEnabled={flags.todo || app.init.capabilities.todo}
-      />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <ProductionChatSection store={store} dockStore={dockStore} />
       </div>

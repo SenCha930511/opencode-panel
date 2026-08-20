@@ -158,7 +158,7 @@ describe("DiffsPanel SSR", () => {
     expect(html).toContain("src/example.ts");
     expect(html).toContain('<span class="shrink-0 text-ok">+3</span>');
     expect(html).toContain('<span class="shrink-0 text-err">−2</span>');
-    expect(html).toContain('aria-label="Open diff"');
+    expect(html).not.toContain('aria-label="Open diff"');
     expect(html).toContain('aria-label="Open file"');
   });
 
@@ -217,13 +217,10 @@ describe("SessionDock SSR", () => {
     expect(html).not.toContain("src/example.ts");
   });
 
-  it("wires row clicks to openDiff/openFile with the active session + file (tree walk over DiffFileRow)", () => {
-    const openedDiffs: unknown[] = [];
+  it("wires the row's click to openFile (native-diff entry retired)", () => {
     const openedFiles: string[] = [];
     const actions: DockActions = {
-      openDiff: (input) => {
-        openedDiffs.push(input);
-      },
+      openDiff: () => undefined,
       openFile: (path) => {
         openedFiles.push(path);
       },
@@ -234,20 +231,15 @@ describe("SessionDock SSR", () => {
       diff: diff("src/example.ts", 3, 2),
       sessionId: "ses_1",
       actions,
-      openDiffLabel: "Open diff",
       openFileLabel: "Open file",
     });
     const buttons: FoundButton[] = [];
     collectButtons(tree, buttons);
 
-    const diffButton = buttons.find((button) => button.marker === "diff:src/example.ts");
     const openButton = buttons.find((button) => button.marker === "open:src/example.ts");
-    expect(diffButton?.label).toBe("src/example.ts");
-    expect(openButton).toBeDefined();
+    expect(openButton?.label).toBe("src/example.ts");
 
-    diffButton?.click();
     openButton?.click();
-    expect(openedDiffs).toEqual([{ sessionId: "ses_1" }]);
     expect(openedFiles).toEqual(["src/example.ts"]);
   });
 });

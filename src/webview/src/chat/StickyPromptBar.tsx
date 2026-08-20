@@ -27,23 +27,33 @@ function visibleUserText(message: MessageVM): string {
   for (const part of message.parts) {
     if (part.kind === "text") text += part.text;
   }
-  return text.replace(/\s+/g, " ").trim();
+  return text.trim();
 }
 
 /**
- * The bar's anchor, or undefined (nothing to pin): the last user message
- * with real text ABOVE the first visible row. In-flight placeholder
- * messages never anchor.
+ * The bar's anchor, or undefined:
+ * - If the top visible row is already a user message, return undefined so the
+ *   original text in the chat list is shown naturally.
+ * - Otherwise (reading an assistant reply/tool), pin the closest user prompt above.
+ * - When scrolling further up past a user prompt, it switches to the prompt above it.
  */
 export function stickyUserMessage(
   messages: readonly MessageVM[],
   firstVisibleIndex: number,
 ): StickyAnchor | undefined {
-  if (firstVisibleIndex <= 1) return undefined;
+  if (firstVisibleIndex < 0) return undefined;
+  
+  // If the top visible message is a real user prompt itself, we're looking directly at it
+  const topMsg = messages[firstVisibleIndex];
+  if (topMsg !== undefined && topMsg.role === "user" && visibleUserText(topMsg).length > 0) {
+    return undefined;
+  }
+
   const end = Math.min(firstVisibleIndex, messages.length) - 1;
+  // Find the closest real user prompt above firstVisibleIndex
   for (let index = end; index >= 0; index -= 1) {
     const message = messages[index];
-    if (message === undefined || message.role !== "user" || message.inFlight) continue;
+    if (message === undefined || message.role !== "user") continue;
     const text = visibleUserText(message);
     if (text.length > 0) {
       return { index, messageId: message.id, text };
@@ -54,7 +64,7 @@ export function stickyUserMessage(
 
 function ReturnIcon(): ReactNode {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-muted-fg">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M9.5 12.5L4.5 7.5L9.5 2.5M5 7.5H13.5"
         stroke="currentColor"
@@ -71,17 +81,24 @@ export function StickyPromptBar(props: {
   onJump(index: number): void;
 }): ReactNode {
   return (
-    <div data-oc-sticky-prompt className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4.5 sm:px-5 pt-1.5">
+    <div
+      data-oc-sticky-prompt
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4.5 sm:px-5 pt-2 transition-all duration-200 ease-out"
+    >
       <button
         type="button"
-        title={props.anchor.text}
-        className="pointer-events-auto flex w-full items-center gap-2 rounded-2xl border border-card-border/80 bg-card-bg/90 p-3 text-left shadow-lg backdrop-blur-md transition-colors hover:border-focus-ring/60 cursor-pointer"
+        title="回到此處 (Jump to prompt)"
+        className="pointer-events-auto group flex w-full items-start justify-between gap-2.5 rounded-2xl border border-card-border/80 bg-panel-bg/95 p-3 text-left shadow-lg backdrop-blur-md transition-all duration-150 hover:border-focus-ring/60 active:scale-[0.99] cursor-pointer"
         onClick={() => {
           props.onJump(props.anchor.index);
         }}
       >
-        <ReturnIcon />
-        <span className="min-w-0 flex-1 truncate text-[13px] text-fg/90">{props.anchor.text}</span>
+        <div className="min-w-0 flex-1 line-clamp-3 overflow-hidden break-words [overflow-wrap:anywhere] text-[13px] leading-relaxed text-fg font-normal">
+          {props.anchor.text}
+        </div>
+        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-fg transition-colors group-hover:text-accent group-hover:bg-accent/10 mt-0.5">
+          <ReturnIcon />
+        </div>
       </button>
     </div>
   );

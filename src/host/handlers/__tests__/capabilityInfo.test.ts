@@ -187,8 +187,8 @@ describe("capability-info refresh push", () => {
         id: "mock-provider",
         name: "Mock Provider",
         models: [
-          { id: "mock-large", name: "Mock Large" },
-          { id: "mock-small", name: "Mock Small" },
+          { id: "mock-large", name: "Mock Large", contextWindow: 200_000 },
+          { id: "mock-small", name: "Mock Small", contextWindow: 200_000 },
         ],
       },
     ]);

@@ -389,3 +389,60 @@ describe("sessions domain handlers", () => {
     }
   });
 });
+
+describe("share idempotency + error detail", () => {
+  function shareScripted(getBody: unknown): ProbeFetch {
+    return (request) => {
+      const url = new URL(request.url);
+      if (request.method === "POST" && url.pathname.endsWith("/share")) {
+        // What current servers answer for an ALREADY-shared session.
+        return Promise.resolve(
+          new Response(JSON.stringify({ _tag: "InternalServerError" }), {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      if (request.method === "GET" && /^\/session\/[^/]+$/.test(url.pathname)) {
+        return Promise.resolve(
+          new Response(JSON.stringify(getBody), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response("{}", { status: 200, headers: { "content-type": "application/json" } }),
+      );
+    };
+  }
+
+  function scriptedService(fetchImpl: ProbeFetch) {
+    return createSessionService({
+      source: staticSessionSource(connectionFor("http://share-scripted.invalid", fetchImpl)),
+      logger: new PanelLogger(new CapturingChannel(), () => false),
+    });
+  }
+
+  it("a duplicate-share 500 folds to the session's existing link (idempotent share)", async () => {
+    const service = scriptedService(
+      shareScripted({ id: "ses_x", share: { url: "https://opncd.ai/share/existing" } }),
+    );
+    await expect(service.shareSession("ses_x")).resolves.toEqual({
+      url: "https://opncd.ai/share/existing",
+    });
+  });
+
+  it("plain-object error bodies surface as JSON detail, never '[object Object]'", async () => {
+    const service = scriptedService(shareScripted({ id: "ses_x" }));
+    try {
+      await service.shareSession("ses_x");
+      throw new Error("share should have failed");
+    } catch (error) {
+      const text = String(error);
+      expect(text).toContain("SessionOperationError");
+      expect(text).toContain('"_tag":"InternalServerError"');
+      expect(text).not.toContain("[object Object]");
+    }
+  });
+});

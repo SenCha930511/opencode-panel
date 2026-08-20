@@ -198,10 +198,11 @@ const defaultActionsFallback: ChatActions = {
   openFile: (path) => {
     void getWebviewMessenger().request("openFile", { path });
   },
-  openDiff: ({ sessionId, messageID }) => {
-    void getWebviewMessenger().request(
-      "openDiff",
-      messageID === undefined ? { sessionId } : { sessionId, messageID },
-    );
+  openDiff: ({ sessionId, messageID, file }) => {
+    void getWebviewMessenger().request("openDiff", {
+      sessionId,
+      ...(messageID !== undefined ? { messageID } : {}),
+      ...(file !== undefined ? { file } : {}),
+    });
   },
 };

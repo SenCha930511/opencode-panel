@@ -11,33 +11,27 @@ import type { ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { MessageOpAvailability } from "./logic.js";
 
-export type SessionMenuAction = "summarize" | "shell" | "export" | "share";
+export type SessionMenuAction = "summarize" | "share";
 
 export interface SessionMenuModel {
   readonly summarize: boolean;
-  readonly shell: boolean;
-  /** Export always renders; `enabled` is false without a session + seam. */
-  readonly export: { readonly visible: true; readonly enabled: boolean };
   readonly share: boolean;
 }
 
+// The shell + export rows were retired (user-facing menu now summarizes and
+// shares only); their wire infra stays for the command-palette shell entry.
 export function sessionMenuModel(input: {
   readonly availability: MessageOpAvailability;
   readonly hasSession: boolean;
-  readonly hasExport: boolean;
 }): SessionMenuModel {
   return {
     summarize: input.hasSession && input.availability.summarize,
-    shell: input.hasSession && input.availability.shell,
-    export: { visible: true, enabled: input.hasSession && input.hasExport },
     share: input.hasSession,
   };
 }
 
 export interface SessionMenuItemLabels {
   readonly summarize: string;
-  readonly shell: string;
-  readonly export: string;
   readonly share: string;
 }
 
@@ -61,27 +55,6 @@ export function SessionMenuItems(props: {
       </DropdownMenu.Item>,
     );
   }
-  if (props.model.shell) {
-    items.push(
-      <DropdownMenu.Item
-        key="shell"
-        className={MENU_ITEM_CLASS}
-        onSelect={() => props.onSelect("shell")}
-      >
-        {props.labels.shell}
-      </DropdownMenu.Item>,
-    );
-  }
-  items.push(
-    <DropdownMenu.Item
-      key="export"
-      className={MENU_ITEM_CLASS}
-      disabled={!props.model.export.enabled}
-      onSelect={() => props.onSelect("export")}
-    >
-      {props.labels.export}
-    </DropdownMenu.Item>,
-  );
   if (props.model.share) {
     items.push(
       <DropdownMenu.Item

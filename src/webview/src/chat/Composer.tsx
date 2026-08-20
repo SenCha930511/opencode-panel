@@ -363,13 +363,13 @@ export function Composer(props: ComposerProps): ReactNode {
             {props.extras}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            {busy ? (
+            {busy && text.trim().length === 0 ? (
               <button
                 type="button"
                 data-oc-composer-stop
                 aria-label={t("composer.abort")}
                 title={t("composer.abort")}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-fg/15 text-fg shadow-xs transition-all hover:bg-err hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-err text-white shadow-xs transition-all hover:bg-err/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                 disabled={sessionId === undefined}
                 onClick={handleAbort}
               >
