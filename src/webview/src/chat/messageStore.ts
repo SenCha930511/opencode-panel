@@ -143,11 +143,13 @@ export class MessageStore {
 
   /** `messages.sync` full payload: verbatim replacement + tail reconciliation. */
   applyFullSync(sessionId: string, payload: unknown): void {
-    // Full sync is the host's authoritative snapshot for the SELECTED session
-    // — always re-bind. (Prev: only bound when sessionless, so any second
-    // session's sync was dropped and the chat was stranded on the first one.)
+    // Explicit-selection contract: only the SESSION THE USER PICKED renders.
+    // A sync for any other session on the shared server (TUI, curl probes,
+    // second client) must not hijack the visible conversation (regression:
+    // a foreign full sync re-bound the store mid-view). Unbound stores bind
+    // the first sync they see; a bound store drops cross-session syncs.
+    if (this.sessionId !== undefined && sessionId !== this.sessionId) return;
     this.setSession(sessionId);
-    if (!this.targetsSession(sessionId)) return;
     this.messages = parseMessageList(payload).map((message) => {
       return this.reconcileMessage(message);
     });

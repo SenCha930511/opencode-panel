@@ -363,26 +363,32 @@ describe("DockSync", () => {
     expect(sink.diffsPayloads()).toEqual([{ sessionId, diffs: [] }]);
   });
 
-  it("adopts the last seen session; setActiveSession refetches both domains", async () => {
+  it("ignores foreign-session invalidations; setActiveSession pins and refetches both domains", async () => {
     mock = await startMockServer(0);
     const sessionId = await createMockSession(mock.url);
     const { sync, sink } = syncHarness(craftedConnection(mock.url, BASE_CAPABILITIES));
 
     expect(sync.activeSession).toBeUndefined();
     sync.invalidate("todos", sessionId);
-    expect(sync.activeSession).toBe(sessionId);
-    await sync.refreshTodos(sessionId);
-    await sync.refreshDiffs(sessionId);
-    const beforeReset = sink.events.length;
+    sync.invalidate("sessions", sessionId);
+    await Promise.resolve();
+    expect(sync.activeSession).toBeUndefined();
+    expect(sink.events).toEqual([]);
 
     sync.setActiveSession(sessionId);
-    await Promise.resolve();
-    // setActiveSession fired one todos + one diffs refresh for the new active.
     await sync.refreshTodos(sessionId);
     await sync.refreshDiffs(sessionId);
-    expect(sink.todosPayloads().length).toBeGreaterThanOrEqual(2);
+    expect(sink.todosPayloads().length).toBeGreaterThanOrEqual(1);
     expect(sink.diffsPayloads().length).toBeGreaterThanOrEqual(1);
-    expect(sink.events.length).toBeGreaterThan(beforeReset);
+
+    // Already-pinned session still refreshes on its own invalidations;
+    // foreign sessions never produce dock syncs.
+    const before = sink.events.length;
+    sync.invalidate("todos", "ses_foreign");
+    sync.invalidate("sessions", "ses_foreign");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(sink.events.length).toBe(before);
   });
 
   it("QA failure: hasTodo=false (old-server) posts todos.sync {unsupported:true} exactly once, logs it, and silences diffs", async () => {

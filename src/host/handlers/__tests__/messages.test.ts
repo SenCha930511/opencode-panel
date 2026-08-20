@@ -107,16 +107,25 @@ describe("MessageSync", () => {
     ]);
   });
 
-  it("routes only messages-kind invalidations, honoring the carried id", async () => {
-    const { sync, posted, fetch } = harness(ok([makeMessage("msg_1")]));
+  it("routes only messages-kind invalidations for the PINNED session", async () => {
+    const { sync, posted, fetch } = harness(ok([makeMessage("msg_1")]), ok([makeMessage("msg_1")]));
     sync.invalidate("sessions", "ses_9");
     sync.invalidate("todos", "ses_9");
+    sync.invalidate("messages", "ses_9");
     expect(fetch.calls).toEqual([]);
-    sync.invalidate("messages", "ses_1");
+
+    sync.setActiveSession("ses_1");
     await Promise.resolve();
     await Promise.resolve();
     expect(fetch.calls).toEqual(["ses_1"]);
-    expect(payloadsOf(posted)).toHaveLength(1);
+
+    sync.invalidate("messages", "ses_9");
+    sync.invalidate("sessions", "ses_1");
+    sync.invalidate("messages", "ses_1");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetch.calls).toEqual(["ses_1", "ses_1"]);
+    expect(payloadsOf(posted)).toHaveLength(2);
   });
 
   it("setActiveSession refetches immediately; bare invalidations reuse it", async () => {
@@ -131,11 +140,15 @@ describe("MessageSync", () => {
     expect(fetch.calls).toEqual(["ses_2", "ses_2"]);
   });
 
-  it("adopts the last seen session as the pre-T12 active fallback", async () => {
-    const { sync } = harness(ok([]));
+  it("never adopts a session from invalidations — selection is explicit only", async () => {
+    const { sync, posted, fetch } = harness(ok([]));
     expect(sync.activeSession).toBeUndefined();
     sync.invalidate("messages", "ses_7");
-    expect(sync.activeSession).toBe("ses_7");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(sync.activeSession).toBeUndefined();
+    expect(fetch.calls).toEqual([]);
+    expect(payloadsOf(posted)).toEqual([]);
   });
 
   it("switches to appended-delta merges once the threshold is crossed", async () => {

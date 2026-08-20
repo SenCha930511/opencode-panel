@@ -20,7 +20,7 @@ import { StringsProvider } from "../../../lib/i18n.js";
 import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
 import { AppProvider } from "../../app/context.js";
 import { AutoScrollPark } from "../autoScroll.js";
-import { resetActiveSessionForTest } from "../activeSession.js";
+import { resetActiveSessionForTest, setActiveSession } from "../activeSession.js";
 import { routeChatEvent } from "../events.js";
 import { MessageStore } from "../messageStore.js";
 import { MessageListBody } from "../MessageList.js";
@@ -166,13 +166,13 @@ describe("MessageList rendering", () => {
     expect(html).toContain('data-role="user"');
   });
 
-  it("re-binds when a full sync arrives for a different selected session", () => {
+  it("a full sync for a foreign session is dropped — selection re-aligns only via setSession", () => {
     // Given: the store is bound to session A with its messages
     const store = new MessageStore();
     store.applyFullSync(SESSION, basicChatMessages());
     expect(store.getState().sessionId).toBe(SESSION);
 
-    // When: the user selects another session and the host pushes its sync
+    // When: a sync for another session arrives WITHOUT a selection change
     const other = basicChatMessages().map((raw, index) => ({
       ...(raw as Record<string, unknown>),
       info: {
@@ -183,7 +183,16 @@ describe("MessageList rendering", () => {
     }));
     store.applyFullSync("ses_other", other);
 
-    // Then: the chat follows the authoritative selection, never stranded
+    // Then: it is ignored — the visible conversation can never be yanked away
+    expect(store.getState().sessionId).toBe(SESSION);
+    expect(store.getState().messages.length).toBeGreaterThan(0);
+
+    // When: the user explicitly selects the other session (useEffect ->
+    // setSession path) and THEN its sync lands
+    store.setSession("ses_other");
+    store.applyFullSync("ses_other", other);
+
+    // Then: the chat follows the authoritative selection
     expect(store.getState().sessionId).toBe("ses_other");
     expect(store.getState().messages.length).toBeGreaterThan(0);
   });
@@ -274,6 +283,7 @@ describe("MessageList rendering", () => {
 
 describe("streaming", () => {
   it("appends 3 in-order deltas into the in-flight part", () => {
+    setActiveSession(SESSION);
     const store = new MessageStore();
     routeChatEvent(store, {
       type: "message.part.deltaBatch",
@@ -290,6 +300,7 @@ describe("streaming", () => {
   });
 
   it("handles the unbatched message.part.delta fallback identically", () => {
+    setActiveSession(SESSION);
     const store = new MessageStore();
     routeChatEvent(store, {
       type: "message.part.delta",

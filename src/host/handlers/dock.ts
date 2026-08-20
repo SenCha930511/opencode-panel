@@ -460,16 +460,16 @@ export class DockSync {
 
   /**
    * Todo-9 bridge seam: `todos` invalidations refetch todos; `sessions`
-   * invalidations (covers `session.diff`) refetch diffs. The LAST seen
-   * sessionId becomes the active fallback until T12's selection signal lands.
+   * invalidations (covers `session.diff`) refetch diffs. Both fire ONLY for
+   * the pinned active session — foreign sessions on the shared server (TUI,
+   * curl probes, other clients) never surface in this panel's dock (the
+   * faithful-selection contract from the stale-view regression fix).
    */
   readonly invalidate: InvalidateSink = (kind, sessionId) => {
-    if (sessionId !== undefined && this.activeSessionId === undefined) {
-      this.activeSessionId = sessionId;
-    }
     if (kind !== "todos" && kind !== "sessions") return;
+    if (this.activeSessionId === undefined) return;
     const target = sessionId ?? this.activeSessionId;
-    if (target === undefined) return;
+    if (target !== this.activeSessionId) return;
     if (kind === "todos") void this.refreshTodos(target);
     else void this.refreshDiffs(target);
   };

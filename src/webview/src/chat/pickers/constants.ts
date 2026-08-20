@@ -38,6 +38,9 @@ export interface ProviderModelEntry {
   readonly name: string;
   /** Context-window size in tokens when the server reports `limit.context`. */
   readonly contextWindow?: number;
+  readonly reasoning?: boolean;
+  readonly variants?: readonly string[];
+  readonly options?: Record<string, unknown>;
 }
 
 /** Provider group for the model dropdown; `models` may be empty. */
@@ -87,10 +90,18 @@ function toModelEntry(value: unknown): ProviderModelEntry | undefined {
     typeof value.contextWindow === "number" && Number.isFinite(value.contextWindow)
       ? value.contextWindow
       : undefined;
+  const reasoning = typeof value.reasoning === "boolean" ? value.reasoning : undefined;
+  const variants = Array.isArray(value.variants)
+    ? value.variants.filter((v): v is string => typeof v === "string" && v.length > 0)
+    : undefined;
+  const options = isRecord(value.options) ? value.options : undefined;
   return {
     id: value.id,
     name: typeof value.name === "string" && value.name.length > 0 ? value.name : value.id,
     ...(contextWindow === undefined ? {} : { contextWindow }),
+    ...(reasoning === undefined ? {} : { reasoning }),
+    ...(variants === undefined ? {} : { variants }),
+    ...(options === undefined ? {} : { options }),
   };
 }
 

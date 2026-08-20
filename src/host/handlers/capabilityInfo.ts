@@ -66,6 +66,10 @@
  * building `session.prompt`'s `body.model` ({providerID, modelID}).
  */
 
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import * as vscode from "vscode";
 import type { OpencodeClient } from "@opencode-ai/sdk";
 import type { PanelLogger } from "../logger.js";
 import type { Capabilities, CapabilityDetector } from "../../server/CapabilityDetector.js";
@@ -79,6 +83,7 @@ import {
   toDefaultModels,
   toProviderEntries,
   type CapabilitiesRefreshPayload,
+  type CapabilityProviderEntry,
 } from "./capabilityWire.js";
 
 export { CAPABILITIES_REFRESH_EVENT, splitModelId } from "./capabilityWire.js";
@@ -88,6 +93,92 @@ export type {
   CapabilityProviderEntry,
   ModelIdParts,
 } from "./capabilityWire.js";
+
+export function enrichProvidersWithLocalConfig(
+  providers: readonly CapabilityProviderEntry[],
+): readonly CapabilityProviderEntry[] {
+  try {
+    const candidates: string[] = [];
+    if (vscode.workspace && Array.isArray(vscode.workspace.workspaceFolders)) {
+      for (const folder of vscode.workspace.workspaceFolders) {
+        const root = folder.uri.fsPath;
+        candidates.push(
+          path.join(root, "opencode.json"),
+          path.join(root, "opencode.jsonc"),
+          path.join(root, "oh-my-opencode.json"),
+          path.join(root, "oh-my-opencode.jsonc"),
+          path.join(root, ".opencode", "config.json"),
+        );
+      }
+    }
+    const home = os.homedir();
+    candidates.push(
+      path.join(home, ".config", "opencode", "opencode.json"),
+      path.join(home, ".config", "opencode", "oh-my-opencode.json"),
+      path.join(home, ".config", "opencode", "config.json"),
+      path.join(home, ".opencode", "config.json"),
+    );
+
+    let localConfig: Record<string, unknown> | undefined;
+    for (const file of candidates) {
+      if (fs.existsSync(file)) {
+        try {
+          const content = fs.readFileSync(file, "utf8");
+          const cleaned = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, "$1");
+          const parsed = JSON.parse(cleaned);
+          if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+            localConfig = parsed as Record<string, unknown>;
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    if (!localConfig || !localConfig.provider || typeof localConfig.provider !== "object") {
+      return providers;
+    }
+
+    const localProviders = localConfig.provider as Record<string, Record<string, unknown>>;
+    return providers.map((prov) => {
+      const localProv = localProviders[prov.id];
+      if (!localProv || !localProv.models || typeof localProv.models !== "object") {
+        return prov;
+      }
+      const localModels = localProv.models as Record<string, Record<string, unknown>>;
+      const updatedModels = prov.models.map((model) => {
+        const localModel = localModels[model.id];
+        if (!localModel) return model;
+        const variants =
+          model.variants ??
+          (localModel.variants && typeof localModel.variants === "object"
+            ? Object.keys(localModel.variants)
+            : undefined);
+        const reasoning =
+          model.reasoning ??
+          (typeof localModel.reasoning === "boolean" ? localModel.reasoning : undefined);
+        const options =
+          model.options ??
+          (localModel.options && typeof localModel.options === "object"
+            ? (localModel.options as Record<string, unknown>)
+            : undefined);
+        return {
+          ...model,
+          ...(variants === undefined ? {} : { variants }),
+          ...(reasoning === undefined ? {} : { reasoning }),
+          ...(options === undefined ? {} : { options }),
+        };
+      });
+      return {
+        ...prov,
+        models: updatedModels,
+      };
+    });
+  } catch {
+    return providers;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // CapabilityInfoSync: connect -> read -> broadcast, deduped; NEVER rejects
@@ -154,7 +245,7 @@ export class CapabilityInfoSync {
       return {
         agents: fresh?.agents ?? connection.capabilities.agents,
         commands: fresh?.commands ?? connection.capabilities.commands,
-        providers: toProviderEntries(providersResult),
+        providers: enrichProvidersWithLocalConfig(toProviderEntries(providersResult)),
         defaultModels: toDefaultModels(providersResult),
         ...(defaultModel === undefined ? {} : { defaultModel }),
       };
@@ -188,7 +279,7 @@ export class CapabilityInfoSync {
     const payload: CapabilitiesRefreshPayload = {
       agents: fresh?.agents ?? connection.capabilities.agents,
       commands: fresh?.commands ?? connection.capabilities.commands,
-      providers: toProviderEntries(providersResult),
+      providers: enrichProvidersWithLocalConfig(toProviderEntries(providersResult)),
       defaultModels: toDefaultModels(providersResult),
       ...(defaultModel === undefined ? {} : { defaultModel }),
     };

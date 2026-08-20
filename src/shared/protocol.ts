@@ -194,6 +194,9 @@ export interface CapabilityModelEntry {
   readonly name: string;
   /** Model's context-window size in tokens (`limit.context`) when the server reports it. */
   readonly contextWindow?: number;
+  readonly reasoning?: boolean;
+  readonly variants?: readonly string[];
+  readonly options?: Record<string, unknown>;
 }
 
 /** One provider group; `models` may be empty (the webview hides the group). */

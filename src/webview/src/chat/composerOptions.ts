@@ -47,6 +47,51 @@ export function getEffort(): EffortLevel {
   return currentEffort;
 }
 
+const modelEffortCache = new Map<string, string>();
+
+export function getModelEffort(modelId?: string, defaultEffort?: string): string {
+  if (!modelId) return currentEffort;
+  if (modelEffortCache.has(modelId)) {
+    return modelEffortCache.get(modelId)!;
+  }
+  try {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(`opencode.composer.effort.${modelId}`);
+      if (saved) {
+        modelEffortCache.set(modelId, saved);
+        return saved;
+      }
+    }
+  } catch {
+    // Ignore
+  }
+  return defaultEffort ?? currentEffort;
+}
+
+export function setModelEffort(modelId: string, effortValue: string): void {
+  modelEffortCache.set(modelId, effortValue);
+  try {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem(`opencode.composer.effort.${modelId}`, effortValue);
+      localStorage.setItem(EFFORT_KEY, effortValue);
+    }
+  } catch {
+    // Ignore
+  }
+  if (effortValue === "low" || effortValue === "medium" || effortValue === "high" || effortValue === "max") {
+    currentEffort = effortValue;
+  }
+  notify();
+}
+
+export function useModelEffort(modelId?: string, defaultEffort?: string): string {
+  return useSyncExternalStore(
+    subscribeComposerOptions,
+    () => getModelEffort(modelId, defaultEffort),
+    () => getModelEffort(modelId, defaultEffort),
+  );
+}
+
 export function setEffort(level: EffortLevel): void {
   if (currentEffort === level) return;
   currentEffort = level;

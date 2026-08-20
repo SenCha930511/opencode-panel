@@ -177,6 +177,7 @@ describe("MessageStore visibility", () => {
     store.applyFullSync("ses_1", sesOne);
     store.applyReverted("m1");
 
+    store.setSession("ses_2");
     store.applyFullSync(
       "ses_2",
       syncPayload([
@@ -187,6 +188,7 @@ describe("MessageStore visibility", () => {
     expect(store.getState().messages.map((entry) => entry.id)).toEqual(["n1", "n2"]);
 
     // Back on ses_1 the stored marker still applies to the next sync.
+    store.setSession("ses_1");
     store.applyFullSync("ses_1", sesOne);
     expect(store.getState().messages.map((entry) => entry.id)).toEqual(["m1"]);
   });

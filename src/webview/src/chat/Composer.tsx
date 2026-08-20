@@ -72,7 +72,31 @@ import { MessageStore } from "./messageStore.js";
 import { MessageList, useChatStore } from "./MessageList.js";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { SlashCommandPalette, type SlashKeyHandler } from "./pickers/CommandPalette.js";
-import { useEffort, setEffort, useAutoMode, setAutoMode } from "./composerOptions.js";
+import {
+  useModelEffort,
+  setModelEffort,
+  useEffort,
+  setEffort,
+  useAutoMode,
+  setAutoMode,
+} from "./composerOptions.js";
+import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
+import { usePickerSelection } from "./composerState.js";
+import { resolveInitialModel } from "./pickers/logic.js";
+
+function formatVariantLabel(variant: string): string {
+  const map: Record<string, string> = {
+    low: "Low (快速思考)",
+    medium: "Medium (標準推理)",
+    high: "High (深度思考)",
+    max: "Max (極致推理)",
+    fast: "Fast (關閉思考)",
+    thinking: "Thinking (啟用思考)",
+    off: "Off (關閉思考)",
+    on: "On (啟用思考)",
+  };
+  return map[variant.toLowerCase()] ?? variant.toUpperCase();
+}
 
 export type { ComposerAttachment } from "./composerLogic.js";
 export { DefaultAttachmentChip } from "./composerChips.js";
@@ -164,6 +188,20 @@ function LightningIcon(): ReactNode {
   );
 }
 
+function GearIcon(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6.5 1.5h3l.4 1.7.9.4 1.6-.7 2.1 2.1-.7 1.6.4.9 1.7.4v3l-1.7.4-.4.9.7 1.6-2.1 2.1-1.6-.7-.9.4-.4 1.7h-3l-.4-1.7-.9-.4-1.6.7-2.1-2.1.7-1.6-.4-.9-1.7-.4v-3l1.7-.4.4-.9-.7-1.6 2.1-2.1 1.6.7.9-.4.4-1.7z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
 export function Composer(props: ComposerProps): ReactNode {
   const { t } = useStrings();
   const app = useApp();
@@ -177,9 +215,54 @@ export function Composer(props: ComposerProps): ReactNode {
   // textarea consults it before its own Enter-send handling.
   const slashKeyRef = useRef<SlashKeyHandler | null>(null);
 
-  const [showOptions, setShowOptions] = useState(false);
-  const effort = useEffort();
   const autoMode = useAutoMode();
+  const pickersSnapshot = useCapabilitySnapshot();
+  const selection = usePickerSelection(sessionId ?? "");
+  const activeModelId = useMemo(() => {
+    if (!pickersSnapshot) return undefined;
+    return (
+      selection.model ??
+      resolveInitialModel({
+        providers: pickersSnapshot.providers,
+        defaultModels: pickersSnapshot.defaultModels,
+        ...(pickersSnapshot.defaultModel === undefined ? {} : { defaultModel: pickersSnapshot.defaultModel }),
+      })
+    );
+  }, [selection.model, pickersSnapshot]);
+
+  const selectedModelEntry = useMemo(() => {
+    if (!activeModelId || !pickersSnapshot) return undefined;
+    for (const prov of pickersSnapshot.providers) {
+      for (const m of prov.models) {
+        if (m.id === activeModelId || `${prov.id}/${m.id}` === activeModelId) {
+          return { provider: prov, model: m };
+        }
+      }
+    }
+    return undefined;
+  }, [activeModelId, pickersSnapshot]);
+
+  // Model-specific variants from opencode.json / providers probe
+  const modelVariants = useMemo(() => {
+    if (!selectedModelEntry) return ["low", "medium", "high", "max"];
+    const { model } = selectedModelEntry;
+    if (model.variants && model.variants.length > 0) {
+      return model.variants;
+    }
+    if (model.reasoning) {
+      return ["low", "medium", "high", "max"];
+    }
+    return [];
+  }, [selectedModelEntry]);
+
+  const defaultModelEffort = useMemo(() => {
+    if (selectedModelEntry?.model.options && typeof selectedModelEntry.model.options.reasoningEffort === "string") {
+      return selectedModelEntry.model.options.reasoningEffort;
+    }
+    return modelVariants[0] ?? "high";
+  }, [selectedModelEntry, modelVariants]);
+
+  const currentEffort = useModelEffort(activeModelId, defaultModelEffort);
 
   const [text, setText] = useState<string>(() => {
     return sessionId === undefined ? "" : drafts.read(sessionId);
@@ -423,84 +506,92 @@ export function Composer(props: ComposerProps): ReactNode {
 
         {/* Toolbar: Left [+ / Agent / Model], Right [Advanced Options (Effort & Auto), ⌘↵, Send/Stop] */}
         <div className="mt-2 flex items-center justify-between gap-1.5 pt-2 border-t border-card-border/40 min-w-0">
-          <div data-oc-composer-extras className="flex flex-1 items-center gap-1 min-w-0 overflow-hidden py-0.5">
+          <div data-oc-composer-extras className="flex flex-1 items-center gap-1 min-w-0 overflow-visible py-0.5">
             {props.extras}
             {props.pickers}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {showOptions && (
-              <div className="flex items-center gap-1 animate-in fade-in duration-150">
-                {/* Effort Selector Dropdown */}
-                <DropdownMenu.Root modal={false}>
-                  <DropdownMenu.Trigger asChild>
-                    <button
-                      type="button"
-                      title={`Reasoning Effort: ${effort.toUpperCase()}`}
-                      className="flex items-center gap-1 rounded-full border border-card-border/80 bg-card-bg/80 px-2 py-0.5 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg shadow-2xs cursor-pointer"
-                    >
-                      <BrainIcon />
-                      <span className="capitalize">{effort}</span>
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      side="top"
-                      align="end"
-                      sideOffset={6}
-                      className="z-50 min-w-36 rounded-xl border border-card-border bg-panel-bg p-1 shadow-2xl ring-1 ring-black/20 text-xs"
-                    >
-                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
-                        Reasoning Effort
-                      </div>
-                      {(["low", "medium", "high", "max"] as const).map((lvl) => (
-                        <DropdownMenu.Item
-                          key={lvl}
-                          className={`flex items-center justify-between rounded-lg px-2 py-1 text-xs cursor-pointer outline-none transition-colors ${
-                            effort === lvl ? "bg-hover-bg text-fg font-medium" : "text-fg/80 hover:bg-hover-bg/70 hover:text-fg"
-                          }`}
-                          onSelect={() => setEffort(lvl)}
-                        >
-                          <span className="capitalize">{lvl}</span>
-                          {effort === lvl && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          )}
-                        </DropdownMenu.Item>
-                      ))}
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-
-                {/* Auto Mode Switch Button */}
+            {/* Options & Functions Dropdown Menu */}
+            <DropdownMenu.Root modal={false}>
+              <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  title="自動執行模式 (Auto-approve actions & execute)"
-                  className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-all shadow-2xs cursor-pointer ${
+                  title="設定與功能選單 (Settings & Options)"
+                  aria-label="設定與功能選單"
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer shadow-2xs ${
                     autoMode
-                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
-                      : "border-card-border/80 bg-card-bg/80 text-muted-fg hover:text-fg hover:bg-hover-bg"
+                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/25 ring-1 ring-emerald-400/40"
+                      : "border-card-border/80 bg-card-bg/80 text-muted-fg hover:bg-hover-bg hover:text-fg"
                   }`}
-                  onClick={() => setAutoMode(!autoMode)}
                 >
-                  <LightningIcon />
-                  <span>Auto</span>
+                  <SlidersIcon />
                 </button>
-              </div>
-            )}
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  side="top"
+                  align="end"
+                  sideOffset={8}
+                  className="z-50 min-w-60 rounded-xl border border-card-border bg-panel-bg p-1.5 shadow-2xl ring-1 ring-black/20 text-xs"
+                >
+                  {/* Section: Auto Mode */}
+                  <DropdownMenu.Item
+                    className="flex items-center justify-between gap-4 rounded-lg px-2.5 py-1.5 text-xs cursor-pointer outline-none transition-colors hover:bg-hover-bg text-fg select-none"
+                    onSelect={() => setAutoMode(!autoMode)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className={autoMode ? "text-emerald-400" : "text-muted-fg"}><LightningIcon /></span>
+                      <span>自動執行模式 (Auto Mode)</span>
+                    </span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded tracking-wide shrink-0 ${autoMode ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-card-bg text-muted-fg border border-card-border/60"}`}>
+                      {autoMode ? "ON" : "OFF"}
+                    </span>
+                  </DropdownMenu.Item>
 
-            {/* Fold/Unfold Toggle Button */}
-            <button
-              type="button"
-              title={showOptions ? "收合進階選項" : "展開進階選項 (Effort / Auto)"}
-              aria-label="進階選項"
-              className={`flex h-6 w-6 items-center justify-center rounded-full border border-card-border/70 transition-all cursor-pointer ${
-                showOptions
-                  ? "bg-hover-bg text-fg border-focus-ring/60"
-                  : "bg-card-bg/60 text-muted-fg hover:bg-hover-bg hover:text-fg"
-              } ${autoMode && !showOptions ? "ring-1 ring-emerald-400/60" : ""}`}
-              onClick={() => setShowOptions((prev) => !prev)}
-            >
-              <SlidersIcon />
-            </button>
+                  <DropdownMenu.Separator className="my-1 h-px bg-card-border/40" />
+
+                  {/* Section: Reasoning Effort */}
+                  <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-fg/80 uppercase tracking-wider flex items-center justify-between">
+                    <span>思考強度 (Effort)</span>
+                    {selectedModelEntry && (
+                      <span className="text-[9px] font-normal text-muted-fg/90 truncate max-w-[90px]" title={selectedModelEntry.model.name}>
+                        {selectedModelEntry.model.name}
+                      </span>
+                    )}
+                  </div>
+                  {modelVariants.length > 0 ? (
+                    modelVariants.map((lvl) => {
+                      const isSelected = currentEffort.toLowerCase() === lvl.toLowerCase();
+                      return (
+                        <DropdownMenu.Item
+                          key={lvl}
+                          className={`flex items-center justify-between rounded-lg px-2.5 py-1 text-xs cursor-pointer outline-none transition-colors select-none ${
+                            isSelected ? "bg-hover-bg text-fg font-medium" : "text-fg/80 hover:bg-hover-bg/70 hover:text-fg"
+                          }`}
+                          onSelect={() => {
+                            if (activeModelId) {
+                              setModelEffort(activeModelId, lvl);
+                            } else {
+                              setEffort(lvl as any);
+                            }
+                          }}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <BrainIcon />
+                            <span>{formatVariantLabel(lvl)}</span>
+                          </span>
+                          {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
+                        </DropdownMenu.Item>
+                      );
+                    })
+                  ) : (
+                    <div className="px-2.5 py-1.5 text-xs text-muted-fg italic">
+                      此模型無可用的思考強度設定
+                    </div>
+                  )}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
             <span className="hidden sm:inline text-[10px] text-muted-fg/60 font-mono tracking-tight select-none px-0.5">
               ⌘↵

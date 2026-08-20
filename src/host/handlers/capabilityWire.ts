@@ -39,6 +39,33 @@ function contextWindowOf(value: unknown): number | undefined {
   return typeof context === "number" && Number.isFinite(context) && context > 0 ? context : undefined;
 }
 
+function variantsOf(value: unknown): readonly string[] | undefined {
+  if (!isRecord(value)) return undefined;
+  if (isRecord(value.variants)) {
+    const keys = Object.keys(value.variants).filter((k) => k.length > 0);
+    return keys.length > 0 ? keys : undefined;
+  }
+  if (Array.isArray(value.variants)) {
+    const list = value.variants.filter((v): v is string => typeof v === "string" && v.length > 0);
+    return list.length > 0 ? list : undefined;
+  }
+  return undefined;
+}
+
+function reasoningOf(value: unknown): boolean | undefined {
+  if (!isRecord(value)) return undefined;
+  if (typeof value.reasoning === "boolean") return value.reasoning;
+  if (typeof value.thinking === "boolean") return value.thinking;
+  if (isRecord(value.thinking)) return true;
+  return undefined;
+}
+
+function optionsOf(value: unknown): Record<string, unknown> | undefined {
+  if (!isRecord(value) || !isRecord(value.options)) return undefined;
+  const keys = Object.keys(value.options);
+  return keys.length > 0 ? value.options : undefined;
+}
+
 export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[] {
   if (Array.isArray(payload)) {
     const models: CapabilityModelEntry[] = [];
@@ -48,7 +75,17 @@ export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[
       if (id.length === 0) continue;
       const name = typeof item.name === "string" && item.name.length > 0 ? item.name : id;
       const contextWindow = contextWindowOf(item);
-      models.push({ id, name, ...(contextWindow === undefined ? {} : { contextWindow }) });
+      const variants = variantsOf(item);
+      const reasoning = reasoningOf(item);
+      const options = optionsOf(item);
+      models.push({
+        id,
+        name,
+        ...(contextWindow === undefined ? {} : { contextWindow }),
+        ...(reasoning === undefined ? {} : { reasoning }),
+        ...(variants === undefined ? {} : { variants }),
+        ...(options === undefined ? {} : { options }),
+      });
     }
     return models;
   }
@@ -61,7 +98,17 @@ export function toModelEntries(payload: unknown): readonly CapabilityModelEntry[
         ? value.name
         : id;
     const contextWindow = contextWindowOf(value);
-    models.push({ id, name, ...(contextWindow === undefined ? {} : { contextWindow }) });
+    const variants = variantsOf(value);
+    const reasoning = reasoningOf(value);
+    const options = optionsOf(value);
+    models.push({
+      id,
+      name,
+      ...(contextWindow === undefined ? {} : { contextWindow }),
+      ...(reasoning === undefined ? {} : { reasoning }),
+      ...(variants === undefined ? {} : { variants }),
+      ...(options === undefined ? {} : { options }),
+    });
   }
   return models;
 }

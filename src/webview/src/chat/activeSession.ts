@@ -1,16 +1,14 @@
 /**
- * Active-session seam (todo 13, TEMPORARY ownership).
- *
- * T12 (sessions domain) owns selection long-term: when their session list
- * lands, their selection signal must call {@link setActiveSession} here (and
- * `MessageSync.setActiveSession` on the host). Until then this module is the
- * chat side's own source of truth: it adopts the first session id observed
- * on any forwarded chat event (`messages.sync`, deltas, `session.status`),
- * which covers the single-session flow without any selection UI.
+ * Active-session seam (todo 13): the chat side's single source of truth
+ * for the user's selection. Selection is EXPLICIT only — session-list
+ * picks, composer new-session, fork — and is mirrored to the host through
+ * the `selectSession` wire. Events NEVER steer the selection: any payload
+ * arriving for another session (TUI activity, curl probes, a second
+ * client on the shared server) is gated out downstream, so the visible
+ * conversation can never be yanked away.
  */
 
 import { useSyncExternalStore } from "react";
-import { isRecord } from "../../../shared/protocol.js";
 import { getWebviewMessenger } from "../../lib/messenger.js";
 
 type Listener = { (): void };
@@ -47,23 +45,6 @@ export function subscribeActiveSession(listener: Listener): () => void {
 
 export function useActiveSession(): string | undefined {
   return useSyncExternalStore(subscribeActiveSession, getActiveSession, getActiveSession);
-}
-
-/**
- * Adopt a session id from a forwarded payload when nothing is selected yet.
- * Once set, later events for OTHER sessions never clobber the selection —
- * explicit `setActiveSession` (T12) is the only override.
- */
-export function adoptSessionFrom(payload: unknown): void {
-  if (activeSessionId !== undefined || !isRecord(payload)) return;
-  const direct = payload.sessionID;
-  if (typeof direct === "string") {
-    setActiveSession(direct);
-    return;
-  }
-  if (isRecord(payload.info) && typeof payload.info.sessionID === "string") {
-    setActiveSession(payload.info.sessionID);
-  }
 }
 
 /**

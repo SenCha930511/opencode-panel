@@ -45,10 +45,11 @@
  *   EventBridge's 250ms-debounced `messages` signal drives refetches. Other
  *   kinds are ignored (sessions/todos syncs are todos 12/18).
  * - `setActiveSession(sessionId)` — the todo-12 active-session contract:
- *   T12's selection logic (host Memento-backed) calls this; the controller
- *   records the id and refetches immediately. Until T12 lands, the last
- *   sessionId seen on the invalidation signal is remembered as the active
- *   fallback, so streamed sessions sync without any selection signal.
+ *   T12's selection logic calls this; the controller records the id and
+ *   refetches immediately. This pin is the ONLY way a session becomes
+ *   eligible for sync posts: event-driven adoption was retired after it
+ *   hijacked the panel view when another client breathed on the shared
+ *   server (stale-view regression).
  *
  * CONCURRENCY: a per-session sequence token ensures only the LATEST fetch
  * for a session posts; a stale in-flight fetch resolving late is discarded,
@@ -146,16 +147,17 @@ export class MessageSync {
 
   /**
    * Todo-9 bridge seam (`invalidate(kind, sessionId)`): only `messages`
-   * signals refetch here; a missing id falls back to the active session.
-   * The LAST sessionId seen becomes the active fallback (pre-T12 flow).
+   * signals refetch here, and ONLY when they name the pinned active
+   * session — foreign sessions (TUI, curl probes, other clients on the
+   * shared server) never trigger a sync post, so nothing downstream can
+   * be steered away from the user's selection. A missing id refreshes the
+   * active session; before T12 pins one, no syncs are produced at all.
    */
   readonly invalidate: InvalidateSink = (kind, sessionId) => {
     if (kind !== "messages") return;
+    if (this.activeSessionId === undefined) return;
     const target = sessionId ?? this.activeSessionId;
-    if (sessionId !== undefined && this.activeSessionId === undefined) {
-      this.activeSessionId = sessionId;
-    }
-    if (target === undefined) return;
+    if (target !== this.activeSessionId) return;
     void this.refresh(target);
   };
 

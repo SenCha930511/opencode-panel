@@ -4,15 +4,17 @@
  * `messages.sync` poll-sync payloads from src/host/handlers/messages.ts
  * (both payload kinds documented there verbatim).
  *
- * Session gating: {@link adoptSessionFrom} lets the store-free era adopt the
- * first observed session; afterwards only events for the ACTIVE session
- * mutate state — events for other sessions are ignored at this seam (not
- * dropped mid-stream: they belong to a different view's data).
+ * Session gating (post-T12 selection contract): selection is EXPLICIT —
+ * session-list clicks, composer new-session, fork. Events NEVER pick the
+ * session: an event whose session differs from the user's explicit
+ * selection simply cannot mutate this view's state, so activity on the
+ * shared server (TUI, curl probes, other clients) never yanks the visible
+ * conversation away (the stray-adoption regression of the pre-T12 ra).
  */
 
 import { isRecord } from "../../../shared/protocol.js";
 import type { WebviewMessenger } from "../../lib/messenger.js";
-import { adoptSessionFrom, getActiveSession } from "./activeSession.js";
+import { getActiveSession } from "./activeSession.js";
 import type { MessageStore } from "./messageStore.js";
 import { parseDeltaBatch, parseDeltaEntry } from "./types.js";
 
@@ -58,11 +60,15 @@ function sessionIdOf(payload: unknown): string | undefined {
   return payload.sessionID;
 }
 
-/** Adopt-then-bind: the store tracks the (possibly newly adopted) session. */
-function bindSession(store: MessageStore, payload: unknown): void {
-  adoptSessionFrom(payload);
+/**
+ * Bind-to-selection: the store mirrors the user's explicit selection. A
+ * store bound to a different (stale) session is re-aligned on the next
+ * event; foreign-session payloads then fall through the per-writer
+ * targetsSession gates untouched.
+ */
+function bindSession(store: MessageStore): void {
   const active = getActiveSession();
-  if (store.getState().sessionId === undefined && active !== undefined) {
+  if (active !== undefined && store.getState().sessionId !== active) {
     store.setSession(active);
   }
 }
@@ -71,7 +77,7 @@ export function routeChatEvent(store: MessageStore, event: ChatEvent): void {
   switch (event.type) {
     case DELTA_BATCH_EVENT_TYPE: {
       for (const entry of parseDeltaBatch(event.payload)) {
-        bindSession(store, entry);
+        bindSession(store);
         store.applyStreamDelta(entry);
       }
       return;
@@ -80,27 +86,27 @@ export function routeChatEvent(store: MessageStore, event: ChatEvent): void {
       // T9 malformed-delta fallback: forwarded unbatched, never dropped.
       const entry = parseDeltaEntry(event.payload);
       if (entry === undefined) return;
-      bindSession(store, entry);
+      bindSession(store);
       store.applyStreamDelta(entry);
       return;
     }
     case PART_UPDATED_EVENT_TYPE: {
-      bindSession(store, event.payload);
+      bindSession(store);
       store.applyPartUpdated(event.payload);
       return;
     }
     case SESSION_STATUS_EVENT_TYPE: {
-      bindSession(store, event.payload);
+      bindSession(store);
       store.applySessionStatus(sessionIdOf(event.payload), sessionStatusType(event.payload));
       return;
     }
     case SESSION_IDLE_EVENT_TYPE: {
-      bindSession(store, event.payload);
+      bindSession(store);
       store.applySessionStatus(sessionIdOf(event.payload), "idle");
       return;
     }
     case MESSAGES_SYNC_EVENT_TYPE: {
-      bindSession(store, event.payload);
+      bindSession(store);
       if (!isRecord(event.payload) || typeof event.payload.sessionId !== "string") return;
       const sessionId = event.payload.sessionId;
       if (event.payload.kind === "full") {

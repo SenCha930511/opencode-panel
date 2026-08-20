@@ -170,14 +170,24 @@ export function MessageList(props: MessageListProps) {
 
     if (lastHandledUserMessageIdRef.current !== latestUserMsg.id) {
       lastHandledUserMessageIdRef.current = latestUserMsg.id;
-      const frame = requestAnimationFrame(() => {
+      park.current.onAtBottomChange(false);
+      setAtBottom(false);
+
+      virtuosoRef.current?.scrollToIndex({
+        index: latestUserIdx,
+        align: "start",
+        behavior: "auto",
+      });
+
+      const timer = setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: latestUserIdx,
           align: "start",
-          behavior: "smooth",
+          behavior: "auto",
         });
-      });
-      return () => cancelAnimationFrame(frame);
+      }, 50);
+
+      return () => clearTimeout(timer);
     }
   }, [state.messages]);
 
