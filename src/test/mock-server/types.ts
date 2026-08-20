@@ -107,7 +107,16 @@ export interface ToolPart {
   tool: string;
   state: ToolState;
 }
-export type MockPart = TextPart | ToolPart;
+export interface ReasoningPart {
+  id: PartId;
+  sessionID: SessionId;
+  messageID: MessageId;
+  type: "reasoning";
+  text: string;
+  time: { start: number; end?: number };
+}
+
+export type MockPart = TextPart | ToolPart | ReasoningPart;
 
 export interface MessageWithParts {
   info: MessageInfo;

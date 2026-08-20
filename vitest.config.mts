@@ -25,6 +25,9 @@ export default defineConfig({
       // The @vscode/test-electron mocha graph (todo 24) imports `vscode` and
       // runs only inside a real extension host — never in the vitest program.
       "src/test/suite/**",
+      // The downloaded VS Code app bundle cached by the harness carries
+      // upstream *.test.* files of its own — never sweep the cache in.
+      "**/.vscode-test/**",
     ],
   },
 });

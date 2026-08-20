@@ -166,6 +166,7 @@ describe("MessageList rendering", () => {
     const html = renderMessages(storedMessages(store));
     expect(html).toContain("<details");
     expect(html).not.toContain("<details open");
+    expect(html).toContain("Thinking");
     expect(html).toContain("weighing the trade-offs");
     expect(html).toContain("hidden detail");
   });

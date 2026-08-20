@@ -8,6 +8,7 @@ import type {
   JsonObject,
   MockPart,
   PartId,
+  ReasoningPart,
   ScenarioName,
   TextPart,
   ToolPart,
@@ -36,6 +37,11 @@ const BASIC_TEXT =
   "message.part.delta chunks, then the message completes with full text. " +
   "The panel can render me like a real opencode response.";
 
+const REASONING_TEXT =
+  "Weighing the mock fixtures against the request: the user asked for a compact " +
+  "reply, so the assistant streams this reasoning part first and the final text " +
+  "second, mirroring how a thinking-capable model behaves on a real server.";
+
 /** Exactly 200 chunks by construction — the plan pins the long-stream count. */
 const LONG_STREAM_CHUNKS: ReadonlyArray<string> = Array.from(
   { length: 200 },
@@ -48,7 +54,11 @@ interface TextStream {
 }
 
 /** Delta emitter: appends text to `part` and streams `message.part.delta` chunks. */
-async function streamText(ctx: ReplayContext, part: TextPart, stream: TextStream): Promise<void> {
+async function streamText(
+  ctx: ReplayContext,
+  part: TextPart | ReasoningPart,
+  stream: TextStream,
+): Promise<void> {
   for (const chunk of stream.chunks) {
     if (ctx.aborted()) return;
     part.text += chunk;
@@ -76,6 +86,17 @@ function textPart(ctx: ReplayContext): TextPart {
     sessionID: ctx.session.info.id,
     messageID: ctx.assistant.id,
     type: "text",
+    text: "",
+    time: { start: ctx.state.now() },
+  };
+}
+
+function reasoningPart(ctx: ReplayContext): ReasoningPart {
+  return {
+    id: ctx.newPartId(),
+    sessionID: ctx.session.info.id,
+    messageID: ctx.assistant.id,
+    type: "reasoning",
     text: "",
     time: { start: ctx.state.now() },
   };
@@ -113,6 +134,9 @@ type ReplayFn = (ctx: ReplayContext) => Promise<void>;
 
 export const replayByScenario: Record<ScenarioName, ReplayFn> = {
   "basic-chat": async (ctx) => {
+    const thinking = reasoningPart(ctx);
+    ctx.addPart(thinking);
+    await streamText(ctx, thinking, { chunks: splitEvery(REASONING_TEXT, 32), delayMs: 2 });
     const part = textPart(ctx);
     ctx.addPart(part);
     await streamText(ctx, part, { chunks: splitEvery(BASIC_TEXT, 24), delayMs: 4 });

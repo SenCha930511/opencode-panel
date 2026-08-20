@@ -60,6 +60,7 @@ export const STRING_IDS = [
   "messages.shell",
   "messages.shellPlaceholder",
   "messages.summarize",
+  "messages.thinking",
   "messages.unrevert",
   // permission approval cards
   "permission.allowAlways",
@@ -178,6 +179,7 @@ export const en: Record<StringId, string> = {
   "messages.shell": "Run shell command",
   "messages.shellPlaceholder": "e.g. git status",
   "messages.summarize": "Summarize / compact session",
+  "messages.thinking": "Thinking",
   "messages.unrevert": "Restore reverted messages",
   "permission.allowAlways": "Always allow",
   "permission.allowOnce": "Allow once",
@@ -287,6 +289,7 @@ export const zhTW: Record<StringId, string> = {
   "messages.shell": "執行 Shell 指令",
   "messages.shellPlaceholder": "例如：git status",
   "messages.summarize": "摘要並壓縮工作階段",
+  "messages.thinking": "思考中",
   "messages.unrevert": "復原已還原的訊息",
   "permission.allowAlways": "一律允許",
   "permission.allowOnce": "允許一次",
