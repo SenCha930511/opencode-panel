@@ -39,8 +39,13 @@ import {
   submitPrompt,
   type ComposerAttachment,
 } from "../composerLogic.js";
-import { setAutoMode } from "../composerOptions.js";
-import { resetArmingStateForTests } from "../sessionArming.js";
+import {
+  getSessionAutoMode,
+  setAutoMode,
+  setSessionAutoMode,
+  updateSessionAutoCache,
+} from "../composerOptions.js";
+import { queryAndSyncSessionAuto, resetArmingStateForTests } from "../sessionArming.js";
 import { DRAFTS_STATE_KEY, DraftStore, type WebviewStateLike } from "../draftStore.js";
 import { MessageStore } from "../messageStore.js";
 
@@ -526,3 +531,46 @@ describe("ensureSessionForSend", () => {
     expect(errors).toEqual([]);
   });
 });
+
+describe("session-aware auto mode options and syncing", () => {
+  it("defaults to global auto mode when session is not in cache", () => {
+    setAutoMode(false);
+    expect(getSessionAutoMode("ses_unknown")).toBe(false);
+    setAutoMode(true);
+    expect(getSessionAutoMode("ses_unknown")).toBe(true);
+    setAutoMode(false);
+  });
+
+  it("reflects session-specific override from cache", () => {
+    setAutoMode(false);
+    updateSessionAutoCache("ses_tui_auto", true);
+    expect(getSessionAutoMode("ses_tui_auto")).toBe(true);
+    expect(getSessionAutoMode("ses_other")).toBe(false);
+  });
+
+  it("setSessionAutoMode updates specific session and global fallback", () => {
+    setSessionAutoMode("ses_custom", true);
+    expect(getSessionAutoMode("ses_custom")).toBe(true);
+    setSessionAutoMode("ses_custom", false);
+    expect(getSessionAutoMode("ses_custom")).toBe(false);
+  });
+
+  it("queryAndSyncSessionAuto queries host and updates session auto cache", async () => {
+    const loop = createLoopback();
+    setAutoMode(false);
+    const queryPromise = queryAndSyncSessionAuto("ses_server_check", loop.messenger);
+    const env = captured(loop.posted);
+    expect(env.type).toBe("getSessionAuto");
+    expect(env.payload).toEqual({ sessionId: "ses_server_check" });
+
+    loop.emit({
+      type: "streamChunk",
+      payload: { messageId: env.messageId, status: "success", done: true, content: { auto: true } },
+    });
+
+    const isAuto = await queryPromise;
+    expect(isAuto).toBe(true);
+    expect(getSessionAutoMode("ses_server_check")).toBe(true);
+  });
+});
+
