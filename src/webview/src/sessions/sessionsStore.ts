@@ -208,15 +208,24 @@ export class SessionsStore {
 
   applyList(sessions: readonly SessionEntry[]): void {
     const selectedId = this.snapshotValue.selectedId;
+    // Rows with a "pending:" id are optimistic placeholders for in-flight
+    // createSession calls; the server can't list them yet, so a refresh
+    // would wipe them mid-create (the row flickers out and selection drops).
+    // Keep them until replaceSessionId/dropSession settles the create.
+    const pending = this.snapshotValue.sessions.filter((session) =>
+      session.id.startsWith("pending:"),
+    );
+    const merged: SessionEntry[] =
+      pending.length === 0 ? [...sessions] : [...pending, ...sessions];
     const exists =
       selectedId !== null &&
-      sessions.some((session) => {
+      merged.some((session) => {
         return session.id === selectedId;
       });
     const nextSelection = exists ? selectedId : null;
     this.commit({
       ...this.snapshotValue,
-      sessions,
+      sessions: merged,
       selectedId: nextSelection,
       status: "ready",
       errorMessage: null,

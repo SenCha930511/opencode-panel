@@ -125,6 +125,26 @@ describe("optimistic mutations", () => {
     expect(store.getSnapshot().selectedId).toBe("ses_new");
   });
 
+  it("an interleaved server list refresh during create does NOT wipe the pending row", async () => {
+    const { store, host } = makeStore();
+    host.respond("createSession", () => ({ ok: true, content: { id: "ses_new" } }));
+    const promise = store.createSession("Fresh");
+    expect(store.getSnapshot().sessions[0]?.id.startsWith("pending:")).toBe(true);
+
+    // A poll/broadcast races the in-flight create: push a server-side list
+    // that does NOT know the new chat yet (since createSession hasn't resolved).
+    host.pushSessionList([makeEntry("ses_old", "old")]);
+
+    // The optimistic pending row must survive so the UI doesn't flicker out;
+    // selection only moves to the fresh id once the create resolves.
+    expect(store.getSnapshot().sessions.some((entry) => entry.id.startsWith("pending:"))).toBe(true);
+    expect(store.getSnapshot().selectedId).toBeNull();
+
+    await expect(promise).resolves.toBe("ses_new");
+    expect(store.getSnapshot().sessions[0]?.id).toBe("ses_new");
+    expect(store.getSnapshot().selectedId).toBe("ses_new");
+  });
+
   it("create: drops the pending entry and raises the banner on error", async () => {
     const { store, host } = makeStore();
     host.respond("createSession", () => ({ ok: false, error: "SessionOperationError: no" }));
