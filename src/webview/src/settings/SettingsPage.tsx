@@ -167,14 +167,23 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const isDirtyOverall = activeTab === "general" ? dirty : cfgDirty;
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-bg">
+    <div className="flex min-h-0 flex-1 flex-col bg-bg text-fg">
       {/* Top Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/70 bg-panel-bg/90 px-3.5 py-2.5 backdrop-blur-md">
-        <div className="flex items-center gap-2">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/70 bg-panel-bg/95 px-3.5 py-2.5 backdrop-blur-md">
+        <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
+          {isDirtyOverall ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-warn/15 border border-warn/30 px-2 py-0.5 text-[10px] font-medium text-warn animate-pulse shrink-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-warn" />
+              <span>未儲存</span>
+            </span>
+          ) : null}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {activeTab === "general" ? (
             <>
               <button
@@ -191,7 +200,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 disabled={!dirty || disabled}
                 onClick={() => {
                   store.revert();
@@ -217,7 +226,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 disabled={!cfgDirty || cfgSlot?.saving === true}
                 onClick={() => {
                   cfgStore.revert(activeTab, configScope);
@@ -229,7 +238,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           )}
           <button
             type="button"
-            className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
+            className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
             onClick={() => {
               void send("closeSettingsTab" as any, {}).catch(() => {});
               navigate("chat");
@@ -241,14 +250,14 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
       </div>
 
       {/* Tabs Navigation Bar */}
-      <div className="flex items-center gap-1 border-b border-card-border/60 bg-panel-bg/50 px-3.5 py-1.5">
+      <div className="flex items-center gap-1 border-b border-card-border/60 bg-panel-bg/60 px-3.5 py-1.5">
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
             activeTab === "general"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
           }`}
         >
           <span>⚙️</span>
@@ -257,10 +266,10 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
         <button
           type="button"
           onClick={() => setActiveTab("opencode")}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
             activeTab === "opencode"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
           }`}
         >
           <span>🤖</span>
@@ -269,17 +278,17 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
         <button
           type="button"
           onClick={() => setActiveTab("omo")}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
             activeTab === "omo"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
           }`}
         >
           <span>⚡</span>
           <span>{t("cfg.tab.omo")}</span>
         </button>
         {activeTab !== "general" ? (
-          <span className="ml-auto flex items-center gap-1">
+          <span className="ml-auto flex items-center gap-1 rounded-xl bg-card-bg/60 border border-card-border/60 p-0.5">
             {(["global", "project"] as const).map((choice) => (
               <button
                 key={choice}
@@ -287,10 +296,10 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                 onClick={() => {
                   setConfigScope(choice);
                 }}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                className={`rounded-lg px-2.5 py-0.5 text-[11px] font-medium transition-all cursor-pointer ${
                   configScope === choice
-                    ? "bg-accent/15 text-accent font-semibold shadow-2xs"
-                    : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+                    ? "bg-accent text-accent-fg font-semibold shadow-2xs"
+                    : "text-muted-fg hover:text-fg"
                 }`}
               >
                 {t(choice === "global" ? "cfg.scope.global" : "cfg.scope.project")}
@@ -299,6 +308,29 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           </span>
         ) : null}
       </div>
+
+      {/* Quick Search Bar for General Settings */}
+      {activeTab === "general" ? (
+        <div className="flex items-center gap-2 border-b border-card-border/40 bg-card-bg/25 px-3.5 py-1.5">
+          <span className="text-muted-fg/60 text-xs">🔍</span>
+          <input
+            type="text"
+            placeholder="搜尋設定項目 (Filter settings...)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent text-xs text-fg placeholder:text-muted-fg/45 outline-none"
+          />
+          {searchQuery ? (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="text-[11px] text-muted-fg hover:text-fg px-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {view.saveFailed ? (
         <p role="alert" className="border-b border-err/30 bg-err/10 px-3.5 py-2 text-xs text-err font-medium">
@@ -311,31 +343,46 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
         {activeTab === "omo" && <OmoConfigTab store={cfgStore} scope={configScope} />}
         {activeTab === "general" && (
           <>
-            {SECTION_ORDER.map((section) => (
-              <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
-                <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
-                  <span className="text-muted-fg">{getSectionIcon(section)}</span>
-                  <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {settingFieldsForSection(section).map((field) => (
-                    <SettingFieldRow
-                      key={`${field.shortKey}:${String(resetSignal)}`}
-                      field={field}
-                      value={settingFieldValue(view.draft, field)}
-                      error={store.fieldError(field.shortKey)}
-                      scope={view.scope[field.shortKey] ?? "global"}
-                      disabled={disabled}
-                      locale={locale}
-                      onValueChange={(next) => {
-                        store.setValue(field.shortKey, next);
-                      }}
-                      onScopeChange={(choice) => {
-                        store.setScopeChoice(field.shortKey, choice);
-                      }}
-                    />
-                  ))}
-                </div>
+            {SECTION_ORDER.map((section) => {
+              const allFields = settingFieldsForSection(section);
+              const filteredFields = searchQuery.trim()
+                ? allFields.filter((f) => {
+                    const q = searchQuery.toLowerCase();
+                    const label = t(fieldLabelId(f)).toLowerCase();
+                    const desc = (locale === "zh-TW" ? f.description.zhTW : f.description.en).toLowerCase();
+                    return label.includes(q) || desc.includes(q) || f.shortKey.toLowerCase().includes(q);
+                  })
+                : allFields;
+
+              if (searchQuery.trim() && filteredFields.length === 0) {
+                return null;
+              }
+
+              return (
+                <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+                  <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
+                    <span className="text-muted-fg">{getSectionIcon(section)}</span>
+                    <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {filteredFields.map((field) => (
+                      <SettingFieldRow
+                        key={`${field.shortKey}:${String(resetSignal)}`}
+                        field={field}
+                        value={settingFieldValue(view.draft, field)}
+                        error={store.fieldError(field.shortKey)}
+                        scope={view.scope[field.shortKey] ?? "global"}
+                        disabled={disabled}
+                        locale={locale}
+                        onValueChange={(next) => {
+                          store.setValue(field.shortKey, next);
+                        }}
+                        onScopeChange={(choice) => {
+                          store.setScopeChoice(field.shortKey, choice);
+                        }}
+                      />
+                    ))}
+                  </div>
                 {section === "server" ? (
                   <>
                     <SettingsSecretsPanel
@@ -389,7 +436,8 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                   </div>
                 ) : null}
               </section>
-            ))}
+            );
+          })}
             <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
               <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
                 <span className="text-accent"><ZapIcon /></span>

@@ -723,7 +723,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
     if (logBoxRef.current && isOpen) {
       logBoxRef.current.scrollTop = logBoxRef.current.scrollHeight;
     }
-  }, [liveSteps, isOpen]);
+  }, [liveSteps, isOpen, isRunning]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -765,7 +765,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
 
   return (
     <details
-      className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-1 scroll-mb-24 scroll-mt-12"
+      className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-3 scroll-mb-24 scroll-mt-12"
       onToggle={(e) => {
         const open = e.currentTarget.open;
         setIsOpen(open);

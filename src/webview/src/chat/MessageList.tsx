@@ -150,22 +150,34 @@ export function MessageList(props: MessageListProps) {
   const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
   const [atBottom, setAtBottom] = useState(true);
   const lastHandledUserMessageIdRef = useRef<string | null>(null);
+  const prevSessionRef = useRef<string | null>(null);
+  const hasJumpedToBottomRef = useRef(false);
 
   useEffect(() => {
+    if (prevSessionRef.current !== activeSessionId) {
+      prevSessionRef.current = activeSessionId;
+      hasJumpedToBottomRef.current = false;
+    }
     store.setSession(activeSessionId);
     const messages = store.getState().messages;
     const lastUserIdx = findLatestUserMessageIndex(messages);
     const lastUser = lastUserIdx >= 0 ? messages[lastUserIdx] : undefined;
     lastHandledUserMessageIdRef.current = lastUser !== undefined ? lastUser.id : null;
-    if (messages.length > 0) {
-      setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({
-          index: messages.length - 1,
-          align: "end",
-        });
-      }, 30);
-    }
   }, [activeSessionId, store]);
+
+  // Instant snap to bottom on initial session messages load
+  useEffect(() => {
+    if (state.messages.length > 0 && !hasJumpedToBottomRef.current) {
+      hasJumpedToBottomRef.current = true;
+      park.current.onAtBottomChange(true);
+      setAtBottom(true);
+      virtuosoRef.current?.scrollToIndex({
+        index: state.messages.length - 1,
+        align: "end",
+        behavior: "auto",
+      });
+    }
+  }, [state.messages.length, activeSessionId]);
 
   useEffect(() => {
     const source = props.source ?? createMessengerEventSource(getWebviewMessenger());
@@ -208,13 +220,13 @@ export function MessageList(props: MessageListProps) {
     }, 50);
 
     // i18n-allow-literal — cleanup callback, not display copy
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [state.messages, store]);
 
   // Real-time stream follow: during active generation (busy or inFlight) or whenever
-  // parts change (tool calls Ran..., reasoning 思考中, text deltas),
+  // parts change (tool calls, subagent running, reasoning 思考中, text deltas),
   // if the list is pinned, instantly pin to the bottom on every chunk/part
-  // so tool cards and reasoning outputs never lag behind or get cut off.
+  // so tool cards and subagent outputs continuously track to the bottom.
   const lastMsg = state.messages[state.messages.length - 1];
   const lastPartsCount = lastMsg?.parts.length ?? 0;
   const lastPart = lastMsg?.parts[lastPartsCount - 1];
@@ -222,9 +234,14 @@ export function MessageList(props: MessageListProps) {
     ? `${lastPart.id}_${lastPart.kind}_${"status" in lastPart ? (lastPart as any).status : ""}_${"text" in lastPart ? (lastPart as any).text.length : ""}`
     : "";
 
+  const hasRunningTool = useMemo(
+    () => state.messages.some((m) => m.parts.some((p) => p.kind === "tool" && p.status === "running")),
+    [state.messages],
+  );
+
   useEffect(() => {
     if (!park.current.isPinned) return;
-    const isBusy = state.status === "busy" || lastMsg?.inFlight === true;
+    const isBusy = state.status === "busy" || lastMsg?.inFlight === true || hasRunningTool;
     if (isBusy) {
       virtuosoRef.current?.scrollToIndex({
         index: state.messages.length - 1,
@@ -232,23 +249,25 @@ export function MessageList(props: MessageListProps) {
         behavior: "auto",
       });
     }
-  }, [state.messages.length, lastPartsCount, lastPartSignature, state.status, lastMsg?.inFlight]);
+  }, [state.messages.length, lastPartsCount, lastPartSignature, state.status, lastMsg?.inFlight, hasRunningTool]);
 
   const body =
     state.messages.length === 0 ? (
       <WelcomeHero emptyLabel={t("messages.empty")} />
     ) : (
       <Virtuoso
+        key={activeSessionId ?? "session_root"}
         ref={virtuosoRef}
         data={state.messages}
         className="h-full"
-        // Mount anchored at the bottom: opening view shows the latest conversation
+        // Mount directly anchored at the bottom: opening view immediately displays the bottom
         initialTopMostItemIndex={state.messages.length > 0 ? state.messages.length - 1 : 0}
+        alignToBottom={true}
         atBottomThreshold={120}
         increaseViewportBy={{ top: 200, bottom: 200 }}
         followOutput={(isAtBottom: boolean) => {
           if (!park.current.isPinned) return false;
-          const isStreaming = state.status === "busy" || lastMsg?.inFlight === true;
+          const isStreaming = state.status === "busy" || lastMsg?.inFlight === true || hasRunningTool;
           return isStreaming ? "auto" : park.current.followFor(isAtBottom);
         }}
         atBottomStateChange={(isBottom: boolean) => {

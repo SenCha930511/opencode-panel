@@ -15,7 +15,7 @@ import { useStrings } from "../../lib/i18n.js";
 import type { StringId } from "../../../shared/strings.js";
 
 export const INPUT_CLASS =
-  "w-full rounded-xl border border-card-border bg-input-card-bg px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/60 focus:border-focus-ring/80 focus:ring-1 focus:ring-focus-ring/25 outline-none disabled:opacity-50";
+  "w-full rounded-xl border border-card-border/80 bg-input-card-bg/90 px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/45 hover:border-card-border focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none disabled:opacity-50 shadow-2xs";
 
 /** Tier-1 spec section: a bordered card with a translated heading. */
 export function Section(props: { readonly titleId: StringId; readonly children: ReactNode }): ReactNode {
@@ -39,12 +39,12 @@ export function AdvancedSection(props: { readonly titleId: StringId; readonly ch
       <button
         type="button"
         aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2 border-b border-card-border/50 pb-2 text-left"
+        className="flex cursor-pointer items-center gap-2 border-b border-card-border/50 pb-2 text-left hover:text-fg transition-colors"
         onClick={() => {
           setOpen((current) => !current);
         }}
       >
-        <span aria-hidden="true" className="text-muted-fg">
+        <span aria-hidden="true" className="text-muted-fg text-[11px] transition-transform">
           {open ? "▾" : "▸"}
         </span>
         <span className="text-xs font-semibold text-fg/90">{t(props.titleId)}</span>
@@ -112,7 +112,7 @@ export function NumberInput(props: NumberInputProps): ReactNode {
   return (
     <input
       type="text"
-      inputMode="decimal"
+      inputMode="numeric"
       aria-label={props.label}
       className={INPUT_CLASS}
       disabled={props.disabled}
@@ -138,16 +138,19 @@ export interface ToggleProps {
 
 export function Toggle(props: ToggleProps): ReactNode {
   return (
-    <input
-      type="checkbox"
-      aria-label={props.label}
-      className="h-3.5 w-3.5 accent-[var(--oc-accent)] disabled:opacity-50"
-      disabled={props.disabled}
-      checked={props.value}
-      onChange={(event) => {
-        props.onCommit(event.target.checked);
-      }}
-    />
+    <label className="relative inline-flex cursor-pointer items-center gap-2 select-none">
+      <input
+        type="checkbox"
+        aria-label={props.label}
+        className="sr-only peer"
+        disabled={props.disabled}
+        checked={props.value}
+        onChange={(event) => {
+          props.onCommit(event.target.checked);
+        }}
+      />
+      <div className="relative h-5 w-9 rounded-full bg-card-border/80 peer-checked:bg-accent peer-focus:ring-2 peer-focus:ring-accent/40 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-xs peer-checked:after:translate-x-4" />
+    </label>
   );
 }
 

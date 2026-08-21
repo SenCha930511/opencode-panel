@@ -24,7 +24,7 @@ import {
 } from "../../../shared/settingsSchema.js";
 
 const INPUT_CLASS =
-  "w-full rounded-xl border border-card-border bg-input-card-bg px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/60 focus:border-focus-ring/80 focus:ring-1 focus:ring-focus-ring/25 outline-none disabled:opacity-50";
+  "w-full rounded-xl border border-card-border/80 bg-input-card-bg/90 px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/45 hover:border-card-border focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none disabled:opacity-50 shadow-2xs";
 
 export interface FieldRowProps {
   readonly field: SettingField;
@@ -48,7 +48,7 @@ function ScopeChip(props: {
   return (
     <select
       aria-label={t(props.labelId)}
-      className="cursor-pointer rounded-lg border border-card-border bg-card-bg/80 px-2 py-0.5 text-[10px] text-muted-fg font-medium outline-none transition-colors hover:border-focus-ring/60 hover:text-fg focus:border-focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-lg border border-card-border/70 bg-card-bg/80 px-2 py-0.5 text-[10px] text-muted-fg font-medium outline-none transition-all hover:border-accent/60 hover:text-fg focus:border-accent focus:ring-1 focus:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
       disabled={props.disabled}
       value={props.scope}
       onChange={(event) => {
@@ -158,16 +158,19 @@ function BooleanInput(props: {
 }): ReactNode {
   const { t } = useStrings();
   return (
-    <input
-      type="checkbox"
-      aria-label={t(props.labelId)}
-      className="h-3.5 w-3.5 accent-[var(--oc-accent)] disabled:opacity-50"
-      disabled={props.disabled}
-      checked={props.value}
-      onChange={(event) => {
-        props.onCommit(event.target.checked);
-      }}
-    />
+    <label className="relative inline-flex cursor-pointer items-center gap-2 select-none">
+      <input
+        type="checkbox"
+        aria-label={t(props.labelId)}
+        className="sr-only peer"
+        disabled={props.disabled}
+        checked={props.value}
+        onChange={(event) => {
+          props.onCommit(event.target.checked);
+        }}
+      />
+      <div className="relative h-5 w-9 rounded-full bg-card-border/80 peer-checked:bg-accent peer-focus:ring-2 peer-focus:ring-accent/40 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-xs peer-checked:after:translate-x-4" />
+    </label>
   );
 }
 
