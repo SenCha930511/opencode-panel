@@ -51,6 +51,7 @@ import {
   type ReactNode,
 } from "react";
 import { useStrings } from "../../lib/i18n.js";
+import type { StringId } from "../../../shared/strings.js";
 import { useApp } from "../app/context.js";
 import { useActiveSession } from "./activeSession.js";
 import type { ChatActions } from "./chatContext.js";
@@ -85,18 +86,11 @@ import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
 import { usePickerSelection } from "./composerState.js";
 import { resolveInitialModel } from "./pickers/logic.js";
 
-function formatVariantLabel(variant: string): string {
-  const map: Record<string, string> = {
-    low: "Low (快速思考)",
-    medium: "Medium (標準推理)",
-    high: "High (深度思考)",
-    max: "Max (極致推理)",
-    fast: "Fast (關閉思考)",
-    thinking: "Thinking (啟用思考)",
-    off: "Off (關閉思考)",
-    on: "On (啟用思考)",
-  };
-  return map[variant.toLowerCase()] ?? variant.toUpperCase();
+function variantStringId(variant: string): StringId | undefined {
+  const key = variant.toLowerCase();
+  const valid: readonly string[] = ["low", "medium", "high", "max", "fast", "thinking", "off", "on"];
+  if (!valid.includes(key)) return undefined;
+  return `composer.variant.${key}` as StringId;
 }
 
 export type { ComposerAttachment } from "./composerLogic.js";
@@ -484,7 +478,7 @@ export function Composer(props: ComposerProps): ReactNode {
         {queuedPrompt && (
           <div className="mb-2 flex items-center justify-between rounded-xl bg-accent/10 px-2.5 py-1 text-xs text-accent">
             <span className="truncate flex-1">
-              排隊等待中：{queuedPrompt.text}
+              {t("composer.queued").replace("{text}", queuedPrompt.text)}
             </span>
             <button
               type="button"
@@ -494,7 +488,7 @@ export function Composer(props: ComposerProps): ReactNode {
                 setQueuedPrompt(null);
               }}
             >
-              取消
+              {t("composer.cancel")}
             </button>
           </div>
         )}
@@ -538,8 +532,8 @@ export function Composer(props: ComposerProps): ReactNode {
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  title="設定與功能選單 (Settings & Options)"
-                  aria-label="設定與功能選單"
+                  title={t("composer.optionsMenu")}
+                  aria-label={t("composer.optionsMenu")}
                   className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer shadow-2xs ${
                     autoMode
                       ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/25 ring-1 ring-emerald-400/40"
@@ -569,10 +563,10 @@ export function Composer(props: ComposerProps): ReactNode {
                   >
                     <span className="flex items-center gap-2">
                       <span className={autoMode ? "text-emerald-400" : "text-muted-fg"}><LightningIcon /></span>
-                      <span>自動執行模式 (Auto Mode)</span>
+                      <span>{t("composer.autoMode.title")}</span>
                     </span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded tracking-wide shrink-0 ${autoMode ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-card-bg text-muted-fg border border-card-border/60"}`}>
-                      {autoMode ? "ON" : "OFF"}
+                      {autoMode ? t("composer.autoMode.on") : t("composer.autoMode.off")}
                     </span>
                   </DropdownMenu.Item>
 
@@ -580,7 +574,7 @@ export function Composer(props: ComposerProps): ReactNode {
 
                   {/* Section: Reasoning Effort */}
                   <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-fg/80 uppercase tracking-wider flex items-center justify-between">
-                    <span>思考強度 (Effort)</span>
+                    <span>{t("composer.effort.title")}</span>
                     {selectedModelEntry && (
                       <span className="text-[9px] font-normal text-muted-fg/90 truncate max-w-[90px]" title={selectedModelEntry.model.name}>
                         {selectedModelEntry.model.name}
@@ -606,7 +600,7 @@ export function Composer(props: ComposerProps): ReactNode {
                         >
                           <span className="flex items-center gap-1.5">
                             <BrainIcon />
-                            <span>{formatVariantLabel(lvl)}</span>
+                            <span>{(() => { const id = variantStringId(lvl); return id === undefined ? lvl.toUpperCase() : t(id); })()}</span>
                           </span>
                           {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
                         </DropdownMenu.Item>
@@ -614,7 +608,7 @@ export function Composer(props: ComposerProps): ReactNode {
                     })
                   ) : (
                     <div className="px-2.5 py-1.5 text-xs text-muted-fg italic">
-                      此模型無可用的思考強度設定
+                      {t("composer.effort.none")}
                     </div>
                   )}
                 </DropdownMenu.Content>

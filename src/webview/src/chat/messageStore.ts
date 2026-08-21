@@ -267,14 +267,14 @@ export class MessageStore {
     const sessionId = stringOr(info.sessionID);
     if (id === undefined || !this.targetsSession(sessionId)) return;
     const at = this.messages.findIndex((message) => message.id === id);
-    if (at !== -1) {
+    const current = this.messages[at];
+    if (at !== -1 && current !== undefined) {
       const messages = [...this.messages];
-      const existing = messages[at];
       messages[at] = {
-        ...existing,
+        ...current,
         info,
         inFlight: false,
-        ...(existing.role === "assistant" || typeof info.role !== "string" ? {} : { role: info.role }),
+        ...(current.role === "assistant" || typeof info.role !== "string" ? {} : { role: info.role }),
       };
       this.messages = messages;
       this.publish();

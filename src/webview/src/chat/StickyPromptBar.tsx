@@ -83,7 +83,7 @@ export function StickyPromptBar(props: {
   return (
     <div
       data-oc-sticky-prompt
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-bg px-4.5 sm:px-5 pt-2 pb-2 transition-all duration-200 ease-out"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-bg pl-4.5 sm:pl-5 pr-[calc(1.125rem+6px)] sm:pr-[calc(1.25rem+6px)] pt-2 pb-2 transition-all duration-200 ease-out"
     >
       <button
         type="button"
