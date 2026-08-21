@@ -42,10 +42,9 @@ const ROUTES: ReadonlyArray<RouteRow> = [
   ["get", "/session/{id}/todo", "List session todos", true],
   ["get", "/session/{id}/diff", "Session diff"],
   ["post", "/session/{id}/permissions/{permissionID}", "Reply to a permission request"],
-  // Question reply route shape is an ASSUMPTION (mirrors the permissions
-  // route); the realtime event `question.asked` is plan-binding but the reply
-  // endpoint is not confirmed in current opencode docs. old-server omits it.
-  ["post", "/session/{id}/questions/{requestID}", "Reply to a question request", true],
+  // Canonical v1.18.x question reply route (official + live doc probe).
+  // old-server omits modern routes (detector must hide post-only features).
+  ["post", "/session/{id}/question/{requestID}/reply", "Reply to a question request", true],
   ["get", "/agent", "List agents"],
   ["get", "/command", "List commands"],
   ["get", "/config", "Get config"],

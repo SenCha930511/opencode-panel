@@ -32,8 +32,7 @@ export type Route = [method: string, pattern: string, handler: Handler];
 export const MODERN_ONLY = [
   "/session/:id/fork",
   "/session/:id/todo",
-  "/session/:id/questions/:requestID",
-  "/api/session/:id/question/:requestID/reply",
+  "/session/:id/question/:requestID/reply",
   "/session/:id/prompt_async",
 ] as const;
 

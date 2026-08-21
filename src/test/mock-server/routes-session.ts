@@ -142,7 +142,7 @@ export function buildSessionRoutes(srv: MockHttpServer): Route[] {
       pending.settle(response);
       json(res, 200, true);
     })],
-    ["POST", "/session/:id/questions/:requestID", modern("/session/:id/questions/:requestID", byId((rec, { params, body, state }, res) => {
+    ["POST", "/session/:id/question/:requestID/reply", modern("/session/:id/question/:requestID/reply", byId((rec, { params, body, state }, res) => {
       const pending = state.pendingQuestions.get(params.requestID ?? "");
       if (pending === undefined || pending.request.sessionID !== rec.info.id) {
         sendApiError(res, 404, `question not found: ${params.requestID ?? ""}`);
