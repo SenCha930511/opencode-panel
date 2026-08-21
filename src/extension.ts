@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { mkdir, writeFile } from "node:fs/promises";
+import * as os from "node:os";
 import {
   createVscodeConfigAccessor,
   createVscodeDockSurface,
@@ -32,6 +33,8 @@ import {
 } from "./host/handlers/attachments.js";
 import { wireCapabilityInfo } from "./host/handlers/capabilityInfo.js";
 import { registerCommandHandlers } from "./host/handlers/commands.js";
+import { createNodeConfigFilesFs } from "./host/configFiles.js";
+import { registerConfigFileHandlers } from "./host/handlers/configFiles.js";
 import {
   createDockService,
   DOCK_DIFF_SCHEME,
@@ -175,6 +178,17 @@ export function activate(
       // edit probes the NEW endpoint with its own stored credentials.
       probeFetchFor: (baseUrl) => createPanelClient(baseUrl, { secrets, logger }).probeFetch,
     }),
+    logger,
+  });
+  // Config-file editor backend (plan W1): configFileRead/configFileWrite over
+  // the safe-write IO core. Dev/test-host runs redirect the home dir to the
+  // sandboxed OPENCODE_PANEL_TEST_HOME so they never touch real config trees.
+  registerConfigFileHandlers(panel.registerHandler, {
+    env: {
+      homeDir: (__DEV__ && process.env.OPENCODE_PANEL_TEST_HOME) || os.homedir(),
+      workspaceFolder: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+    },
+    fs: createNodeConfigFilesFs(),
     logger,
   });
   // Todo-18: todos/diffs dock — openDiff/openFile handlers, poll-sync riding

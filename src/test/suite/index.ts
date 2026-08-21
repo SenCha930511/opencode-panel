@@ -23,6 +23,7 @@ export function run(testsRoot: string, callback: (error: unknown, failures?: num
     await import("./chatRoundTrip.test.js");
     await import("./permissionFlow.test.js");
     await import("./settingsRoundTrip.test.js");
+    await import("./configFileRoundTrip.test.js");
     await import("./oldServer.test.js");
   };
   load().then(

@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import type { ConfigScope } from "../../../shared/protocol.js";
 import { useStrings } from "../../lib/i18n.js";
 import type { StringId } from "../../../shared/strings.js";
 import {
@@ -25,6 +26,7 @@ import {
 import { useApp } from "../app/context";
 import { attachCapabilityStore, useCapabilitySnapshot } from "../chat/pickers/capabilityStore.js";
 import { SettingFieldRow } from "./fields.js";
+import { ConfigFilesStore, slotKeyOf } from "./configFilesStore.js";
 import { SettingsFormStore } from "./settingsStore.js";
 import { parseSettingsSnapshotWire } from "./settingsWire.js";
 import { SettingsSecretsPanel } from "./SettingsSecrets.js";
@@ -115,6 +117,12 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
   const capabilities = useCapabilitySnapshot();
   const [resetSignal, setResetSignal] = useState(0);
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [configScope, setConfigScope] = useState<ConfigScope>("global");
+  const [cfgStore] = useState(() => new ConfigFilesStore((type, payload) => messenger.request(type, payload))); // i18n-allow-literal — code-only expression, no display copy
+  const cfgView = useSyncExternalStore(cfgStore.subscribe, cfgStore.getSnapshot, cfgStore.getSnapshot);
+  const cfgSlot = activeTab === "general" ? null : cfgView.slots[slotKeyOf(activeTab, configScope)];
+  const cfgDirty = cfgSlot?.dirty ?? false;
+  const cfgBlocked = cfgSlot === null || cfgSlot.saving || cfgSlot.readOnly;
 
   useEffect(() => {
     attachCapabilityStore(messenger);
@@ -122,6 +130,20 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
 
   const dirty = store.dirtyKeys().length > 0;
   const disabled = view.applying;
+
+  /** Config-tab (opencode/omo) Apply/Revert wires (plan W5). */
+  const onConfigApply = (): void => {
+    if (activeTab === "general") return;
+    void cfgStore.save(activeTab, configScope).then((ok) => {
+      if (ok) pushToast("info", t("cfg.file.saved"));
+    });
+  };
+  const onConfigRevert = (): void => {
+    if (activeTab === "general") return;
+    cfgStore.revert(activeTab, configScope);
+  };
+  const cfgLoadFailed =
+    activeTab !== "general" && cfgSlot !== null && !cfgSlot.loaded && cfgSlot.saveError !== null;
 
   const runSecret = async (kind: "password" | "username", value: string): Promise<boolean> => {
     try {
@@ -153,7 +175,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          {activeTab === "general" && (
+          {activeTab === "general" ? (
             <>
               <button
                 type="button"
@@ -173,7 +195,32 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                 disabled={!dirty || disabled}
                 onClick={() => {
                   store.revert();
-                  setResetSignal((value) => value + 1);
+                  setResetSignal((value) => value + 1); // i18n-allow-literal — code-only expression, no display copy
+                }}
+              >
+                {t("settings.revert")}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!cfgDirty || cfgBlocked}
+                onClick={() => {
+                  void cfgStore.save(activeTab, configScope).then((ok) => {
+                    if (ok) pushToast("info", t("cfg.file.saved"));
+                  });
+                }}
+              >
+                {t("settings.apply")}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!cfgDirty || cfgSlot?.saving === true}
+                onClick={() => {
+                  cfgStore.revert(activeTab, configScope);
                 }}
               >
                 {t("settings.revert")}
@@ -205,7 +252,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           }`}
         >
           <span>⚙️</span>
-          <span>一般設定</span>
+          <span>{t("cfg.tab.general")}</span>
         </button>
         <button
           type="button"
@@ -217,7 +264,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           }`}
         >
           <span>🤖</span>
-          <span>OpenCode 配置</span>
+          <span>{t("cfg.tab.opencode")}</span>
         </button>
         <button
           type="button"
@@ -229,8 +276,28 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           }`}
         >
           <span>⚡</span>
-          <span>OMO 配置</span>
+          <span>{t("cfg.tab.omo")}</span>
         </button>
+        {activeTab !== "general" ? (
+          <span className="ml-auto flex items-center gap-1">
+            {(["global", "project"] as const).map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => {
+                  setConfigScope(choice);
+                }}
+                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                  configScope === choice
+                    ? "bg-accent/15 text-accent font-semibold shadow-2xs"
+                    : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+                }`}
+              >
+                {t(choice === "global" ? "cfg.scope.global" : "cfg.scope.project")}
+              </button>
+            ))}
+          </span>
+        ) : null}
       </div>
 
       {view.saveFailed ? (
@@ -240,8 +307,8 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3.5">
-        {activeTab === "opencode" && <OpenCodeConfigTab />}
-        {activeTab === "omo" && <OmoConfigTab />}
+        {activeTab === "opencode" && <OpenCodeConfigTab store={cfgStore} scope={configScope} />}
+        {activeTab === "omo" && <OmoConfigTab store={cfgStore} scope={configScope} />}
         {activeTab === "general" && (
           <>
             {SECTION_ORDER.map((section) => (

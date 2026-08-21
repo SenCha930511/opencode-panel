@@ -98,7 +98,7 @@ const READ_RESOLVERS: Readonly<Record<`${ConfigFileId}:${ConfigScope}`, (env: Co
   "opencode:project": (env) => [join(requireWorkspace(env), "opencode.json")],
   "omo:global": (env) => [
     join(env.homeDir, ".omo", "omo.jsonc"),
-    join(env.homeDir, ".config", "oh-my-openagent", "omo.jsonc"),
+    join(env.homeDir, ".omo", "omo.json"),
   ],
   "omo:project": (env) => [join(requireWorkspace(env), ".omo", "omo.jsonc")],
 };
