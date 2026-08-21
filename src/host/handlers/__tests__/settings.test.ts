@@ -88,8 +88,9 @@ function makeHarness(overrides?: {
     },
     update(shortKey, value, target) {
       updates.push({ shortKey, value, target });
-      if (target === "workspace") workspace.set(shortKey, value);
-      else global.set(shortKey, value);
+      const layer = target === "workspace" ? workspace : global;
+      if (value === undefined) layer.delete(shortKey);
+      else layer.set(shortKey, value);
       return Promise.resolve();
     },
   };
@@ -188,6 +189,26 @@ describe("setSettings", () => {
     expect(updates).toEqual([{ shortKey: "port", value: 6000, target: "workspace" }]);
     const reply = await handlers.getSettings();
     expect(reply.scope["port"]).toBe("workspace");
+  });
+
+  it("switching a field from workspace BACK to global clears the workspace-layer shadow", async () => {
+    // Given: a port written to the workspace layer
+    const { handlers, updates } = makeHarness();
+    await handlers.setSettings({ values: { port: 6000 }, scope: { port: "workspace" } });
+
+    // When: the user flips the chip to User (global) and changes the value.
+    // The workspace layer still shadows every later global write unless the
+    // host clears it — so the port appears "stuck at 6000" in VS Code.
+    await handlers.setSettings({ values: { port: 7000 }, scope: {} });
+
+    // Then: after the global write, the host MUST clear the workspace layer.
+    const clearUpdates = updates.filter(
+      (u) => u.shortKey === "port" && u.target === "workspace" && u.value === undefined,
+    );
+    expect(clearUpdates).toHaveLength(1);
+    const snapshot = await handlers.getSettings();
+    expect(snapshot.scope["port"]).toBe("global");
+    expect(snapshot.values.port).toBe(7000);
   });
 
   it("probes the NEW config after a port change", async () => {

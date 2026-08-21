@@ -53,7 +53,11 @@ export { SettingsValidationError } from "./settingsValidation.js";
 /** Minimal read/write configuration seam (production: workspace.getConfiguration). */
 export interface SettingsConfigSurface {
   inspect(shortKey: string): SettingsConfigInspection | undefined;
-  update(shortKey: string, value: SettingValue, target: SettingScopeChoice): PromiseLike<void>;
+  update(
+    shortKey: string,
+    value: SettingValue | undefined,
+    target: SettingScopeChoice,
+  ): PromiseLike<void>;
 }
 
 /** Structural mirror of the value layers of vscode's ConfigurationInspect. */
@@ -151,6 +155,20 @@ export function createSettingsHandlers(deps: SettingsHandlersDeps): SettingsHand
       for (const entry of parsed.entries) {
         await deps.surface.update(entry.field.shortKey, entry.value, entry.scope);
         deps.logger.debug(`settings: wrote ${entry.field.key} scope=${entry.scope}`);
+        if (entry.scope === "global") {
+          // A stale workspace-layer value SHADOWS every later global write —
+          // the user flips the chip back to User and their change silently
+          // does nothing. VS Code's update(key, undefined, target) clears a
+          // layer; do that for both workspace surfaces.
+          const inspected = deps.surface.inspect(entry.field.shortKey);
+          if (inspected?.workspaceValue !== undefined) {
+            await deps.surface.update(entry.field.shortKey, undefined, "workspace");
+            deps.logger.debug(`settings: cleared workspace-layer shadow for ${entry.field.key}`);
+          }
+          if (inspected?.workspaceFolderValue !== undefined) {
+            await deps.surface.update(entry.field.shortKey, undefined, "workspace");
+          }
+        }
       }
       const next = await snapshot();
       // Post-write probe of the CURRENT config — also the Test Connection
