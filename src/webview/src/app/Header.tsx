@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { useStrings } from "../../lib/i18n.js";
 import { McpPopover, OldServerBanner } from "../mcp/index.js";
 import { useApp, type ServerStatus } from "./context.js";
-import { setActiveSession } from "../chat/activeSession.js";
 import { getSharedSessionsStore } from "../sessions/sessionsStore.js";
 
 /**
@@ -269,19 +268,10 @@ export function Header(): ReactNode {
                   type="button"
                   aria-label={t("sessions.new")}
                   className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
-                  onClick={async () => {
+                  onClick={() => {
                     setSessionsOpen(false);
                     navigate("chat");
-                    try {
-                      const res = await send("createSession", {});
-                      if (res?.id) {
-                        setActiveSession(res.id);
-                        const store = getSharedSessionsStore();
-                        store?.select(res.id);
-                      }
-                    } catch {
-                      // ignore
-                    }
+                    getSharedSessionsStore()?.createSession(undefined).catch(() => {});
                   }}
                 >
                   <EditPenIcon />
