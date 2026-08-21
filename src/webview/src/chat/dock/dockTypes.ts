@@ -77,9 +77,12 @@ function parseList<T>(items: unknown, each: (item: unknown) => T | undefined): r
   const parsed: T[] = [];
   for (const item of items) {
     const vm = each(item);
-    if (vm === undefined) return undefined;
-    parsed.push(vm);
+    // A drifted row drops alone, never its valid neighbors (host parity).
+    if (vm !== undefined) parsed.push(vm);
   }
+  // …but a non-empty list where EVERY row drifted is a broken payload, and
+  // the previous snapshot outranks silence (existing store contract).
+  if (items.length > 0 && parsed.length === 0) return undefined;
   return parsed;
 }
 

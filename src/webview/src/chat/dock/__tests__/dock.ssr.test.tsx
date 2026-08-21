@@ -23,7 +23,7 @@ import type { WebviewStateLike } from "../../draftStore.js";
 import { DiffFileRow, DiffsPanel, SessionDock, TodosPanel, type DockActions } from "../SessionDock.js";
 import { TodoPinnedList } from "../TodoPinnedList.js";
 import { DockStateStore, DockStore } from "../dockStore.js";
-import type { DockDiffFileVM, DockTodoVM } from "../dockTypes.js";
+import { parseSessionDiffPayload, type DockDiffFileVM, type DockTodoVM } from "../dockTypes.js";
 
 function render(element: ReactElement): string {
   return renderToStaticMarkup(element);
@@ -285,5 +285,45 @@ describe("TodoPinnedList SSR", () => {
     const html = render(<TodoPinnedList store={store} />);
     expect(html).toContain("Ship the gate");
     expect(html).toContain("○");
+  });
+});
+
+describe("diff-row double-click dedupe (sweep E2)", () => {
+  it("a rapid second click on the same row fires openDiff only once", () => {
+    const openedDiffs: { sessionId: string; file: string }[] = [];
+    const actions: DockActions = {
+      openDiff: (input) => {
+        openedDiffs.push(input as { sessionId: string; file: string });
+      },
+      openFile: () => undefined,
+    };
+    const tree = DiffFileRow({
+      diff: diff("src/dedupe-case.ts", 1, 1),
+      sessionId: "ses_dedupe",
+      actions,
+      openDiffLabel: "Open diff",
+    });
+    const buttons: FoundButton[] = [];
+    collectButtons(tree as ReactElement, buttons);
+    const openButton = buttons.find((button) => button.marker === "open:src/dedupe-case.ts");
+    expect(openButton).toBeDefined();
+    openButton?.click();
+    openButton?.click();
+    expect(openedDiffs).toEqual([{ sessionId: "ses_dedupe", file: "src/dedupe-case.ts" }]);
+  });
+});
+
+describe("boundary parser drift tolerance (sweep E4)", () => {
+  it("a single drifted diff row never sinks the whole list", () => {
+    const parsed = parseSessionDiffPayload({
+      sessionID: "ses_drift",
+      diff: [
+        { file: "a.ts", additions: 1, deletions: 0 },
+        { file: "drifted.ts" },
+        { file: "b.ts", additions: 2, deletions: 3 },
+      ],
+    });
+    expect(parsed?.sessionID).toBe("ses_drift");
+    expect(parsed?.diffs?.map((row) => row.file)).toEqual(["a.ts", "b.ts"]);
   });
 });

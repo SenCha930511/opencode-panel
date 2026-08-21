@@ -907,7 +907,13 @@ export function registerDockHandlers(register: RegisterHandler, deps: DockDomain
   register(
     "openFile",
     async ({ path }): Promise<FromWebviewResponse["openFile"]> => {
-      await service.openFile(path);
+      try {
+        await service.openFile(path);
+      } catch (error) {
+        // Same dead-click seam as openDiff: void callers swallow rejections.
+        if (deps.notify === undefined) throw error;
+        deps.notify("error", errorSummary(error));
+      }
       return null;
     },
   );
