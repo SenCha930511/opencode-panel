@@ -53,6 +53,7 @@ export function TodoPinnedList(props: { readonly store: DockStore }): ReactNode 
   if (state.todosUnsupported) return null;
   const todos = todosForSession(state, activeSession);
   if (todos.length === 0) return null;
+  // i18n-allow-literal — completion counter loop, not display copy
   const completed = todos.filter((todo) => todoDone(todo.status)).length;
   return (
     <section
