@@ -1,11 +1,11 @@
-# OpenCode Panel
+# OpenCode Chat Sidebar
 
 English · [繁體中文](README.zh-TW.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-panel/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-panel)](https://github.com/SenCha930511/opencode-panel/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-panel)
-[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-panel?style=social)](https://github.com/SenCha930511/opencode-panel/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-panel/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-panel)](https://github.com/SenCha930511/opencode-chat-panel/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-panel?style=social)](https://github.com/SenCha930511/opencode-chat-panel/stargazers)
 
 A sidebar chat extension for VS Code that drives your **locally installed
 [opencode](https://opencode.ai)** through its official headless server —
@@ -74,15 +74,20 @@ Without OMO everything behaves identically, minus the note.
 
 ## Installation
 
-The extension is not on the Marketplace yet — install it from a packaged
-`.vsix`:
+Install **OpenCode Chat Sidebar** from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel) —
+or search "OpenCode Chat Sidebar" in the Extensions view
+(`Ctrl+Shift+X` / `Cmd+Shift+X`), then reload when prompted. The panel icon
+appears in the Activity Bar.
 
-1. Get `opencode-panel-x.y.z.vsix` from
-   [Releases](https://github.com/SenCha930511/opencode-panel/releases), or
+To install a packaged `.vsix` instead (e.g. an unreleased build):
+
+1. Get `opencode-chat-panel-x.y.z.vsix` from
+   [Releases](https://github.com/SenCha930511/opencode-chat-panel/releases), or
    build it yourself (see below).
 2. In the **Extensions** view, open the `...` menu → **Install from VSIX...**
    and pick the file. Or from a terminal:
-   `code --install-extension opencode-panel-x.y.z.vsix` (use your editor's
+   `code --install-extension opencode-chat-panel-x.y.z.vsix` (use your editor's
    bundled CLI).
 3. Reload the window when prompted — the panel icon appears in the Activity
    Bar.
@@ -90,11 +95,11 @@ The extension is not on the Marketplace yet — install it from a packaged
 ### Build from source
 
 ```bash
-git clone https://github.com/SenCha930511/opencode-panel.git
-cd opencode-panel
+git clone https://github.com/SenCha930511/opencode-chat-panel.git
+cd opencode-chat-panel
 npm install
 npm run build && npm run build:webview
-npx vsce package   # produces opencode-panel-<version>.vsix
+npx vsce package   # produces opencode-chat-panel-<version>.vsix
 ```
 
 Development loop: run `npm run watch` (extension host) plus
@@ -128,7 +133,7 @@ SecretStorage.
 | `opencodePanel.serverArgs` | string[] | `[]` | Extra arguments passed to `opencode serve`. |
 | `opencodePanel.autoStartServer` | boolean | `true` | Automatically spawn/attach the server on activation. |
 | `opencodePanel.minimumServerVersion` | string | `"0.0.0"` | Warn when the connected server reports a version below this floor (warn-only; never blocks). |
-| `opencodePanel.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Panel* output channel (credentials are always redacted). |
+| `opencodePanel.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Chat Sidebar* output channel (credentials are always redacted). |
 | `opencodePanel.chatFontFamily` | string | `""` | Override the chat font family (empty = VS Code default). |
 | `opencodePanel.chatFontSize` | number | `0` | Override the chat font size in px (0 = VS Code default). |
 | `opencodePanel.language` | enum | `"auto"` | Panel interface language: `auto` follows VS Code's display language; `en` / `zh-TW` pin a locale and apply instantly to every open panel. |
@@ -154,18 +159,35 @@ UI is always one click away.
 
 ## Screenshots
 
-> _Screenshots will land with the first tagged release._ Sections reserved:
->
-> - Chat view with streaming response and tool cards
-> - Permission approval card
-> - Todos & diffs dock with native diff preview
-> - Settings page
-> - 繁體中文介面一覽
+The chat panel with a streaming session, collapsed reasoning ("Thinking") and
+tool cards, plus the todos & file-changes dock:
+
+![Chat panel — streaming response, reasoning and tool cards](docs/screenshots/chat-panel.png)
+
+Permission and question cards appear inline in the conversation — nothing is
+auto-answered:
+
+| Permission approval | Question card |
+| --- | --- |
+| ![Permission approval card](docs/screenshots/permission.png) | ![Question card with options](docs/screenshots/question.png) |
+
+Todos & file changes dock, with per-message diffs opened in VS Code's native
+diff editor:
+
+![Todos & diffs dock with native diff preview](docs/screenshots/dock-diff.png)
+
+The extension's own settings page (gear icon in the chat view header):
+
+![Settings page](docs/screenshots/settings.png)
+
+### Full IDE view
+
+![OpenCode Chat Panel in a full VS Code window](docs/screenshots/hero.png)
 
 ## Contributing
 
 Issues and pull requests are welcome at
-[SenCha930511/opencode-panel](https://github.com/SenCha930511/opencode-panel).
+[SenCha930511/opencode-chat-panel](https://github.com/SenCha930511/opencode-chat-panel).
 Before sending a PR, keep the quality gates green: `npm run build`,
 `node scripts/check-i18n.mjs`, `node scripts/check-coverage.mjs`, and
 `npm run test:unit`.

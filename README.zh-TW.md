@@ -1,11 +1,11 @@
-# OpenCode Panel
+# OpenCode Chat Sidebar
 
 [English](README.md) · 繁體中文
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-panel/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-panel)](https://github.com/SenCha930511/opencode-panel/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-panel)
-[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-panel?style=social)](https://github.com/SenCha930511/opencode-panel/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-panel/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-panel)](https://github.com/SenCha930511/opencode-chat-panel/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-panel?style=social)](https://github.com/SenCha930511/opencode-chat-panel/stargazers)
 
 一個 VS Code 側邊欄聊天擴充套件，透過官方 headless 伺服器驅動你**本機安裝的
 [opencode](https://opencode.ai)**——不用離開編輯器，就有 Codex/Cursor 等級的
@@ -54,24 +54,30 @@ OMO 為**選配**。有安裝時：
 
 ## 安裝方式
 
-本擴充套件尚未上架 Marketplace，請安裝打包好的 `.vsix`：
+從
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
+安裝 **OpenCode Chat Sidebar**；或在「擴充功能」檢視（`Ctrl+Shift+X` /
+`Cmd+Shift+X`）搜尋「OpenCode Chat Sidebar」，安裝後依提示重新載入，活動列
+就會出現面板圖示。
 
-1. 從 [Releases](https://github.com/SenCha930511/opencode-panel/releases)
-   取得最新的 `opencode-panel-x.y.z.vsix`，或依下節說明自行建置。
+如需改裝打包好的 `.vsix`（例如尚未發佈的建置）：
+
+1. 從 [Releases](https://github.com/SenCha930511/opencode-chat-panel/releases)
+   取得最新的 `opencode-chat-panel-x.y.z.vsix`，或依下節說明自行建置。
 2. 在「擴充功能」檢視中，從 `...` 選單選擇**「從 VSIX 安裝...」**並選取該
    檔案；或在終端機執行
-   `code --install-extension opencode-panel-x.y.z.vsix`（使用你編輯器
+   `code --install-extension opencode-chat-panel-x.y.z.vsix`（使用你編輯器
    內建的 CLI）。
 3. 依提示重新載入視窗，活動列就會出現面板圖示。
 
 ### 從原始碼建置
 
 ```bash
-git clone https://github.com/SenCha930511/opencode-panel.git
-cd opencode-panel
+git clone https://github.com/SenCha930511/opencode-chat-panel.git
+cd opencode-chat-panel
 npm install
 npm run build && npm run build:webview
-npx vsce package   # 產生 opencode-panel-<version>.vsix
+npx vsce package   # 產生 opencode-chat-panel-<version>.vsix
 ```
 
 開發流程：執行 `npm run watch`（extension host）搭配
@@ -104,7 +110,7 @@ SecretStorage。
 | `opencodePanel.serverArgs` | string[] | `[]` | 傳給 `opencode serve` 的額外參數。 |
 | `opencodePanel.autoStartServer` | boolean | `true` | 啟動時自動 spawn/attach 伺服器。 |
 | `opencodePanel.minimumServerVersion` | string | `"0.0.0"` | 伺服器版本低於此門檻時警告（僅警告，不阻擋使用）。 |
-| `opencodePanel.debugLogs` | boolean | `false` | 在 *OpenCode Panel* 輸出頻道輸出詳細記錄（憑證一律去識別化）。 |
+| `opencodePanel.debugLogs` | boolean | `false` | 在 *OpenCode Chat Sidebar* 輸出頻道輸出詳細記錄（憑證一律去識別化）。 |
 | `opencodePanel.chatFontFamily` | string | `""` | 覆寫聊天字體（空白 = 沿用 VS Code 預設）。 |
 | `opencodePanel.chatFontSize` | number | `0` | 覆寫聊天字體大小 px（0 = 沿用 VS Code 預設）。 |
 | `opencodePanel.language` | enum | `"auto"` | 面板介面語言：`auto` 跟隨 VS Code 顯示語言；`en` / `zh-TW` 明確指定語系，即時套用到所有已開啟的面板。 |
@@ -127,18 +133,33 @@ SecretStorage。
 
 ## 螢幕截圖
 
-> _截圖將隨第一個標記版本補上。_ 預留區塊：
->
-> - 聊天視窗：串流回應與工具卡片
-> - 權限確認卡片
-> - 待辦與差異側欄、原生 diff 預覽
-> - 設定頁
-> - 英文介面一覽
+聊天面板：串流工作階段、可收合的「思考中」(reasoning) 片段與工具卡片，
+下方附加待辦與檔案變更側欄：
+
+![聊天面板——串流回應、思考中與工具卡片](docs/screenshots/chat-panel-zh-tw.png)
+
+權限確認卡片與問題卡片直接出現在對話中，絕不自動代答：
+
+| 權限確認卡片 | 問題卡片 |
+| --- | --- |
+| ![權限確認卡片](docs/screenshots/permission-zh-tw.png) | ![問題卡片](docs/screenshots/question-zh-tw.png) |
+
+待辦與差異側欄，逐訊息檔案差異用 VS Code 原生 diff 檢視開啟：
+
+![待辦與差異側欄、原生 diff 預覽](docs/screenshots/dock-diff-zh-tw.png)
+
+擴充套件內建設定頁（聊天視窗右上齒輪）：
+
+![設定頁](docs/screenshots/settings-zh-tw.png)
+
+### 完整 IDE 畫面
+
+![完整 VS Code 視窗中的 OpenCode Chat Panel](docs/screenshots/hero-zh-tw.png)
 
 ## 貢獻
 
 歡迎到
-[SenCha930511/opencode-panel](https://github.com/SenCha930511/opencode-panel)
+[SenCha930511/opencode-chat-panel](https://github.com/SenCha930511/opencode-chat-panel)
 開 issue 或送 PR。送出前請確認品質關卡全數通過：`npm run build`、
 `node scripts/check-i18n.mjs`、`node scripts/check-coverage.mjs` 與
 `npm run test:unit`。
