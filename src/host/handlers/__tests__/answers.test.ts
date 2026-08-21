@@ -408,4 +408,34 @@ describe("answers domain handlers (plan todo 16)", () => {
     // sanity for the fixture helper
     expect(assistantTextOf({ info: {}, parts: [{ type: "text", text: "x" }] })).toBe("x");
   });
+
+  it("question reply with a synthetic webview requestID falls back to GET /question resolution", async () => {
+    mock = await startMockServer(0);
+    const seen: { url: string; method: string }[] = [];
+    const raw: ProbeFetch = (request) => globalThis.fetch(request);
+    const tapping: ProbeFetch = async (request) => {
+      if (request.url.includes("/question")) {
+        seen.push({ url: request.url, method: request.method });
+      }
+      return raw(request);
+    };
+    const connection = connectionFor(mock.url, tapping);
+    const harness = createHarness(connection);
+    const flow = await createFlowSession(connection, "question-flow", mock);
+
+    const reply = await answerUntilPublished(harness, "answerQuestion", {
+      sessionId: flow.sessionId,
+      questionID: "question:12",
+      answers: ["minimal"],
+    });
+    expect(reply.status).toBe("success");
+    expect(reply.content).toBeNull();
+    expect(seen.some((hit) => hit.method === "GET" && new URL(hit.url).pathname === "/question")).toBe(true);
+    const settled = seen.find((hit) => {
+      const path = new URL(hit.url).pathname;
+      return hit.method === "POST" && /^\/question\/[^/]+\/reply$/.test(path);
+    });
+    expect(settled).toBeDefined();
+    expect(settled?.url).not.toContain("question%3A12");
+  });
 });

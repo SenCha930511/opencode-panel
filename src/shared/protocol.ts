@@ -59,6 +59,58 @@ export interface SessionSummary {
 export type ToastLevel = "info" | "warning" | "error";
 
 // ---------------------------------------------------------------------------
+// Config-file editor (opencode.json / omo.jsonc) wire surface.
+// ---------------------------------------------------------------------------
+
+export type ConfigFileId = "opencode" | "omo";
+
+export type ConfigScope = "global" | "project";
+
+export interface ConfigFileReadPayload {
+  readonly file: ConfigFileId;
+  readonly scope: ConfigScope;
+}
+
+export interface ConfigFileWritePayload extends ConfigFileReadPayload {
+  /** Full replacement text (JSONC, comments preserved webview-side). */
+  readonly rawText: string;
+  /** mtime the webview last read; omit to force past the host mtime guard. */
+  readonly expectedMtimeMs?: number;
+}
+
+export interface ConfigFileReadReply {
+  /** Path a read resolved to, or the default create target when missing. */
+  readonly path: string;
+  readonly exists: boolean;
+  readonly rawText: string;
+  readonly mtimeMs: number;
+  /** Machine-stable parse code (jsonc-parser printParseErrorCode), or null. */
+  readonly parseError: string | null;
+  /**
+   * Absolute path of the legacy `~/.config/opencode/oh-my-openagent.json`,
+   * set only for file:"omo", scope:"global" when both read candidates are
+   * missing AND the legacy file exists. Display-only — never a write target.
+   */
+  readonly legacyNoticePath?: string | null;
+}
+
+export interface ConfigFileWriteReply {
+  readonly mtimeMs: number;
+  readonly backupPath: string | null;
+}
+
+/** Host write/read failure taxonomy; messages carry a stable `[<code>]` prefix. */
+export const CONFIG_FILE_ERROR_CODES = [
+  "parse",
+  "mtime-mismatch",
+  "no-workspace",
+  "io",
+  "invalid-payload",
+] as const;
+
+export type ConfigFileErrorCode = (typeof CONFIG_FILE_ERROR_CODES)[number];
+
+// ---------------------------------------------------------------------------
 // Webview -> Host: string -> payload map (one entry per request type).
 // ---------------------------------------------------------------------------
 
@@ -117,6 +169,8 @@ export interface FromWebviewProtocol {
   };
   readonly openSettingsTab: Record<string, never>;
   readonly closeSettingsTab: Record<string, never>;
+  readonly configFileRead: ConfigFileReadPayload;
+  readonly configFileWrite: ConfigFileWritePayload;
 }
 
 /** The value each request resolves to in its terminal `done:true` envelope. */
@@ -157,6 +211,8 @@ export interface FromWebviewResponse {
   };
   readonly openSettingsTab: null;
   readonly closeSettingsTab: null;
+  readonly configFileRead: ConfigFileReadReply;
+  readonly configFileWrite: ConfigFileWriteReply;
 }
 
 // ---------------------------------------------------------------------------
@@ -301,6 +357,8 @@ export const FROM_WEBVIEW_MESSAGE_TYPES = [
   "getSessionAuto",
   "openSettingsTab",
   "closeSettingsTab",
+  "configFileRead",
+  "configFileWrite",
 ] as const;
 
 export type FromWebviewMessageType = (typeof FROM_WEBVIEW_MESSAGE_TYPES)[number];
