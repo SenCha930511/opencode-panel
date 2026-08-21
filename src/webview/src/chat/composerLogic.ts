@@ -21,6 +21,10 @@ import type { WebviewMessenger } from "../../lib/messenger.js";
 import type { ServerStatus } from "../app/context.js";
 import { setActiveSession } from "./activeSession.js";
 import { armSessionForSend } from "./sessionArming.js";
+import { getSharedSessionsStore } from "../sessions/sessionsStore.js";
+
+/** Draft key under which the home screen (no active session) persists text. */
+export const HOME_DRAFT_KEY = "__home__";
 
 /**
  * Resolve the session a send targets: the active one, or — on the home
@@ -34,6 +38,10 @@ export async function ensureSessionForSend(
   if (sessionId !== undefined) return sessionId;
   const created = await messenger.request("createSession", {});
   setActiveSession(created.id);
+  // Keep the sessions panel in sync so the list highlights the new chat:
+  // the createSession reply precedes the next sessions.list broadcast, and
+  // the store's selection must not be left pointing at... nothing.
+  getSharedSessionsStore()?.applySelection(created.id);
   // Arm auto BEFORE the caller dispatches the first prompt: a fresh session
   // has no ruleset yet, so the first tool call must not race the PATCH.
   await armSessionForSend(messenger, created.id);

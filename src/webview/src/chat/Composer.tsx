@@ -86,6 +86,8 @@ import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
 import { usePickerSelection } from "./composerState.js";
 import { resolveInitialModel } from "./pickers/logic.js";
 
+const HOME_DRAFT_KEY = "__home__";
+
 function variantStringId(variant: string): StringId | undefined {
   const key = variant.toLowerCase();
   const valid: readonly string[] = ["low", "medium", "high", "max", "fast", "thinking", "off", "on"];
@@ -273,7 +275,7 @@ export function Composer(props: ComposerProps): ReactNode {
       : undefined;
 
   const [text, setText] = useState<string>(() => {
-    return sessionId === undefined ? "" : drafts.read(sessionId);
+    return drafts.read(sessionId ?? HOME_DRAFT_KEY);
   });
   const status = app.serverStatus;
   const busy = useChatStore(store).status === "busy";
@@ -282,7 +284,7 @@ export function Composer(props: ComposerProps): ReactNode {
   // session's draft, and acknowledge a non-empty restore with the info toast.
   useEffect(() => {
     drafts.flush();
-    const restored = sessionId === undefined ? "" : drafts.read(sessionId);
+    const restored = drafts.read(sessionId ?? HOME_DRAFT_KEY);
     setText(restored);
     if (restored.length > 0) {
       app.pushToast("info", t("composer.draftRestored"));
@@ -356,13 +358,13 @@ export function Composer(props: ComposerProps): ReactNode {
           ...(currentVariant === undefined ? {} : { variant: currentVariant }),
         });
         const ok = await submitPrompt(app.messenger, payload, reportError);
-        if (!ok) {
+        if (ok) {
+          store.markUserSent();
+        } else {
           // The queued path cleared the text up front; a send failure must
           // bring it back so the user's draft is never silently lost.
           setText(promptToSend.text);
           drafts.write(target, promptToSend.text);
-        } else {
-          store.markUserSent();
         }
       })();
     }
@@ -419,6 +421,7 @@ export function Composer(props: ComposerProps): ReactNode {
         store.markUserSent();
         setText("");
         drafts.clear(target);
+        drafts.clear(HOME_DRAFT_KEY);
       }
     })();
   }, [app.messenger, busy, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text, store]);
@@ -431,9 +434,7 @@ export function Composer(props: ComposerProps): ReactNode {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>): void => {
     const next = event.target.value;
     setText(next);
-    if (sessionId !== undefined) {
-      drafts.write(sessionId, next);
-    }
+    drafts.write(sessionId ?? HOME_DRAFT_KEY, next);
   };
 
   // Slash-palette accept clears the consumed "/cmd" text (never sent — the

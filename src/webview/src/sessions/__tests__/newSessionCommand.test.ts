@@ -61,26 +61,20 @@ describe("attachNewSessionCommand", () => {
     expect(NEW_SESSION_COMMAND_EVENT).toBe("command.newSession");
   });
 
-  it("creates AND selects a session through the real store on the command event", async () => {
-    // Given: an attached store whose host answers createSession with an id
-    const loop = makeLoopback({ id: "ses_new" });
+  it("the new-session command routes HOME immediately — no session hits the wire until the first prompt lands", async () => {
+    // Given: an attached store with an already-selected session
+    const loop = makeLoopback({ id: "ses_old" });
     const store = new SessionsStore({ messenger: loop.messenger });
+    store.applySelection("ses_old");
     const detach = attachNewSessionCommand(loop.messenger, store);
-    // And: a completion subscription (never a timed poll)
-    const selected = new Promise<void>((resolve) => {
-      const off = store.subscribe(() => {
-        if (store.getSnapshot().selectedId === "ses_new") {
-          off();
-          resolve();
-        }
-      });
-    });
     // When: the host forwards the new-session command event
     loop.fromHost(commandEvent("command.newSession"));
-    // Then: a createSession request crossed the wire and the reply is selected
-    await selected;
-    expect(loop.requests.map((request) => request.type)).toEqual(["createSession"]);
-    expect(store.getSnapshot().sessions.some((session) => session.id === "ses_new")).toBe(true);
+    await Promise.resolve();
+    // Then: NOTHING crossed the wire — the composer opens as a draft-only
+    // chat; the session gets created only when the first prompt dispatches.
+    expect(loop.requests).toEqual([]);
+    expect(store.getSnapshot().selectedId).toBeNull();
+    expect(store.getSnapshot().sessions).toEqual([]);
     detach();
   });
 
@@ -97,25 +91,4 @@ describe("attachNewSessionCommand", () => {
     detach();
   });
 
-  it("surfaces a createSession failure via the store's error banner state", async () => {
-    // Given: an attached store whose host rejects createSession
-    const loop = makeLoopback(new Error("boom"));
-    const store = new SessionsStore({ messenger: loop.messenger });
-    const detach = attachNewSessionCommand(loop.messenger, store);
-    const failed = new Promise<void>((resolve) => {
-      const off = store.subscribe(() => {
-        if (store.getSnapshot().status === "error") {
-          off();
-          resolve();
-        }
-      });
-    });
-    // When: the command event fires
-    loop.fromHost(commandEvent("command.newSession"));
-    // Then: the store's error state carries the failure; no selection is made
-    await failed;
-    expect(store.getSnapshot().selectedId).toBeNull();
-    expect(store.getSnapshot().errorMessage).toContain("boom");
-    detach();
-  });
 });

@@ -271,7 +271,7 @@ export function Header(): ReactNode {
                   onClick={() => {
                     setSessionsOpen(false);
                     navigate("chat");
-                    getSharedSessionsStore()?.createSession(undefined).catch(() => {});
+                    getSharedSessionsStore()?.select(null);
                   }}
                 >
                   <EditPenIcon />

@@ -4,12 +4,10 @@
  * `opencodePanel.newSession` into the chat webview as a `command.newSession`
  * event (src/extension.ts -> ChatViewProvider.postEvent); until now nothing
  * webview-side consumed it. This seam is the consumer: it routes the event
- * through the REAL sessions store — `SessionsStore.createSession(undefined)`
- * posts the todo-3 `createSession` request and, on the host's reply,
- * optimistically inserts AND selects the new session (sessionActions.create
- * calls `applySelection`, which also forwards todo-13's active-session
- * bridge). Mutation/selection therefore ride the same state machine the
- * panel's own New-Session button uses — never a parallel path.
+ * through the REAL sessions store — `store.select(null)` drops chat back
+ * to the HOME composer WITHOUT creating a session server-side; the session
+ * only comes into being when the first send actually dispatches
+ * (ensureSessionForSend path), matching ChatGPT/Claude's create-on-first-prompt.
  *
  * The `"command.newSession"` literal mirrors src/extension.ts verbatim; the
  * two copies are pinned by tests on the webview side because the host and
@@ -34,8 +32,6 @@ export function attachNewSessionCommand(
 ): () => void {
   return messenger.on("event", (event) => {
     if (event.type !== NEW_SESSION_COMMAND_EVENT) return;
-    void store.createSession(undefined).catch(() => {
-      return undefined;
-    });
+    store.select(null);
   });
 }
