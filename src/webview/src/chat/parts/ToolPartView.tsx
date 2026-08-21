@@ -618,7 +618,7 @@ function isSubagentTool(part: ToolPart): boolean {
   return false;
 }
 
-function extractSubagentInfo(part: ToolPart): {
+function extractSubagentInfo(part: ToolPart, t: (id: StringId) => string): {
   agentName?: string;
   title: string;
   description?: string;
@@ -655,11 +655,11 @@ function extractSubagentInfo(part: ToolPart): {
     } else if (typeof input.command === "string") {
       description = `$ ${input.command}`;
     } else if (typeof input.query === "string") {
-      description = `搜尋: ${input.query}`;
+      description = t("tool.searchQuery").replace("{query}", input.query);
     }
 
     if (!description && taskId) {
-      description = `背景任務 (${taskId})`;
+      description = t("tool.backgroundTask").replace("{taskId}", taskId);
       hint = taskId;
     }
 
@@ -667,7 +667,7 @@ function extractSubagentInfo(part: ToolPart): {
       const firstLine = description.trim().split("\n")[0] ?? "";
       title = firstLine.length > 55 ? firstLine.slice(0, 55) + "..." : firstLine;
     } else if (!title && taskId) {
-      title = `背景任務 (${taskId})`;
+      title = t("tool.backgroundTask").replace("{taskId}", taskId);
     }
   }
 
@@ -680,7 +680,7 @@ function extractSubagentInfo(part: ToolPart): {
   if (typeof part.output === "string" && part.output.trim().length > 0) {
     const lines = part.output.trim().split("\n");
     if (lines.length > 12) {
-      previewOutput = lines.slice(0, 12).join("\n") + `\n... (+${lines.length - 12} 行省略)`;
+      previewOutput = lines.slice(0, 12).join("\n") + "\n" + t("tool.omittedLinesSuffix").replace("{count}", String(lines.length - 12));
     } else {
       previewOutput = part.output;
     }
@@ -689,7 +689,7 @@ function extractSubagentInfo(part: ToolPart): {
       const str = JSON.stringify(part.output, null, 2);
       const lines = str.trim().split("\n");
       if (lines.length > 12) {
-        previewOutput = lines.slice(0, 12).join("\n") + `\n... (+${lines.length - 12} 行省略)`;
+        previewOutput = lines.slice(0, 12).join("\n") + "\n" + t("tool.omittedLinesSuffix").replace("{count}", String(lines.length - 12));
       } else {
         previewOutput = str;
       }
@@ -712,7 +712,8 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
   const isRunning = part.status === "running";
-  const subagentInfo = useMemo(() => extractSubagentInfo(part), [part]);
+  // i18n-allow-literal — code memo key, not display copy
+  const subagentInfo = useMemo(() => extractSubagentInfo(part, t), [part, t]);
   const [isOpen, setIsOpen] = useState(false);
   const [liveSteps, setLiveSteps] = useState<readonly string[]>([]);
   const logBoxRef = useRef<HTMLDivElement>(null);
@@ -784,7 +785,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
           {subagentInfo.agentName ? `[${subagentInfo.agentName}]` : "Subagent"}
         </span>
         <span className="font-normal text-muted-fg/70 shrink-0">
-          {isRunning ? "執行中..." : "調用完成"}
+          {isRunning ? t("subagent.statusRunning") : t("subagent.statusFinished")}
         </span>
         <span className="font-medium text-fg/90 truncate min-w-0 flex-1">
           {subagentInfo.title}
@@ -804,18 +805,18 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
       <div className="border-t border-card-border/40 p-2.5 space-y-2 bg-black/10">
         {subagentInfo.description && subagentInfo.description !== subagentInfo.title ? (
           <div className="rounded-lg bg-card-bg/70 border border-card-border/50 p-2 text-[11px]">
-            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務說明</div>
+            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">{t("subagent.taskDescriptionLabel")}</div>
             <div className="text-fg/90 leading-relaxed break-words">{subagentInfo.description}</div>
           </div>
         ) : null}
 
         <div className="rounded-lg bg-black/40 border border-card-border/60 p-2.5 text-xs">
           <div className="flex items-center justify-between text-[11px] text-muted-fg/85 mb-1.5 gap-2">
-            <span className="font-medium truncate">執行步驟 (Subagent Logs)</span>
+            <span className="font-medium truncate">{t("subagent.logStepsLabel")}</span>
             {isRunning ? (
               <span className="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium whitespace-nowrap shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                即時執行中
+                {t("subagent.liveIndicator")}
               </span>
             ) : null}
           </div>
@@ -825,7 +826,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
           >
             <div className="text-accent/90 break-words flex items-center gap-1.5">
               <span>⚡</span>
-              <span>{subagentInfo.description || `任務: ${subagentInfo.title}`}</span>
+              <span>{subagentInfo.description || t("subagent.fallbackTaskLabel").replace("{title}", subagentInfo.title)}</span>
             </div>
 
             {liveSteps.length > 0 ? (
@@ -837,10 +838,10 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
             ) : isRunning ? (
               <div className="text-muted-fg/70 italic text-[10px] flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
-                <span>子智慧體背景運算中，正在執行任務...</span>
+                <span>{t("subagent.runningInBackground")}</span>
               </div>
             ) : (
-              <div className="text-muted-fg/70 italic text-[10px]">✓ 子智慧體已完成任務。</div>
+              <div className="text-muted-fg/70 italic text-[10px]">{t("subagent.completedNote")}</div>
             )}
           </div>
         </div>
