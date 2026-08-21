@@ -78,33 +78,33 @@ export function QuestionCard(props: QuestionCardProps) {
   const submittable = answers.every((answer) => answer.length > 0);
 
   return (
-    <div className="my-1.5 rounded-2xl border border-accent/50 bg-panel-bg/95 p-3.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/15 text-xs text-fg transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-3">
-      <div className="flex items-start gap-2.5">
+    <div className="my-2 w-full max-w-full mx-auto rounded-2xl border border-accent/50 bg-panel-bg/95 p-3.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/15 text-xs text-fg transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-3 box-border overflow-hidden">
+      <div className="flex items-start gap-2.5 min-w-0 max-w-full">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent shadow-2xs">
           <QuestionIcon />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-sm text-fg tracking-tight">{t("question.title")}</span>
             {expired && (
-              <span className="rounded-full bg-err/10 px-2 py-0.5 text-[10px] font-medium text-err">
+              <span className="rounded-full bg-err/10 px-2 py-0.5 text-[10px] font-medium text-err shrink-0">
                 {t("permission.expired")}
               </span>
             )}
           </div>
 
           {card.questions.map((prompt, index) => (
-            <div key={`${card.requestId}-${index}`} className="mt-2.5 space-y-2">
+            <div key={`${card.requestId}-${index}`} className="mt-2.5 space-y-2 min-w-0 max-w-full">
               {prompt.header !== undefined ? (
-                <span className="inline-block rounded-md bg-hover-bg/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg border border-card-border/60">
+                <span className="inline-block rounded-md bg-hover-bg/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg border border-card-border/60 break-words [overflow-wrap:anywhere]">
                   {prompt.header}
                 </span>
               ) : null}
-              <div className="font-medium text-xs text-fg/95 leading-relaxed">{prompt.question}</div>
+              <div className="font-medium text-xs text-fg/95 leading-relaxed break-words [overflow-wrap:anywhere]">{prompt.question}</div>
 
               {expired ? null : prompt.options.length > 0 ? (
-                <div className="space-y-1.5 pt-0.5">
-                  <div className="grid gap-1.5 sm:grid-cols-2">
+                <div className="space-y-1.5 pt-0.5 w-full min-w-0">
+                  <div className="flex flex-col gap-1.5 w-full min-w-0">
                     {prompt.options.map((option) => {
                       const chosen = (selected[index] ?? []).includes(option.label);
                       return (
@@ -115,7 +115,7 @@ export function QuestionCard(props: QuestionCardProps) {
                           title={option.description ?? option.label}
                           disabled={busy}
                           onClick={() => toggle(index, option.label, prompt.multiple)}
-                          className={`flex items-start gap-2 rounded-xl border p-2.5 text-left transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
+                          className={`flex w-full min-w-0 max-w-full items-start gap-2.5 rounded-xl border p-2.5 text-left transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 box-border ${
                             chosen
                               ? "border-accent bg-accent/10 shadow-xs text-fg ring-1 ring-accent/30"
                               : "border-card-border/80 bg-card-bg/60 text-muted-fg hover:bg-hover-bg hover:text-fg hover:border-card-border"
@@ -132,10 +132,10 @@ export function QuestionCard(props: QuestionCardProps) {
                           >
                             {chosen ? "✓" : null}
                           </span>
-                          <div className="min-w-0 flex-1">
-                            <span className="block font-medium text-xs text-fg">{option.label}</span>
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <span className="block font-medium text-xs text-fg break-words [overflow-wrap:anywhere] leading-snug">{option.label}</span>
                             {option.description !== undefined && option.description !== option.label ? (
-                              <span className="mt-0.5 block text-[11px] text-muted-fg/80 leading-tight">
+                              <span className="mt-1 block text-[11px] text-muted-fg/80 leading-relaxed break-words [overflow-wrap:anywhere]">
                                 {option.description}
                               </span>
                             ) : null}
@@ -144,26 +144,28 @@ export function QuestionCard(props: QuestionCardProps) {
                       );
                     })}
                   </div>
-                  <div className="pt-1">
+                  <div className="pt-1 w-full min-w-0">
                     <input
                       type="text"
                       placeholder={t("question.customPlaceholder")}
                       value={texts[index] ?? ""}
                       disabled={busy}
                       onChange={(event) => setText(index, event.currentTarget.value)}
-                      className="w-full rounded-xl border border-card-border/80 bg-input-card-bg px-3 py-1.5 text-xs text-fg outline-none transition-colors placeholder:text-muted-fg/50 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30 disabled:opacity-50"
+                      className="w-full min-w-0 max-w-full box-border rounded-xl border border-card-border/80 bg-input-card-bg px-3 py-1.5 text-xs text-fg outline-none transition-colors placeholder:text-muted-fg/50 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30 disabled:opacity-50"
                     />
                   </div>
                 </div>
               ) : (
-                <input
-                  type="text"
-                  placeholder={t("question.answerPlaceholder")}
-                  value={texts[index] ?? ""}
-                  disabled={busy}
-                  onChange={(event) => setText(index, event.currentTarget.value)}
-                  className="w-full rounded-xl border border-card-border/80 bg-input-card-bg px-3 py-2 text-xs text-fg outline-none transition-colors placeholder:text-muted-fg/50 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30 disabled:opacity-50"
-                />
+                <div className="w-full min-w-0">
+                  <input
+                    type="text"
+                    placeholder={t("question.answerPlaceholder")}
+                    value={texts[index] ?? ""}
+                    disabled={busy}
+                    onChange={(event) => setText(index, event.currentTarget.value)}
+                    className="w-full min-w-0 max-w-full box-border rounded-xl border border-card-border/80 bg-input-card-bg px-3 py-2 text-xs text-fg outline-none transition-colors placeholder:text-muted-fg/50 focus:border-focus-ring focus:ring-1 focus:ring-focus-ring/30 disabled:opacity-50"
+                  />
+                </div>
               )}
             </div>
           ))}

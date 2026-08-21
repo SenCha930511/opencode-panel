@@ -69,7 +69,7 @@ function ProductionChatSection(props: {
   const app = useApp();
   const { t } = useStrings();
   const flags = useCapabilityFlags();
-  const pickers = useComposerPickers();
+  const pickers = useComposerPickers(props.store);
   const attachments = useAttachments();
   return (
     <>

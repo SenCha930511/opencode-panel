@@ -19,7 +19,8 @@
  * in pickers/logic.ts).
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { isRecord } from "../../../../shared/protocol.js";
 import { useStrings } from "../../../lib/i18n.js";
 import { useApp } from "../../app/context.js";
 import { useActiveSession } from "../activeSession.js";
@@ -28,10 +29,67 @@ import {
   setModelSelection,
   usePickerSelection,
 } from "../composerState.js";
+import { useChatStore } from "../MessageList.js";
+import type { MessageVM } from "../types.js";
 import type { AgentEntry, ProviderEntry } from "./constants.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
 import { agentRows, isCustomAgent, resolveInitialModel } from "./logic.js";
 import { PickerDropdown, type PickerGroup, type PickerRow } from "./PickerDropdown.js";
+
+export function extractSessionAgentAndModel(
+  messages: readonly MessageVM[] | undefined,
+): { agent?: string; model?: string } {
+  if (!messages || messages.length === 0) return {};
+  let agent: string | undefined;
+  let model: string | undefined;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (!msg || !msg.info) continue;
+    const info = msg.info;
+
+    if (!agent) {
+      if (typeof info.agent === "string" && info.agent.length > 0) {
+        agent = info.agent;
+      } else if (typeof info.agentID === "string" && info.agentID.length > 0) {
+        agent = info.agentID;
+      } else if (typeof info.mode === "string" && info.mode.length > 0) {
+        agent = info.mode;
+      }
+    }
+
+    if (!model) {
+      if (typeof info.model === "string" && info.model.length > 0) {
+        model = info.model;
+      } else if (isRecord(info.model)) {
+        const prov =
+          typeof info.model.providerID === "string"
+            ? info.model.providerID
+            : typeof info.model.provider === "string"
+              ? info.model.provider
+              : "";
+        const mid =
+          typeof info.model.modelID === "string"
+            ? info.model.modelID
+            : typeof info.model.model === "string"
+              ? info.model.model
+              : typeof info.model.id === "string"
+                ? info.model.id
+                : "";
+        if (prov && mid) model = `${prov}/${mid}`;
+        else if (mid) model = mid;
+      } else if (typeof info.providerID === "string" && typeof info.modelID === "string") {
+        model = `${info.providerID}/${info.modelID}`;
+      } else if (typeof info.modelID === "string" && info.modelID.length > 0) {
+        model = info.modelID;
+      }
+    }
+
+    if (agent && model) break;
+  }
+
+  return { agent, model };
+}
 
 // ---------------------------------------------------------------------------
 // Agent dropdown (hides entirely on an empty agent list — QA rule).
@@ -190,24 +248,32 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
 }
 
 // ---------------------------------------------------------------------------
-// The T14 mount point: both pickers over the live stores.
+export interface ChatPickersProps {
+  readonly store?: MessageStore;
+}
 
-export function ChatPickers(): ReactNode {
+export function ChatPickers(props?: ChatPickersProps): ReactNode {
   const app = useApp();
   const sessionId = useActiveSession();
   const snapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
+  const chatState = props?.store ? useChatStore(props.store) : undefined;
 
   useEffect(() => {
     attachCapabilityStore(app.messenger);
   }, [app.messenger]);
+
+  const sessionDefaults = useMemo(
+    () => extractSessionAgentAndModel(chatState?.messages),
+    [chatState?.messages],
+  );
 
   if (snapshot === undefined) return null;
   const showAgent = snapshot.agents.length > 0;
   const showModel = snapshot.providers.some((provider) => provider.models.length > 0);
   if (!showAgent && !showModel) return null;
 
-  const activeAgent = selection.agent;
+  const activeAgent = selection.agent ?? sessionDefaults.agent;
   const currentAgentEntry = snapshot.agents.find((a) => a.name === activeAgent);
   const isLockedAgent = currentAgentEntry?.model !== undefined && currentAgentEntry.model.length > 0;
   const lockedModelId = currentAgentEntry?.model;
@@ -215,6 +281,7 @@ export function ChatPickers(): ReactNode {
   const modelValue =
     (isLockedAgent ? lockedModelId : undefined) ??
     selection.model ??
+    sessionDefaults.model ??
     resolveInitialModel({
       providers: snapshot.providers,
       defaultModels: snapshot.defaultModels,
@@ -227,7 +294,7 @@ export function ChatPickers(): ReactNode {
     <div data-oc="chat-pickers" className="flex items-center gap-1 min-w-0 flex-1 overflow-visible">
       <AgentPicker
         agents={snapshot.agents}
-        {...(selection.agent === undefined ? {} : { value: selection.agent })}
+        {...(activeAgent === undefined ? {} : { value: activeAgent })}
         onPick={(name) => {
           setAgentSelection(sessionId ?? "", name);
           const pickedAgent = snapshot.agents.find((a) => a.name === name);

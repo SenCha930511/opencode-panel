@@ -202,6 +202,29 @@ export function MessageList(props: MessageListProps) {
     return () => clearTimeout(timer);
   }, [state.messages, store]);
 
+  // Real-time stream follow: during active generation (busy or inFlight) or whenever
+  // parts change (tool calls Ran..., reasoning 思考中, text deltas),
+  // if the list is pinned, instantly pin to the bottom on every chunk/part
+  // so tool cards and reasoning outputs never lag behind or get cut off.
+  const lastMsg = state.messages[state.messages.length - 1];
+  const lastPartsCount = lastMsg?.parts.length ?? 0;
+  const lastPart = lastMsg?.parts[lastPartsCount - 1];
+  const lastPartSignature = lastPart
+    ? `${lastPart.id}_${lastPart.kind}_${"status" in lastPart ? (lastPart as any).status : ""}_${"text" in lastPart ? (lastPart as any).text.length : ""}`
+    : "";
+
+  useEffect(() => {
+    if (!park.current.isPinned) return;
+    const isBusy = state.status === "busy" || lastMsg?.inFlight === true;
+    if (isBusy) {
+      virtuosoRef.current?.scrollToIndex({
+        index: state.messages.length - 1,
+        align: "end",
+        behavior: "auto",
+      });
+    }
+  }, [state.messages.length, lastPartsCount, lastPartSignature, state.status, lastMsg?.inFlight]);
+
   const body =
     state.messages.length === 0 ? (
       <WelcomeHero emptyLabel={t("messages.empty")} />
@@ -212,8 +235,13 @@ export function MessageList(props: MessageListProps) {
         className="h-full"
         // Mount anchored at the bottom: opening view shows the latest conversation
         initialTopMostItemIndex={state.messages.length > 0 ? state.messages.length - 1 : 0}
-        atBottomThreshold={80}
-        followOutput={park.current.followFor}
+        atBottomThreshold={120}
+        increaseViewportBy={{ top: 200, bottom: 200 }}
+        followOutput={(isAtBottom: boolean) => {
+          if (!park.current.isPinned) return false;
+          const isStreaming = state.status === "busy" || lastMsg?.inFlight === true;
+          return isStreaming ? "auto" : park.current.followFor(isAtBottom);
+        }}
         atBottomStateChange={(isBottom: boolean) => {
           park.current.onAtBottomChange(isBottom);
           setAtBottom(isBottom);

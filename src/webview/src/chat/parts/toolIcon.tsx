@@ -5,10 +5,11 @@
  * heuristic picks an icon family; it never gates behavior.
  */
 
-export type ToolIconKind = "terminal" | "search" | "edit" | "read" | "tool";
+export type ToolIconKind = "terminal" | "search" | "edit" | "read" | "subagent" | "tool";
 
 export function toolIconKind(tool: string): ToolIconKind {
   const name = tool.toLowerCase();
+  if (/(subagent|task|explore|delegate|worker|team|agent)/.test(name)) return "subagent";
   if (/(bash|shell|cmd|command|terminal|exec)/.test(name)) return "terminal";
   if (/(search|grep|find|query|lookup|scan|glob)/.test(name)) return "search";
   if (/(edit|write|patch|replace|insert|delete|remove|rename|move|create)/.test(name)) return "edit";
@@ -34,6 +35,15 @@ function Svg(props: { readonly children: React.ReactNode }) {
 
 export function ToolIcon(props: { readonly kind: ToolIconKind }) {
   switch (props.kind) {
+    case "subagent":
+      return (
+        <Svg>
+          <rect x="2" y="4" width="12" height="9" rx="2" {...STROKE_PROPS} />
+          <circle cx="5.5" cy="8.5" r="1" fill="currentColor" />
+          <circle cx="10.5" cy="8.5" r="1" fill="currentColor" />
+          <path d="M8 1.5v2.5M5 13v1.5M11 13v1.5" {...STROKE_PROPS} />
+        </Svg>
+      );
     case "terminal":
       return (
         <Svg>

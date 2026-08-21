@@ -85,6 +85,7 @@ import { queryAndSyncSessionAuto, requestSessionAuto } from "./sessionArming.js"
 import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
 import { usePickerSelection } from "./composerState.js";
 import { resolveInitialModel } from "./pickers/logic.js";
+import { extractSessionAgentAndModel } from "./pickers/ChatPickers.js";
 
 const HOME_DRAFT_KEY = "__home__";
 
@@ -205,6 +206,7 @@ export function Composer(props: ComposerProps): ReactNode {
   const activeSessionId = useActiveSession();
   const sessionId = props.sessionId ?? activeSessionId;
   const store = useMemo(() => (props.store ?? new MessageStore()), [props.store]);
+  const chatState = useChatStore(store);
   const drafts = useMemo(() => (props.drafts ?? createWebviewDraftStore()), [props.drafts]);
   const chips = props.attachments ?? [];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -222,17 +224,28 @@ export function Composer(props: ComposerProps): ReactNode {
 
   const pickersSnapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
+  const sessionDefaults = useMemo(
+    () => extractSessionAgentAndModel(chatState.messages),
+    [chatState.messages],
+  );
+
+  const activeAgent = selection.agent ?? sessionDefaults.agent ?? props.agent;
+  const activeAgentEntry = pickersSnapshot?.agents.find((a) => a.name === activeAgent);
+
   const activeModelId = useMemo(() => {
     if (!pickersSnapshot) return undefined;
+    if (activeAgentEntry?.model) return activeAgentEntry.model;
     return (
       selection.model ??
+      sessionDefaults.model ??
+      props.model ??
       resolveInitialModel({
         providers: pickersSnapshot.providers,
         defaultModels: pickersSnapshot.defaultModels,
         ...(pickersSnapshot.defaultModel === undefined ? {} : { defaultModel: pickersSnapshot.defaultModel }),
       })
     );
-  }, [selection.model, pickersSnapshot]);
+  }, [selection.model, sessionDefaults.model, props.model, activeAgentEntry, pickersSnapshot]);
 
   const selectedModelEntry = useMemo(() => {
     if (!activeModelId || !pickersSnapshot) return undefined;
@@ -403,8 +416,8 @@ export function Composer(props: ComposerProps): ReactNode {
     if (!canSend) return;
     const effectiveText = expandMentionPaths(text);
 
-    const effectiveAgent = selection.agent ?? props.agent;
-    const effectiveModel = selection.model ?? props.model ?? activeModelId;
+    const effectiveAgent = selection.agent ?? sessionDefaults.agent ?? props.agent;
+    const effectiveModel = selection.model ?? sessionDefaults.model ?? props.model ?? activeModelId;
 
     // If model is currently outputting, queue the prompt to send once ready
     if (busy) {

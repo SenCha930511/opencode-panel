@@ -117,6 +117,15 @@ function verbForTool(tool: string): string {
   ) {
     return "Ran";
   }
+  if (
+    lower.includes("subagent") ||
+    lower.includes("delegate") ||
+    lower.includes("worker") ||
+    lower === "task" ||
+    lower === "explore"
+  ) {
+    return "Subagent";
+  }
   return tool;
 }
 
@@ -587,6 +596,164 @@ function StandardToolDetails(props: { readonly part: ToolPart }) {
   );
 }
 
+function isSubagentTool(part: ToolPart): boolean {
+  const name = part.tool.toLowerCase();
+  if (
+    name === "task" ||
+    name === "subagent" ||
+    name === "explore" ||
+    name === "invoke_subagent" ||
+    name === "call_subagent" ||
+    name === "delegate" ||
+    name === "background_task" ||
+    name.startsWith("agent_") ||
+    name.startsWith("team_") ||
+    name.includes("subagent")
+  ) {
+    return true;
+  }
+  if (isRecord(part.input)) {
+    const input = part.input as Record<string, unknown>;
+    if (typeof input.subagent === "string" || typeof input.agent === "string") return true;
+    if (typeof input.task === "string" || typeof input.task_name === "string" || typeof input.task_id === "string") {
+      return true;
+    }
+  }
+  return false;
+}
+
+function extractSubagentInfo(part: ToolPart): {
+  agentName?: string;
+  title: string;
+  description?: string;
+  previewOutput: string;
+} {
+  let agentName: string | undefined;
+  let title = part.title ?? part.tool;
+  let description: string | undefined;
+
+  if (isRecord(part.input)) {
+    const input = part.input as Record<string, unknown>;
+    if (typeof input.agent === "string") agentName = input.agent;
+    else if (typeof input.subagent === "string") agentName = input.subagent;
+    else if (typeof input.task_name === "string") agentName = input.task_name;
+
+    if (typeof input.description === "string") description = input.description;
+    else if (typeof input.prompt === "string") description = input.prompt;
+    else if (typeof input.task === "string") description = input.task;
+    else if (typeof input.instruction === "string") description = input.instruction;
+
+    if (description) {
+      const firstLine = description.trim().split("\n")[0] ?? "";
+      title = firstLine.length > 55 ? firstLine.slice(0, 55) + "..." : firstLine;
+    }
+  }
+
+  // Format preview output to not be too long (capped at ~12 lines)
+  let previewOutput = "";
+  if (typeof part.output === "string") {
+    const lines = part.output.trim().split("\n");
+    if (lines.length > 12) {
+      previewOutput = lines.slice(0, 12).join("\n") + `\n... (+${lines.length - 12} 行省略)`;
+    } else {
+      previewOutput = part.output;
+    }
+  } else if (part.output !== undefined && part.output !== null) {
+    try {
+      const str = JSON.stringify(part.output, null, 2);
+      const lines = str.trim().split("\n");
+      if (lines.length > 12) {
+        previewOutput = lines.slice(0, 12).join("\n") + `\n... (+${lines.length - 12} 行省略)`;
+      } else {
+        previewOutput = str;
+      }
+    } catch {
+      previewOutput = String(part.output);
+    }
+  }
+
+  return { agentName, title, description, previewOutput };
+}
+
+function SubagentToolCard(props: { readonly part: ToolPart }) {
+  const { t } = useStrings();
+  const { part } = props;
+  const isRunning = part.status === "running";
+  const subagentInfo = useMemo(() => extractSubagentInfo(part), [part]);
+
+  return (
+    <details
+      className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-1"
+      onToggle={(e) => {
+        if (e.currentTarget.open) {
+          const el = e.currentTarget;
+          setTimeout(() => {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 50);
+        }
+      }}
+    >
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-fg hover:bg-accent/10 transition-colors font-medium">
+        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
+          ▶
+        </span>
+        <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded bg-accent/20 text-accent">
+          <ToolIcon kind="subagent" />
+        </span>
+        <span className="font-semibold text-xs text-accent truncate shrink-0">
+          {subagentInfo.agentName ? `[${subagentInfo.agentName}]` : "Subagent"}
+        </span>
+        <span className="font-normal text-muted-fg/70 shrink-0">
+          {isRunning ? "執行中..." : "調用完成"}
+        </span>
+        <span className="font-medium text-fg/90 truncate min-w-0 flex-1">
+          {subagentInfo.title}
+        </span>
+        {isRunning ? (
+          <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0 ml-1" />
+        ) : (
+          <span
+            aria-label={t(STATUS_LABEL[part.status])}
+            title={t(STATUS_LABEL[part.status])}
+            className={`shrink-0 ml-1 text-[11px] font-semibold leading-none ${STATUS_CLASS[part.status]}`}
+          >
+            {STATUS_GLYPH[part.status] ?? t(STATUS_LABEL[part.status])}
+          </span>
+        )}
+      </summary>
+      <div className="border-t border-card-border/40 p-2.5 space-y-2 bg-black/10">
+        {subagentInfo.description ? (
+          <div className="rounded-lg bg-card-bg/70 border border-card-border/50 p-2 text-[11px]">
+            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務說明</div>
+            <div className="text-fg/90 leading-relaxed break-words">{subagentInfo.description}</div>
+          </div>
+        ) : null}
+
+        {subagentInfo.previewOutput ? (
+          <div className="rounded-lg bg-black/25 border border-card-border/50 p-2 text-[11px]">
+            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-1">
+              執行輸出預覽
+            </div>
+            <div className="max-h-40 overflow-y-auto font-mono text-[11px] text-fg/85 whitespace-pre-wrap leading-relaxed">
+              {subagentInfo.previewOutput}
+            </div>
+          </div>
+        ) : isRunning ? (
+          <div className="text-[11px] text-muted-fg italic px-1 py-0.5">
+            ⏳ 子智慧體正在背景並行執行中...
+          </div>
+        ) : null}
+
+        {part.error !== undefined ? (
+          <pre className="overflow-x-auto rounded-lg border border-err/30 bg-err/10 p-2 font-mono text-[11px] text-err">
+            {part.error}
+          </pre>
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
 export function GenericToolCard(props: { readonly part: ToolPart }) {
   const { part } = props;
 
@@ -606,6 +773,10 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
 
   if (isPermissionTool) {
     return <PermissionToolCard part={part} />;
+  }
+
+  if (isSubagentTool(part)) {
+    return <SubagentToolCard part={part} />;
   }
 
   return <StandardToolDetails part={part} />;
