@@ -95,6 +95,7 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
     const sessionId = props.sessionId;
     if (sessionId === undefined) return;
     const clipboard = props.clipboard ?? {
+      // i18n-allow-literal — clipboard handler, not display copy
       writeText: (text: string) => navigator.clipboard.writeText(text),
     };
     void copyShareLink(app.messenger, sessionId, clipboard).then((outcome) => {
@@ -127,7 +128,7 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
         >
           <CompressIcon />
           <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-medium opacity-0 transition-all duration-200 ease-out group-hover:max-w-xs group-hover:opacity-100">
-            壓縮
+            {t("sessions.compress")}
           </span>
         </button>
       ) : null}

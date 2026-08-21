@@ -53,6 +53,7 @@ export function MessageView(props: {
   const isSystemReminder =
     isUser &&
     message.parts.length > 0 &&
+    // i18n-allow-literal — message-part filters, not display copy
     message.parts.every((p) => p.kind === "text" && isSystemReminderText(p.text));
 
   const orderedParts = isUser

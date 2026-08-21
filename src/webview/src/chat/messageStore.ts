@@ -307,6 +307,7 @@ export class MessageStore {
     const id = stringOr(info.id);
     const sessionId = stringOr(info.sessionID);
     if (id === undefined || !this.targetsSession(sessionId)) return;
+    // i18n-allow-literal — id lookup loop, not display copy
     const at = this.messages.findIndex((message) => message.id === id);
     const current = this.messages[at];
     if (at !== -1 && current !== undefined) {
@@ -332,6 +333,7 @@ export class MessageStore {
     // Same "uncreated = newest" contract as the delta-sync sort (sweep A2).
     const b = createdMs(info) ?? Number.POSITIVE_INFINITY;
     const insertAt = this.messages.findIndex((message) => {
+      // i18n-allow-literal — comparator logic, not display copy
       const a = createdMs(message.info) ?? Number.POSITIVE_INFINITY;
       return a > b;
     });

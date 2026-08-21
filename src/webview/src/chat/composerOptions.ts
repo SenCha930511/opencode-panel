@@ -87,6 +87,7 @@ export function setModelEffort(modelId: string, effortValue: string): void {
 export function useModelEffort(modelId?: string, defaultEffort?: string): string {
   return useSyncExternalStore(
     subscribeComposerOptions,
+    // i18n-allow-literal — subscription getters, not display copy
     () => getModelEffort(modelId, defaultEffort),
     () => getModelEffort(modelId, defaultEffort),
   );
@@ -139,6 +140,7 @@ export function setSessionAutoMode(sessionId: string | undefined, enabled: boole
 export function useSessionAutoMode(sessionId?: string): boolean {
   return useSyncExternalStore(
     subscribeComposerOptions,
+    // i18n-allow-literal — subscription getters, not display copy
     () => getSessionAutoMode(sessionId),
     () => getSessionAutoMode(sessionId),
   );
