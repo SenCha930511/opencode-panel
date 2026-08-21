@@ -107,6 +107,7 @@ export interface FromWebviewProtocol {
   readonly listSessions: Record<string, never>;
   readonly getCapabilities: Record<string, never>;
   readonly setSessionAuto: { readonly sessionId: string; readonly enabled: boolean };
+  readonly getSessionAuto: { readonly sessionId: string };
   readonly openSettingsTab: Record<string, never>;
   readonly closeSettingsTab: Record<string, never>;
 }
@@ -142,6 +143,7 @@ export interface FromWebviewResponse {
   /** The capabilities.refresh payload, or null when nothing is connected/readable. */
   readonly getCapabilities: CapabilitiesRefreshPayload | null;
   readonly setSessionAuto: null;
+  readonly getSessionAuto: { readonly auto: boolean };
   readonly openSettingsTab: null;
   readonly closeSettingsTab: null;
 }
@@ -284,6 +286,7 @@ export const FROM_WEBVIEW_MESSAGE_TYPES = [
   "listSessions",
   "getCapabilities",
   "setSessionAuto",
+  "getSessionAuto",
   "openSettingsTab",
   "closeSettingsTab",
 ] as const;

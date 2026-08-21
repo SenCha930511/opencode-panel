@@ -41,7 +41,7 @@ import {
   pendingCountOtherSessions,
 } from "./pendingRequests.js";
 import { QuestionCard } from "./QuestionCard.js";
-import { useAutoMode } from "../composerOptions.js";
+import { useSessionAutoMode } from "../composerOptions.js";
 import { ensureAutoArmed } from "../sessionArming.js";
 
 export interface ChatCardsDockProps {
@@ -99,7 +99,7 @@ export function ChatCardsDock(props: ChatCardsDockProps) {
   );
   const cards = cardsForSession(state, activeSession);
   const othersCount = pendingCountOtherSessions(state, activeSession);
-  const autoMode = useAutoMode();
+  const autoMode = useSessionAutoMode(activeSession);
 
   useEffect(() => {
     ensureAutoArmed(activeSession, autoMode);

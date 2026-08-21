@@ -20,7 +20,7 @@
 
 import type { WebviewMessenger } from "../../lib/messenger.js";
 import { getWebviewMessenger } from "../../lib/messenger.js";
-import { getAutoMode } from "./composerOptions.js";
+import { getAutoMode, updateSessionAutoCache } from "./composerOptions.js";
 
 const ARMED_KEY = "opencode.composer.autoArmedSessions";
 
@@ -68,7 +68,30 @@ async function patchSessionRuleset(
   }
 }
 
+/** Query the server for this session's auto state and update the cache. */
+export async function queryAndSyncSessionAuto(
+  sessionId: string,
+  messenger?: WebviewMessenger,
+): Promise<boolean> {
+  const wire = messengerOrLazy(messenger);
+  try {
+    const res = await wire.request("getSessionAuto", { sessionId });
+    if (res && typeof res.auto === "boolean") {
+      updateSessionAutoCache(sessionId, res.auto);
+      if (res.auto) {
+        armedSessions.add(sessionId);
+        persistArmedSessions();
+      }
+      return res.auto;
+    }
+  } catch {
+    // Ignore query failure
+  }
+  return false;
+}
+
 async function armSession(messenger: WebviewMessenger, sessionId: string): Promise<void> {
+  updateSessionAutoCache(sessionId, true);
   if (armedSessions.has(sessionId)) return;
   const ok = await patchSessionRuleset(messenger, sessionId, true);
   if (ok) {
@@ -78,6 +101,7 @@ async function armSession(messenger: WebviewMessenger, sessionId: string): Promi
 }
 
 async function disarmSession(messenger: WebviewMessenger, sessionId: string): Promise<void> {
+  updateSessionAutoCache(sessionId, false);
   if (!armedSessions.has(sessionId)) return;
   const ok = await patchSessionRuleset(messenger, sessionId, false);
   if (ok) {
@@ -107,14 +131,25 @@ export function ensureAutoArmed(
   autoOn: boolean,
   messenger?: WebviewMessenger,
 ): void {
+  if (activeSession === undefined) return;
   const wire = messengerOrLazy(messenger);
   if (autoOn) {
-    if (activeSession === undefined) return;
     void armSession(wire, activeSession);
     return;
   }
-  for (const sessionId of [...armedSessions]) {
-    void disarmSession(wire, sessionId);
+  void disarmSession(wire, activeSession);
+}
+
+export async function requestSessionAuto(
+  messenger: WebviewMessenger,
+  sessionId: string,
+  enabled: boolean,
+): Promise<void> {
+  const wire = messengerOrLazy(messenger);
+  if (enabled) {
+    await armSession(wire, sessionId);
+  } else {
+    await disarmSession(wire, sessionId);
   }
 }
 

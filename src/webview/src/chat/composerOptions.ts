@@ -113,6 +113,37 @@ export function getAutoMode(): boolean {
   return currentAutoMode;
 }
 
+const sessionAutoCache = new Map<string, boolean>();
+
+export function getSessionAutoMode(sessionId?: string): boolean {
+  if (sessionId && sessionAutoCache.has(sessionId)) {
+    return sessionAutoCache.get(sessionId)!;
+  }
+  return currentAutoMode;
+}
+
+export function updateSessionAutoCache(sessionId: string, enabled: boolean): void {
+  if (sessionAutoCache.get(sessionId) === enabled) return;
+  sessionAutoCache.set(sessionId, enabled);
+  notify();
+}
+
+export function setSessionAutoMode(sessionId: string | undefined, enabled: boolean): void {
+  if (sessionId) {
+    sessionAutoCache.set(sessionId, enabled);
+  }
+  setAutoMode(enabled);
+  notify();
+}
+
+export function useSessionAutoMode(sessionId?: string): boolean {
+  return useSyncExternalStore(
+    subscribeComposerOptions,
+    () => getSessionAutoMode(sessionId),
+    () => getSessionAutoMode(sessionId),
+  );
+}
+
 export function setAutoMode(enabled: boolean): void {
   if (currentAutoMode === enabled) return;
   currentAutoMode = enabled;

@@ -77,9 +77,10 @@ import {
   setModelEffort,
   useEffort,
   setEffort,
-  useAutoMode,
-  setAutoMode,
+  useSessionAutoMode,
+  setSessionAutoMode,
 } from "./composerOptions.js";
+import { queryAndSyncSessionAuto, requestSessionAuto } from "./sessionArming.js";
 import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
 import { usePickerSelection } from "./composerState.js";
 import { resolveInitialModel } from "./pickers/logic.js";
@@ -215,7 +216,14 @@ export function Composer(props: ComposerProps): ReactNode {
   // textarea consults it before its own Enter-send handling.
   const slashKeyRef = useRef<SlashKeyHandler | null>(null);
 
-  const autoMode = useAutoMode();
+  const autoMode = useSessionAutoMode(sessionId);
+
+  useEffect(() => {
+    if (sessionId) {
+      void queryAndSyncSessionAuto(sessionId, app.messenger);
+    }
+  }, [sessionId, app.messenger]);
+
   const pickersSnapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
   const activeModelId = useMemo(() => {
@@ -353,7 +361,13 @@ export function Composer(props: ComposerProps): ReactNode {
           ...(promptToSend.model === undefined ? {} : { model: promptToSend.model }),
           ...(currentVariant === undefined ? {} : { variant: currentVariant }),
         });
-        await submitPrompt(app.messenger, payload, reportError);
+        const ok = await submitPrompt(app.messenger, payload, reportError);
+        if (!ok) {
+          // The queued path cleared the text up front; a send failure must
+          // bring it back so the user's draft is never silently lost.
+          setText(promptToSend.text);
+          drafts.write(target, promptToSend.text);
+        }
       })();
     }
   }, [busy, queuedPrompt, inputDisabled, sessionId, app.messenger, reportError]);
@@ -545,7 +559,13 @@ export function Composer(props: ComposerProps): ReactNode {
                   {/* Section: Auto Mode */}
                   <DropdownMenu.Item
                     className="flex items-center justify-between gap-4 rounded-lg px-2.5 py-1.5 text-xs cursor-pointer outline-none transition-colors hover:bg-hover-bg text-fg select-none"
-                    onSelect={() => setAutoMode(!autoMode)}
+                    onSelect={() => {
+                      const next = !autoMode;
+                      setSessionAutoMode(sessionId, next);
+                      if (sessionId) {
+                        void requestSessionAuto(app.messenger, sessionId, next);
+                      }
+                    }}
                   >
                     <span className="flex items-center gap-2">
                       <span className={autoMode ? "text-emerald-400" : "text-muted-fg"}><LightningIcon /></span>

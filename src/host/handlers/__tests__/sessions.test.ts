@@ -30,6 +30,7 @@ import {
 import { startMockServer, type MockServer } from "../../../test/mock-server/index.js";
 import {
   createSessionService,
+  isSessionAutoArmed,
   registerSessionHandlers,
   staticSessionSource,
   type SessionClientSource,
@@ -507,3 +508,73 @@ describe("setSessionAuto service (raw PATCH ruleset)", () => {
     }
   });
 });
+
+describe("isSessionAutoArmed helper", () => {
+  it("returns false for invalid or empty data", () => {
+    expect(isSessionAutoArmed(null)).toBe(false);
+    expect(isSessionAutoArmed({})).toBe(false);
+    expect(isSessionAutoArmed({ permission: [] })).toBe(false);
+  });
+
+  it("detects wildcard allow as true", () => {
+    expect(
+      isSessionAutoArmed({
+        permission: [{ permission: "*", pattern: "*", action: "allow" }],
+      }),
+    ).toBe(true);
+  });
+
+  it("detects wildcard ask as false", () => {
+    expect(
+      isSessionAutoArmed({
+        permission: [{ permission: "*", pattern: "*", action: "ask" }],
+      }),
+    ).toBe(false);
+  });
+
+  it("uses the latest wildcard rule (last-match-wins)", () => {
+    expect(
+      isSessionAutoArmed({
+        permission: [
+          { permission: "*", pattern: "*", action: "allow" },
+          { permission: "*", pattern: "*", action: "ask" },
+        ],
+      }),
+    ).toBe(false);
+
+    expect(
+      isSessionAutoArmed({
+        permission: [
+          { permission: "*", pattern: "*", action: "ask" },
+          { permission: "*", pattern: "*", action: "allow" },
+        ],
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("getSessionAuto service", () => {
+  it("returns true when server returns allow rules", async () => {
+    const fetchImpl: ProbeFetch = () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            id: "ses_auto",
+            permission: [{ permission: "*", pattern: "*", action: "allow" }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+    const service = scriptedService(fetchImpl);
+    const result = await service.getSessionAuto("ses_auto");
+    expect(result).toBe(true);
+  });
+
+  it("returns false on 404 or network errors", async () => {
+    const fetchImpl: ProbeFetch = () => Promise.resolve(new Response("not found", { status: 404 }));
+    const service = scriptedService(fetchImpl);
+    const result = await service.getSessionAuto("ses_missing");
+    expect(result).toBe(false);
+  });
+});
+

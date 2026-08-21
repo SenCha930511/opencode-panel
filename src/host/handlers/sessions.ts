@@ -85,7 +85,8 @@ export type SessionOperation =
   | "share"
   | "unshare"
   | "fork"
-  | "setSessionAuto";
+  | "setSessionAuto"
+  | "getSessionAuto";
 
 /** One failed session-domain server call, carries no credentials. */
 export class SessionOperationError extends Error {
@@ -185,6 +186,34 @@ export interface SessionService {
    * `SessionUpdateData.body` type hides `permission`, hence raw).
    */
   setSessionAuto(id: string, enabled: boolean): Promise<void>;
+  /**
+   * Query the session-level permission wildcard rule to detect whether auto mode
+   * is currently armed for this session on the server.
+   */
+  getSessionAuto(id: string): Promise<boolean>;
+}
+
+export function isSessionAutoArmed(sessionData: unknown): boolean {
+  if (typeof sessionData !== "object" || sessionData === null) return false;
+  const data = sessionData as Record<string, unknown>;
+  const rules = Array.isArray(data.permission)
+    ? data.permission
+    : Array.isArray(data.permissions)
+      ? data.permissions
+      : undefined;
+  if (!rules || rules.length === 0) return false;
+
+  // Rules are evaluated in order; the latest wildcard/general match dictates auto state.
+  for (let i = rules.length - 1; i >= 0; i--) {
+    const rule = rules[i];
+    if (typeof rule === "object" && rule !== null) {
+      const r = rule as Record<string, unknown>;
+      if (r.permission === "*" || r.permission === "all" || !r.permission) {
+        return r.action === "allow";
+      }
+    }
+  }
+  return false;
 }
 
 export function isSubagentSession(session: { title?: string; parentID?: string }): boolean {
@@ -258,17 +287,21 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
         const url = session.share?.url;
         if (url === undefined) {
           // A 200 share reply without share.url is a server contract violation;
-          // surface it honestly rather than handing the UI an empty link.
-          throw new SessionOperationError("share", "server reply carried no share url", undefined);
+          // fall through to the recovery lookup before failing hard.
+          const recovered = await existingShareUrl(deps, id);
+          if (recovered !== undefined) return { url: recovered };
+          throw new SessionOperationError(
+            "share",
+            "server returned 200 share response without share.url",
+            200,
+          );
         }
         return { url };
       } catch (error) {
-        // The server 500s when the session is ALREADY shared (verified live).
-        // Sharing is idempotent in spirit: an existing link IS the answer.
-        if (error instanceof SessionOperationError) {
-          const existing = await existingShareUrl(deps, id);
-          if (existing !== undefined) return { url: existing };
-        }
+        // Idempotency: if already shared, opencode returns a 500 whose body is
+        // generic; fetch the existing share URL so a double-click resolves cleanly.
+        const recovered = await existingShareUrl(deps, id);
+        if (recovered !== undefined) return { url: recovered };
         throw error;
       }
     },
@@ -307,6 +340,26 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
         throw new SessionOperationError("setSessionAuto", detail, response.status);
       }
     },
+
+    async getSessionAuto(id) {
+      try {
+        const connection = await deps.source.connect();
+        const response = await connection.probeFetch(
+          new Request(`${connection.baseUrl}/session/${encodeURIComponent(id)}`, {
+            method: "GET",
+            headers: { "content-type": "application/json" },
+          }),
+        );
+        if (!response.ok) return false;
+        const data: unknown = await response.json();
+        return isSessionAutoArmed(data);
+      } catch (error) {
+        deps.logger.warn(
+          `sessions domain: getSessionAuto failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return false;
+      }
+    },
   };
 }
 
@@ -325,7 +378,7 @@ export interface SessionsDomainDeps {
 }
 
 /**
- * Register the six session-domain message handlers. Each mutating op awaits a
+ * Register the session-domain message handlers. Each mutating op awaits a
  * sync refresh so every view gets the fresh list broadcast before the reply;
  * a server failure throws, which the todo-3 messenger converts into an error
  * reply (webview: toast + optimistic rollback; see plan todo-12 QA scenario).
@@ -379,5 +432,9 @@ export function registerSessionHandlers(register: RegisterHandler, deps: Session
     await service.setSessionAuto(sessionId, enabled);
     return null;
   });
-}
 
+  register("getSessionAuto", async ({ sessionId }): Promise<FromWebviewResponse["getSessionAuto"]> => {
+    const auto = await service.getSessionAuto(sessionId);
+    return { auto };
+  });
+}
