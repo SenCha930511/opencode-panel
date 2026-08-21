@@ -258,6 +258,7 @@ export interface ChatPickersProps {
 
 export function ChatPickers(props?: ChatPickersProps): ReactNode {
   const app = useApp();
+  const { t } = useStrings();
   const sessionId = useActiveSession();
   const snapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
@@ -268,6 +269,7 @@ export function ChatPickers(props?: ChatPickersProps): ReactNode {
   }, [app.messenger]);
 
   const sessionDefaults = useMemo(
+    // i18n-allow-literal — code selector, not display copy
     () => extractSessionAgentAndModel(chatState?.messages),
     [chatState?.messages],
   );
@@ -278,6 +280,7 @@ export function ChatPickers(props?: ChatPickersProps): ReactNode {
   if (!showAgent && !showModel) return null;
 
   const activeAgent = selection.agent ?? sessionDefaults.agent;
+  // i18n-allow-literal — code lookup, not display copy
   const currentAgentEntry = snapshot.agents.find((a) => a.name === activeAgent);
   const isLockedAgent = currentAgentEntry?.model !== undefined && currentAgentEntry.model.length > 0;
   const lockedModelId = currentAgentEntry?.model;
@@ -301,16 +304,19 @@ export function ChatPickers(props?: ChatPickersProps): ReactNode {
         {...(activeAgent === undefined ? {} : { value: activeAgent })}
         onPick={(name) => {
           setAgentSelection(sessionId ?? "", name);
+          // i18n-allow-literal — code lookup, not display copy
           const pickedAgent = snapshot.agents.find((a) => a.name === name);
           if (pickedAgent?.model) {
             app.pushToast(
               "info",
-              `智慧體「${name}」已鎖定專屬模型「${pickedAgent.model}」。`,
+              t("picker.agent.lockedToast")
+                .replace("{name}", name)
+                .replace("{model}", pickedAgent.model),
             );
           } else if (isCustomAgent(name)) {
             app.pushToast(
               "info",
-              `已選擇自訂智慧體「${name}」。`,
+              t("picker.agent.customPickedToast").replace("{name}", name),
             );
           }
         }}
@@ -319,12 +325,18 @@ export function ChatPickers(props?: ChatPickersProps): ReactNode {
         providers={snapshot.providers}
         locked={isLockedAgent}
         {...(isLockedAgent
-          ? { lockedReason: `🔒 智慧體「${activeAgent}」已鎖定使用專屬模型「${lockedModelId}」，無法手動切換。` }
+          ? {
+              lockedReason: t("picker.model.lockedReason")
+                .replace("{name}", activeAgent ?? "")
+                .replace("{model}", lockedModelId ?? ""),
+            }
           : {})}
         onLockedClick={() => {
           app.pushToast(
             "info",
-            `智慧體「${activeAgent}」已綁定專屬模型「${lockedModelId}」。若要自由切換模型，請切換至通用智慧體 (build / general)。`,
+            t("picker.model.lockedToast")
+              .replace("{name}", activeAgent ?? "")
+              .replace("{model}", lockedModelId ?? ""),
           );
         }}
         {...(modelValue === undefined ? {} : { value: modelValue })}
@@ -333,7 +345,9 @@ export function ChatPickers(props?: ChatPickersProps): ReactNode {
           if (hasCustomAgent) {
             app.pushToast(
               "warning",
-              `已設定模型為「${id.split("/").pop() ?? id}」。目前使用中的自訂智慧體「${activeAgent}」若設定了專屬模型，後端將優先以智慧體模型為主。若要完全自由指定模型，請切換至 build / general 通用智慧體。`,
+              t("picker.model.pickedWarningToast")
+                .replace("{model}", id.split("/").pop() ?? id)
+                .replace("{name}", activeAgent ?? ""),
             );
           }
         }}
