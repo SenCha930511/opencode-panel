@@ -137,6 +137,7 @@ describe("optimistic mutations", () => {
 
     // The optimistic pending row must survive so the UI doesn't flicker out;
     // selection only moves to the fresh id once the create resolves.
+    // i18n-allow-literal — test assertion predicate, not display copy
     expect(store.getSnapshot().sessions.some((entry) => entry.id.startsWith("pending:"))).toBe(true);
     expect(store.getSnapshot().selectedId).toBeNull();
 

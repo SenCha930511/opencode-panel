@@ -287,7 +287,7 @@ export function UserCheckpointButton(props: {
     () =>
       new MessageActionsController({
         sessionId: getActiveSession,
-        messages: () => props.store?.getState().messages ?? [],
+        messages: () => props.store?.getState().messages ?? [], // i18n-allow-literal
         messenger: app.messenger,
         reporter,
         onReverted: (messageId) => {

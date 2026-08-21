@@ -78,6 +78,7 @@ export const STRING_IDS = [
   // message list
   "chat.jumpBack",
   "chat.scrollBottom",
+  "chat.systemReminder.label",
   "messages.collapseTool",
   "messages.empty",
   "messages.expandTool",
@@ -269,6 +270,7 @@ export const en: Record<StringId, string> = {
   "mcp.title": "MCP servers",
   "chat.jumpBack": "Jump back to this prompt",
   "chat.scrollBottom": "Scroll to the newest message",
+  "chat.systemReminder.label": "System reminder · Background task notice",
   "messages.collapseTool": "Collapse tool call details",
   "messages.empty": "No messages yet — send a prompt to begin.",
   "messages.expandTool": "Expand tool call details",
@@ -451,6 +453,7 @@ export const zhTW: Record<StringId, string> = {
   "mcp.title": "MCP 伺服器",
   "chat.jumpBack": "回到此處 (Jump to prompt)",
   "chat.scrollBottom": "捲動至最新訊息",
+  "chat.systemReminder.label": "系統提醒 · 背景任務通知",
   "messages.collapseTool": "摺疊工具呼叫詳細資訊",
   "messages.empty": "尚無訊息，傳送提示以開始對話。",
   "messages.expandTool": "展開工具呼叫詳細資訊",

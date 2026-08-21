@@ -132,7 +132,8 @@ function findLatestUserMessageIndex(messages: readonly MessageVM[]): number {
     if (msg !== undefined && msg.role === "user") {
       const isReminder =
         msg.parts.length > 0 &&
-        msg.parts.every((p) => p.kind === "text" && isSystemReminderText(p.text));
+        // i18n-allow-literal — part filter, not display copy
+  msg.parts.every((p) => p.kind === "text" && isSystemReminderText(p.text));
       if (!isReminder) return i;
     }
   }
@@ -206,7 +207,8 @@ export function MessageList(props: MessageListProps) {
       });
     }, 50);
 
-    return () => clearTimeout(timer);
+    // i18n-allow-literal — cleanup callback, not display copy
+  return () => clearTimeout(timer);
   }, [state.messages, store]);
 
   // Real-time stream follow: during active generation (busy or inFlight) or whenever

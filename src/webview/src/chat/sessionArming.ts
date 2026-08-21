@@ -31,7 +31,8 @@ function hydrateArmedSessions(): Set<string> {
     if (raw === null) return new Set();
     const list: unknown = JSON.parse(raw);
     if (!Array.isArray(list)) return new Set();
-    return new Set(list.filter((x): x is string => typeof x === "string"));
+    // i18n-allow-literal — set filter logic, not display copy
+  return new Set(list.filter((x): x is string => typeof x === "string"));
   } catch {
     return new Set();
   }

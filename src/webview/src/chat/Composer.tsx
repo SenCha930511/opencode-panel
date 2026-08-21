@@ -225,11 +225,13 @@ export function Composer(props: ComposerProps): ReactNode {
   const pickersSnapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
   const sessionDefaults = useMemo(
+    // i18n-allow-literal — session defaults selector, not display copy
     () => extractSessionAgentAndModel(chatState.messages),
     [chatState.messages],
   );
 
   const activeAgent = selection.agent ?? sessionDefaults.agent ?? props.agent;
+  // i18n-allow-literal — code lookup, not display copy
   const activeAgentEntry = pickersSnapshot?.agents.find((a) => a.name === activeAgent);
 
   const activeModelId = useMemo(() => {
