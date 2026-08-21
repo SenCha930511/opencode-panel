@@ -238,7 +238,7 @@ export class EventBridge {
 
   private readonly batchParts = new Map<string, MutableDeltaEntry>();
   private batchArmed = false;
-  private readonly debounce = new Map<SyncKind, DebounceSlot>();
+  private readonly debounce = new Map<string, DebounceSlot>();
 
   constructor(deps: EventBridgeDeps) {
     this.deps = deps;
@@ -476,14 +476,18 @@ export class EventBridge {
 
   private noteSync(kind: SyncKind, properties: unknown): void {
     const sessionId = sessionIdForSync(kind, properties);
-    const previous = this.debounce.get(kind);
+    // Debounce per (kind, sessionId) so a burst from a foreign session can
+    // never overwrite the slot carrying the ACTIVE session's invalidation;
+    // within one session the burst still collapses to a single fire.
+    const slotKey = `${kind} ${sessionId ?? ""}`;
+    const previous = this.debounce.get(slotKey);
     const token = (previous?.token ?? 0) + 1;
-    this.debounce.set(kind, { token, sessionId });
+    this.debounce.set(slotKey, { token, sessionId });
     void this.clock.delay(this.timing.debounceMs).then(() => {
       if (this.disposed) return;
-      const current = this.debounce.get(kind);
+      const current = this.debounce.get(slotKey);
       if (current === undefined || current.token !== token) return;
-      this.debounce.delete(kind);
+      this.debounce.delete(slotKey);
       this.deps.invalidate(kind, sessionId);
     });
   }

@@ -346,7 +346,40 @@ describe("delta batching", () => {
 // Unit: immediate forwarding, filtering, invalidation.
 
 describe("forwarding and invalidation", () => {
-  it("forwards non-delta events immediately and debounces invalidation 250ms per kind", async () => {
+  it("debounces per (kind, sessionId): a foreign-session burst no longer suppresses the active session", async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = makeHarness({ clock: timerClock() });
+      harness.bridge.start();
+      await waitFor(() => harness.streams.length === 1, "first subscription");
+      const stream = must(harness.streams[0], "stream");
+      stream.push({ type: "server.connected", properties: {} });
+      await tick();
+
+      // Active session A's completion, then foreign session B's events in the
+      // SAME 250ms window — OLD behavior: B overwrote A's slot so invalidate
+      // fired only for B and A went stale. New: both sessions fire.
+      stream.push({ type: "message.updated", properties: { info: { sessionID: "ses_A" } } });
+      await vi.advanceTimersByTimeAsync(40);
+      stream.push({ type: "message.updated", properties: { info: { sessionID: "ses_B" } } });
+      await vi.advanceTimersByTimeAsync(30);
+      stream.push({ type: "message.updated", properties: { info: { sessionID: "ses_B" } } });
+
+      await vi.advanceTimersByTimeAsync(250);
+      await tick();
+      const msgs = harness.invalidations.filter((inv) => inv.kind === "messages");
+      expect(msgs).toEqual([
+        { kind: "messages", sessionId: "ses_A" },
+        { kind: "messages", sessionId: "ses_B" },
+      ]);
+      harness.bridge.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+
+  it("forwards non-delta events immediately and debounces invalidation 250ms per (kind, session)", async () => {
     vi.useFakeTimers();
     try {
       const harness = makeHarness({ clock: timerClock() });
@@ -368,21 +401,25 @@ describe("forwarding and invalidation", () => {
       expect(harness.forwarded.length).toBe(15);
       expect(harness.forwarded.filter((event) => event.type === "session.updated").length).toBe(5);
 
+      // Events at t=0,40,80,120,160; each (kind,session) slot fires at its
+      // own event_time + 250ms, so the s1..s4 slots (12 fires) land by t+249.
       await vi.advanceTimersByTimeAsync(249);
       await tick();
-      expect(harness.invalidations.length).toBe(0);
+      expect(harness.invalidations.length).toBe(12);
       await vi.advanceTimersByTimeAsync(1);
       await tick();
-      // Exactly one fire per kind, each carrying the LAST sessionId of the burst.
-      const byKind = [...harness.invalidations].sort((a, b) => a.kind.localeCompare(b.kind));
-      expect(byKind).toEqual([
-        { kind: "messages", sessionId: "m5" },
-        { kind: "sessions", sessionId: "s5" },
-        { kind: "todos", sessionId: "t5" },
-      ]);
+      // One fire per (kind, session) slot. The burst carried 5 DISTINCT
+      // session ids per kind, so every session survives the window — the old
+      // per-kind slot would have collapsed them to the last id.
+      const msgs = harness.invalidations.filter((inv) => inv.kind === "messages");
+      expect(msgs.map((inv) => inv.sessionId)).toEqual(["m1", "m2", "m3", "m4", "m5"]);
+      const sess = harness.invalidations.filter((inv) => inv.kind === "sessions");
+      expect(sess.map((inv) => inv.sessionId)).toEqual(["s1", "s2", "s3", "s4", "s5"]);
+      const todos = harness.invalidations.filter((inv) => inv.kind === "todos");
+      expect(todos.map((inv) => inv.sessionId)).toEqual(["t1", "t2", "t3", "t4", "t5"]);
       await vi.advanceTimersByTimeAsync(1000);
       await tick();
-      expect(harness.invalidations.length).toBe(3);
+      expect(harness.invalidations.length).toBe(15);
       harness.bridge.dispose();
     } finally {
       vi.useRealTimers();
