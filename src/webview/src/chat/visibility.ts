@@ -27,18 +27,32 @@
 import type { MessageVM, PartVM } from "./types.js";
 
 const SYSTEM_DIRECTIVE_PREFIX = "[SYSTEM DIRECTIVE: OH-MY-OPENCODE";
-const BACKGROUND_NOTICE_PREFIXES = ["[BACKGROUND TASK ", "[ALL BACKGROUND TASKS "];
 const SYSTEM_REMINDER_PREFIX = "<system-reminder>";
 const OMO_INITIATOR_MARKER = "<!-- OMO_INTERNAL_INITIATOR -->";
 
-/** True when USER-authored-channel text is actually an injected block. */
+export function isSystemReminderText(text: string): boolean {
+  const trimmed = text.trimStart();
+  return (
+    trimmed.startsWith(SYSTEM_REMINDER_PREFIX) ||
+    trimmed.startsWith("[BACKGROUND TASK ") ||
+    trimmed.startsWith("[ALL BACKGROUND TASKS ") ||
+    text.includes(SYSTEM_REMINDER_PREFIX)
+  );
+}
+
+export function cleanSystemReminderText(text: string): string {
+  return text
+    .replace(/<\/?system-reminder>/gi, "")
+    .replace(/<!--\s*OMO_INTERNAL[A-Z_]*\s*-->/gi, "")
+    .trim();
+}
+
+/** True when USER-authored-channel text is a hidden internal directive. */
 export function isInjectedUserText(text: string): boolean {
   const trimmed = text.trimStart();
   if (trimmed.startsWith(SYSTEM_DIRECTIVE_PREFIX)) return true;
-  for (const prefix of BACKGROUND_NOTICE_PREFIXES) {
-    if (trimmed.startsWith(prefix)) return true;
-  }
-  if (trimmed.startsWith(SYSTEM_REMINDER_PREFIX)) return true;
+  // System reminders are NOT hidden: they are rendered as dedicated SystemNoticeCards!
+  if (isSystemReminderText(text)) return false;
   return text.includes(OMO_INITIATOR_MARKER);
 }
 

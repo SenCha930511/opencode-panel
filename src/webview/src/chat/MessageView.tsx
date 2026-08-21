@@ -42,12 +42,18 @@ const ROLE_CLASS: Readonly<Record<string, string>> = {
  * User messages render as rounded cards with a subtle checkpoint (revert)
  * icon on hover. Assistant messages render borderless with no actions menu.
  */
+import { isSystemReminderText } from "./visibility.js";
+
 export function MessageView(props: {
   readonly message: MessageVM;
   readonly store?: MessageStore;
 }) {
   const { message } = props;
   const isUser = message.role === "user";
+  const isSystemReminder =
+    isUser &&
+    message.parts.length > 0 &&
+    message.parts.every((p) => p.kind === "text" && isSystemReminderText(p.text));
 
   const orderedParts = isUser
     ? [
@@ -58,12 +64,14 @@ export function MessageView(props: {
 
   return (
     <article
-      data-role={message.role}
+      data-role={isSystemReminder ? "system" : message.role}
       data-in-flight={message.inFlight}
       className={`group relative text-[13px] transition-all break-words [overflow-wrap:anywhere] ${
-        isUser
-          ? "sticky top-0 z-10 my-1.5 w-full rounded-2xl border border-card-border/80 bg-panel-bg/95 p-3 shadow-md text-fg backdrop-blur-md"
-          : "my-1.5 w-full px-0.5 py-1 text-fg"
+        isSystemReminder
+          ? "my-1.5 w-full px-0.5"
+          : isUser
+            ? "sticky top-0 z-10 my-1.5 w-full rounded-2xl border border-card-border/80 bg-panel-bg/95 p-3 shadow-md text-fg backdrop-blur-md"
+            : "my-1.5 w-full px-0.5 py-1 text-fg"
       }`}
     >
       <div className="space-y-1.5 min-w-0 max-w-full overflow-hidden text-[13px] break-words [overflow-wrap:anywhere]">
@@ -79,7 +87,7 @@ export function MessageView(props: {
             <PartView key={part.id} part={part} />
           ))}
       </div>
-      {isUser && (
+      {isUser && !isSystemReminder && (
         <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <UserCheckpointButton
             message={message}

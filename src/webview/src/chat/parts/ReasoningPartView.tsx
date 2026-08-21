@@ -25,18 +25,17 @@ function BrainIcon(): ReactNode {
   );
 }
 
+import { scrollElementIntoViewSafe } from "./scrollHelper.js";
+
 /** Reasoning renders collapsed by default; summary = localized Thinking label + the data's own lead. */
 export function ReasoningPartView(props: { readonly part: Extract<PartVM, { kind: "reasoning" }> }) {
   const { t } = useStrings();
   return (
     <details
-      className="group m-0 overflow-hidden rounded-lg text-xs transition-all"
+      className="group m-0 overflow-hidden rounded-lg text-xs transition-all scroll-mb-24 scroll-mt-12"
       onToggle={(e) => {
         if (e.currentTarget.open) {
-          const el = e.currentTarget;
-          setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }, 50);
+          scrollElementIntoViewSafe(e.currentTarget);
         }
       }}
     >

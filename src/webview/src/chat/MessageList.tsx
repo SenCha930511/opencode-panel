@@ -248,7 +248,7 @@ export function MessageList(props: MessageListProps) {
         }}
         rangeChanged={setVisibleRange}
         components={{
-          Footer: () => <div className="h-8 w-full shrink-0" aria-hidden="true" />,
+          Footer: () => <div className="h-28 w-full shrink-0" aria-hidden="true" />,
         }}
         itemContent={(_index, message) => (
           <div className="px-4.5 py-1 sm:px-5 min-w-0 max-w-full overflow-hidden">

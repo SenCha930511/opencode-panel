@@ -44,12 +44,15 @@ const BACKGROUND_NOTICE = "[ALL BACKGROUND TASKS FINISHED]\nResult: bg_42 done";
 // Pure predicates.
 
 describe("isInjectedUserText", () => {
-  it("catches the OMO directive family, background notices, reminders, and the initiator marker", () => {
+  it("catches internal silent directives and initiator markers", () => {
     expect(isInjectedUserText(DIRECTIVE_USER)).toBe(true);
-    expect(isInjectedUserText("[BACKGROUND TASK COMPLETED]\nmore")).toBe(true);
-    expect(isInjectedUserText(`  ${BACKGROUND_NOTICE}`)).toBe(true); // leading ws tolerated
-    expect(isInjectedUserText("<system-reminder>Background task bg_1 completed.</system-reminder>")).toBe(true);
     expect(isInjectedUserText("prefix\n<!-- OMO_INTERNAL_INITIATOR -->")).toBe(true);
+  });
+
+  it("allows system reminders and background task notices to pass through", () => {
+    expect(isInjectedUserText("[BACKGROUND TASK COMPLETED]\nmore")).toBe(false);
+    expect(isInjectedUserText(`  ${BACKGROUND_NOTICE}`)).toBe(false);
+    expect(isInjectedUserText("<system-reminder>Background task bg_1 completed.</system-reminder>")).toBe(false);
   });
 
   it("leaves real user-authored text alone", () => {
@@ -80,8 +83,11 @@ describe("stripHiddenParts", () => {
     const withFile = message("m4", "user", [filePart("m4:a"), textPart("m4:b", DIRECTIVE_USER)]);
     expect(stripHiddenParts(withFile)?.parts.map((part) => part.id)).toEqual(["m4:a"]);
     expect(
-      stripHiddenParts(message("m5", "user", [textPart("m5:a", BACKGROUND_NOTICE)])),
+      stripHiddenParts(message("m5", "user", [textPart("m5:a", DIRECTIVE_USER)])),
     ).toBeUndefined();
+    expect(
+      stripHiddenParts(message("m5b", "user", [textPart("m5b:a", BACKGROUND_NOTICE)]))?.parts,
+    ).toHaveLength(1);
   });
 
   it("never invents an empty bubble for genuinely part-less messages", () => {

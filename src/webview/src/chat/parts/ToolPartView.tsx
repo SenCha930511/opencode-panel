@@ -10,6 +10,7 @@ import { PermissionCard } from "../cards/PermissionCard.js";
 import { parseQuestionPrompt, parsePermissionCard } from "../cards/cardParsers.js";
 import type { QuestionPromptVM, PermissionCardVM } from "../cards/cardTypes.js";
 import { ToolIcon, toolIconKind } from "./toolIcon.js";
+import { scrollElementIntoViewSafe } from "./scrollHelper.js";
 
 const TOOL_OUTPUT_LINE_CAP = 80;
 
@@ -152,9 +153,7 @@ function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
         className="mt-1.5 text-[10px] font-semibold text-accent/90 hover:text-accent hover:underline cursor-pointer"
         onClick={() => {
           setExpanded(true);
-          setTimeout(() => {
-            containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }, 50);
+          scrollElementIntoViewSafe(containerRef.current);
         }}
       >
         {t("tool.output.expand").replace("{count}", `+${Math.max(slice.remaining, 0)}`)}
@@ -500,13 +499,10 @@ function StandardToolDetails(props: { readonly part: ToolPart }) {
 
   return (
     <details
-      className="group m-0 overflow-hidden rounded-lg text-xs transition-all"
+      className="group m-0 overflow-hidden rounded-lg text-xs transition-all scroll-mb-24 scroll-mt-12"
       onToggle={(e) => {
         if (e.currentTarget.open) {
-          const el = e.currentTarget;
-          setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }, 50);
+          scrollElementIntoViewSafe(e.currentTarget);
         }
       }}
     >
@@ -629,7 +625,7 @@ function extractSubagentInfo(part: ToolPart): {
   previewOutput: string;
 } {
   let agentName: string | undefined;
-  let title = part.title ?? part.tool;
+  let title = part.title && part.title !== part.tool ? part.title : "";
   let description: string | undefined;
 
   if (isRecord(part.input)) {
@@ -637,21 +633,30 @@ function extractSubagentInfo(part: ToolPart): {
     if (typeof input.agent === "string") agentName = input.agent;
     else if (typeof input.subagent === "string") agentName = input.subagent;
     else if (typeof input.task_name === "string") agentName = input.task_name;
+    else if (typeof input.name === "string") agentName = input.name;
 
     if (typeof input.description === "string") description = input.description;
     else if (typeof input.prompt === "string") description = input.prompt;
     else if (typeof input.task === "string") description = input.task;
     else if (typeof input.instruction === "string") description = input.instruction;
+    else if (typeof input.command === "string") description = `$ ${input.command}`;
+    else if (typeof input.query === "string") description = `搜尋: ${input.query}`;
 
-    if (description) {
+    if (!title && description) {
       const firstLine = description.trim().split("\n")[0] ?? "";
       title = firstLine.length > 55 ? firstLine.slice(0, 55) + "..." : firstLine;
+    } else if (!title && typeof input.task_id === "string") {
+      title = `背景任務 (${input.task_id})`;
     }
+  }
+
+  if (!title) {
+    title = part.tool;
   }
 
   // Format preview output to not be too long (capped at ~12 lines)
   let previewOutput = "";
-  if (typeof part.output === "string") {
+  if (typeof part.output === "string" && part.output.trim().length > 0) {
     const lines = part.output.trim().split("\n");
     if (lines.length > 12) {
       previewOutput = lines.slice(0, 12).join("\n") + `\n... (+${lines.length - 12} 行省略)`;
@@ -683,13 +688,10 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
 
   return (
     <details
-      className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-1"
+      className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-1 scroll-mb-24 scroll-mt-12"
       onToggle={(e) => {
         if (e.currentTarget.open) {
-          const el = e.currentTarget;
-          setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }, 50);
+          scrollElementIntoViewSafe(e.currentTarget);
         }
       }}
     >
@@ -727,6 +729,20 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
             <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務說明</div>
             <div className="text-fg/90 leading-relaxed break-words">{subagentInfo.description}</div>
           </div>
+        ) : part.input !== undefined && typeof part.input === "object" && Object.keys(part.input).length > 0 ? (
+          <div className="rounded-lg bg-card-bg/70 border border-card-border/50 p-2 text-[11px]">
+            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務參數</div>
+            <pre className="overflow-x-auto font-mono text-[11px] text-fg/85 whitespace-pre-wrap leading-relaxed">
+              {prettyJson(part.input)}
+            </pre>
+          </div>
+        ) : null}
+
+        {isRunning ? (
+          <div className="flex items-center gap-2 rounded-lg bg-accent/10 border border-accent/20 px-2.5 py-1.5 text-[11px] text-accent">
+            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
+            <span>子智慧體正在背景並行執行中...</span>
+          </div>
         ) : null}
 
         {subagentInfo.previewOutput ? (
@@ -737,10 +753,6 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
             <div className="max-h-40 overflow-y-auto font-mono text-[11px] text-fg/85 whitespace-pre-wrap leading-relaxed">
               {subagentInfo.previewOutput}
             </div>
-          </div>
-        ) : isRunning ? (
-          <div className="text-[11px] text-muted-fg italic px-1 py-0.5">
-            ⏳ 子智慧體正在背景並行執行中...
           </div>
         ) : null}
 
