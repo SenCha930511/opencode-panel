@@ -39,6 +39,8 @@ import {
   submitPrompt,
   type ComposerAttachment,
 } from "../composerLogic.js";
+import { setAutoMode } from "../composerOptions.js";
+import { resetArmingStateForTests } from "../sessionArming.js";
 import { DRAFTS_STATE_KEY, DraftStore, type WebviewStateLike } from "../draftStore.js";
 import { MessageStore } from "../messageStore.js";
 
@@ -445,6 +447,45 @@ describe("ensureSessionForSend", () => {
     const loop = createLoopback();
     expect(await ensureSessionForSend(loop.messenger, "ses_keep")).toBe("ses_keep");
     expect(loop.posted).toEqual([]);
+  });
+
+  it("auto ON: a newly-created session is armed ON THE WIRE before its id resolves", async () => {
+    resetArmingStateForTests();
+    setAutoMode(true);
+    const loop = createLoopback();
+    const pending = ensureSessionForSend(loop.messenger, undefined);
+    const createdEnv = captured(loop.posted);
+    expect(createdEnv.type).toBe("createSession");
+    loop.emit({
+      type: "streamChunk",
+      payload: { messageId: createdEnv.messageId, status: "success", done: true, content: { id: "ses_new" } },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const armEnv = captured(loop.posted, 1);
+    expect(armEnv.type).toBe("setSessionAuto");
+    expect(armEnv.payload).toEqual({ sessionId: "ses_new", enabled: true });
+    loop.emit({
+      type: "streamChunk",
+      payload: { messageId: armEnv.messageId, status: "success", done: true, content: null },
+    });
+    expect(await pending).toBe("ses_new");
+    setAutoMode(false);
+    resetArmingStateForTests();
+  });
+
+  it("auto OFF: no arming envelope leaves the composer for a new session", async () => {
+    resetArmingStateForTests();
+    setAutoMode(false);
+    const loop = createLoopback();
+    const pending = ensureSessionForSend(loop.messenger, undefined);
+    const env = captured(loop.posted);
+    loop.emit({
+      type: "streamChunk",
+      payload: { messageId: env.messageId, status: "success", done: true, content: { id: "ses_clean" } },
+    });
+    expect(await pending).toBe("ses_clean");
+    expect(loop.posted.length).toBe(1);
+    resetArmingStateForTests();
   });
 });
 

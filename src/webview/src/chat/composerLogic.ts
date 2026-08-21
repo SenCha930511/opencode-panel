@@ -20,6 +20,7 @@ import type { StringId } from "../../../shared/strings.js";
 import type { WebviewMessenger } from "../../lib/messenger.js";
 import type { ServerStatus } from "../app/context.js";
 import { setActiveSession } from "./activeSession.js";
+import { armSessionForSend } from "./sessionArming.js";
 
 /**
  * Resolve the session a send targets: the active one, or — on the home
@@ -33,6 +34,9 @@ export async function ensureSessionForSend(
   if (sessionId !== undefined) return sessionId;
   const created = await messenger.request("createSession", {});
   setActiveSession(created.id);
+  // Arm auto BEFORE the caller dispatches the first prompt: a fresh session
+  // has no ruleset yet, so the first tool call must not race the PATCH.
+  await armSessionForSend(messenger, created.id);
   return created.id;
 }
 
