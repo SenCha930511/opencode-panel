@@ -1,8 +1,14 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
+import { getWebviewMessenger } from "../../../lib/messenger.js";
 import type { StringId } from "../../../../shared/strings.js";
-import { isRecord } from "../../../../shared/protocol.js";
+import { isRecord, type PermissionResponse } from "../../../../shared/protocol.js";
 import type { PartVM, ToolStatus } from "../types.js";
+import { getActiveSession } from "../activeSession.js";
+import { QuestionCard } from "../cards/QuestionCard.js";
+import { PermissionCard } from "../cards/PermissionCard.js";
+import { parseQuestionPrompt, parsePermissionCard } from "../cards/cardParsers.js";
+import type { QuestionPromptVM, PermissionCardVM } from "../cards/cardTypes.js";
 import { ToolIcon, toolIconKind } from "./toolIcon.js";
 
 const TOOL_OUTPUT_LINE_CAP = 80;
@@ -151,7 +157,194 @@ function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
  * team_*, plain-opencode built-ins) render identically by construction.
  */
 
-export function GenericToolCard(props: { readonly part: ToolPart }) {
+const answeredQuestionsMap = new Map<string, readonly string[]>();
+
+function getQuestionKey(part: ToolPart): string {
+  return part.callID ?? part.id;
+}
+
+function QuestionToolCard(props: { readonly part: ToolPart }) {
+  const { t } = useStrings();
+  const { part } = props;
+  const qKey = getQuestionKey(part);
+  const previouslySubmitted = answeredQuestionsMap.get(qKey);
+  const isCompleted =
+    part.status === "completed" ||
+    part.output !== undefined ||
+    previouslySubmitted !== undefined;
+
+  const [localStatus, setLocalStatus] = useState<"pending" | "replying" | "replied">(
+    isCompleted ? "replied" : "pending"
+  );
+  const [submittedAnswers, setSubmittedAnswers] = useState<readonly string[] | null>(
+    previouslySubmitted ?? null
+  );
+
+  const parsedCard = useMemo(() => {
+    if (!isRecord(part.input) || !Array.isArray(part.input.questions)) return null;
+    const questions = (part.input.questions as unknown[])
+      .map(parseQuestionPrompt)
+      .filter((q): q is QuestionPromptVM => q !== undefined);
+    if (questions.length === 0) return null;
+    return {
+      kind: "question" as const,
+      sessionId: getActiveSession() ?? "",
+      requestId: part.callID ?? part.id,
+      questions,
+      status: isCompleted || localStatus === "replied" ? ("replied" as const) : localStatus === "replying" ? ("replying" as const) : ("pending" as const),
+    };
+  }, [part.input, part.callID, part.id, isCompleted, localStatus]);
+
+  if (!parsedCard) {
+    return <StandardToolDetails part={part} />;
+  }
+
+  if (isCompleted || part.status === "completed" || localStatus === "replied") {
+    return (
+      <div className="my-2 rounded-2xl border border-ok/30 bg-panel-bg/95 p-3.5 text-xs text-fg shadow-md backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-ok font-semibold text-xs">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px]">✓</span>
+            <span>{t("question.title")} - 已完成</span>
+          </div>
+          {submittedAnswers && (
+            <span className="text-[10px] text-muted-fg font-medium">
+              {submittedAnswers.join(", ")}
+            </span>
+          )}
+        </div>
+        {part.output ? (
+          <div className="mt-2 rounded-lg bg-card-bg/70 p-2 font-mono text-[11px] text-muted-fg border border-card-border/40">
+            {part.output}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <QuestionCard
+      card={parsedCard}
+      onSubmit={(answers) => {
+        setSubmittedAnswers(answers);
+        answeredQuestionsMap.set(qKey, answers);
+        setLocalStatus("replying");
+        const sessionId = getActiveSession() ?? "";
+        const questionID = part.callID ?? part.id;
+        void getWebviewMessenger()
+          .request("answerQuestion", {
+            sessionId,
+            questionID,
+            answers,
+          })
+          .then(() => {
+            setLocalStatus("replied");
+          })
+          .catch((err) => {
+            console.warn("answerQuestion request failed:", err);
+            setLocalStatus("pending");
+          });
+      }}
+      onDismiss={() => {
+        answeredQuestionsMap.set(qKey, []);
+        setLocalStatus("replied");
+      }}
+    />
+  );
+}
+
+function extractCommand(input: unknown): string | undefined {
+  if (!isRecord(input)) return undefined;
+  if (typeof input.CommandLine === "string") return input.CommandLine;
+  if (typeof input.command === "string") return input.command;
+  if (typeof input.cmd === "string") return input.cmd;
+  if (typeof input.script === "string") return input.script;
+  return undefined;
+}
+
+function extractFilePath(input: unknown): string | undefined {
+  if (!isRecord(input)) return undefined;
+  const path =
+    input.TargetFile ??
+    input.targetFile ??
+    input.AbsolutePath ??
+    input.filePath ??
+    input.path ??
+    input.file ??
+    input.DirectoryPath ??
+    input.SearchPath;
+  return typeof path === "string" && path.length > 0 ? path : undefined;
+}
+
+function extractQueryOrUrl(input: unknown): { query?: string; url?: string } | undefined {
+  if (!isRecord(input)) return undefined;
+  const query = typeof input.query === "string" ? input.query : typeof input.Query === "string" ? input.Query : undefined;
+  const url = typeof input.url === "string" ? input.url : typeof input.Url === "string" ? input.Url : undefined;
+  if (query || url) return { query, url };
+  return undefined;
+}
+
+function PermissionToolCard(props: { readonly part: ToolPart }) {
+  const { t } = useStrings();
+  const { part } = props;
+  const [localStatus, setLocalStatus] = useState<"pending" | "replying" | "replied">(
+    part.status === "completed" ? "replied" : "pending"
+  );
+
+  const parsedCard = useMemo(() => {
+    const card = parsePermissionCard({
+      id: part.callID ?? part.id,
+      sessionID: getActiveSession() ?? "",
+      ...(isRecord(part.input) ? part.input : {}),
+      ...(isRecord(part.raw) ? part.raw : {}),
+    });
+    return card ?? null;
+  }, [part.input, part.raw, part.callID, part.id]);
+
+  if (!parsedCard) {
+    return <StandardToolDetails part={part} />;
+  }
+
+  if (part.status === "completed" || localStatus === "replied") {
+    return (
+      <div className="my-2 rounded-2xl border border-ok/30 bg-panel-bg/95 p-3 text-xs text-fg shadow-md backdrop-blur-md">
+        <div className="flex items-center gap-2 text-ok font-semibold text-xs">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px]">✓</span>
+          <span>{t("permission.title")} - 已核准 (Approved)</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <PermissionCard
+      card={parsedCard}
+      onReply={(response) => {
+        setLocalStatus("replying");
+        const sessionId = getActiveSession() ?? "";
+        const permissionID = part.callID ?? part.id;
+        void getWebviewMessenger()
+          .request("answerPermission", {
+            sessionId,
+            permissionID,
+            response,
+          })
+          .then(() => {
+            setLocalStatus("replied");
+          })
+          .catch((err) => {
+            console.warn("answerPermission request failed:", err);
+            setLocalStatus("pending");
+          });
+      }}
+      onDismiss={() => {
+        setLocalStatus("replied");
+      }}
+    />
+  );
+}
+
+function StandardToolDetails(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
   const iconKind = toolIconKind(part.tool);
@@ -159,6 +352,10 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
   const isRunning = part.status === "running";
   // Completed file edits headline their diff counters instead of a bare ✓.
   const diffStat = part.status === "completed" ? readFileDiffStat(part.raw) : undefined;
+  const cmd = extractCommand(part.input);
+  const filePath = extractFilePath(part.input);
+  const queryOrUrl = extractQueryOrUrl(part.input);
+  const [copied, setCopied] = useState(false);
 
   return (
     <details className="group m-0 overflow-hidden rounded-lg text-xs transition-all">
@@ -191,11 +388,50 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
         )}
       </summary>
       <div className="mt-1 pl-4 space-y-1.5 border-l border-card-border/60">
-        {part.input !== undefined ? (
+        {cmd ? (
+          <div className="flex items-center justify-between gap-2 rounded-lg bg-black/40 px-2.5 py-1.5 font-mono text-[11px] text-emerald-400 border border-card-border/40 overflow-hidden">
+            <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 flex-1">
+              <span className="text-muted-fg/60 select-none">$</span>
+              <span className="text-fg font-medium whitespace-pre">{cmd}</span>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 text-[10px] text-muted-fg hover:text-fg transition-colors px-1.5 py-0.5 rounded hover:bg-hover-bg cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                void navigator.clipboard.writeText(cmd);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? "已複製 ✓" : "複製"}
+            </button>
+          </div>
+        ) : filePath ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-card-bg/80 hover:bg-hover-bg px-2.5 py-1 text-[11px] font-mono text-accent hover:underline transition-all cursor-pointer border border-card-border/60 shadow-2xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                void getWebviewMessenger().request("openFile", { path: filePath });
+              }}
+            >
+              <span>📄 {filePath}</span>
+              <span className="text-[10px] text-muted-fg">↗</span>
+            </button>
+          </div>
+        ) : queryOrUrl ? (
+          <div className="rounded-lg bg-card-bg/60 p-2 text-[11px] text-fg border border-card-border/40">
+            {queryOrUrl.query && <div>🔍 搜尋詞：<span className="font-semibold">{queryOrUrl.query}</span></div>}
+            {queryOrUrl.url && <div className="truncate font-mono text-accent">🌐 {queryOrUrl.url}</div>}
+          </div>
+        ) : part.input !== undefined ? (
           <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2 font-mono text-[11px] text-fg">
             {prettyJson(part.input)}
           </pre>
         ) : null}
+
         {part.output !== undefined ? (
           <ToolOutputBlock output={part.output} />
         ) : null}
@@ -207,4 +443,28 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
       </div>
     </details>
   );
+}
+
+export function GenericToolCard(props: { readonly part: ToolPart }) {
+  const { part } = props;
+
+  const isQuestionTool =
+    (part.tool.toLowerCase().includes("question") ||
+      (isRecord(part.input) && Array.isArray((part.input as any).questions))) &&
+    isRecord(part.input) &&
+    Array.isArray((part.input as any).questions);
+
+  if (isQuestionTool) {
+    return <QuestionToolCard part={part} />;
+  }
+
+  const isPermissionTool =
+    part.tool.toLowerCase().includes("permission") ||
+    (isRecord(part.input) && typeof (part.input as any).permission === "string");
+
+  if (isPermissionTool) {
+    return <PermissionToolCard part={part} />;
+  }
+
+  return <StandardToolDetails part={part} />;
 }

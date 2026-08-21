@@ -323,12 +323,16 @@ export function Composer(props: ComposerProps): ReactNode {
   const creatingRef = useRef(false);
   // Same for the queued send effect: no re-entry mid-await.
   const queueInFlightRef = useRef(false);
+  // And the main path: Enter during `await submitPrompt` must not re-fire.
+  const sendInFlightRef = useRef(false);
   const [queuedPrompt, setQueuedPrompt] = useState<{
     text: string;
     chips: readonly ComposerAttachment[];
     agent?: string | undefined;
     model?: string | undefined;
     variant?: string | undefined;
+    // The session the prompt was composed for; guards cross-session sends.
+    originSession: string | undefined;
   } | null>(null);
 
   // Clear queue on session switch
@@ -341,6 +345,12 @@ export function Composer(props: ComposerProps): ReactNode {
     if (!busy && queuedPrompt && !inputDisabled && !queueInFlightRef.current) {
       const promptToSend = queuedPrompt;
       setQueuedPrompt(null);
+      if (promptToSend.originSession !== sessionId) {
+        // Session switched while queued: this text belongs to the origin —
+        // park it back on that draft instead of crossing session boundaries.
+        drafts.write(promptToSend.originSession ?? HOME_DRAFT_KEY, promptToSend.text);
+        return;
+      }
       queueInFlightRef.current = true;
       void (async () => {
         try {
@@ -393,14 +403,18 @@ export function Composer(props: ComposerProps): ReactNode {
     if (!canSend) return;
     const effectiveText = expandMentionPaths(text);
 
+    const effectiveAgent = selection.agent ?? props.agent;
+    const effectiveModel = selection.model ?? props.model ?? activeModelId;
+
     // If model is currently outputting, queue the prompt to send once ready
     if (busy) {
       setQueuedPrompt({
         text: effectiveText,
         chips,
-        agent: props.agent,
-        model: props.model,
+        agent: effectiveAgent,
+        model: effectiveModel,
         variant: currentVariant,
+        originSession: sessionId,
       });
       setText("");
       if (sessionId !== undefined) {
@@ -411,42 +425,63 @@ export function Composer(props: ComposerProps): ReactNode {
       return;
     }
 
-    if (creatingRef.current || queueInFlightRef.current) return;
+    if (creatingRef.current || queueInFlightRef.current || sendInFlightRef.current) return;
+    sendInFlightRef.current = true;
     void (async () => {
-      let target = sessionId;
-      if (target === undefined) {
-        setCreating(true);
-        creatingRef.current = true;
-        try {
-          target = await ensureSessionForSend(app.messenger, sessionId);
-        } catch (error) {
+      try {
+        let target = sessionId;
+        if (target === undefined) {
+          setCreating(true);
+          creatingRef.current = true;
+          try {
+            target = await ensureSessionForSend(app.messenger, sessionId);
+          } catch (error) {
+            setCreating(false);
+            creatingRef.current = false;
+            reportError(error instanceof Error ? error.message : String(error));
+            return;
+          }
           setCreating(false);
           creatingRef.current = false;
-          reportError(error instanceof Error ? error.message : String(error));
-          return;
         }
-        setCreating(false);
-        creatingRef.current = false;
-      }
-      const payload = buildPromptPayload({
-        sessionId: target,
-        text: effectiveText,
-        attachments: chips,
-        ...(props.agent === undefined ? {} : { agent: props.agent }),
-        ...(props.model === undefined ? {} : { model: props.model }),
-        ...(currentVariant === undefined ? {} : { variant: currentVariant }),
-      });
-      // Fire-and-observe: the reply only gates the draft clear; streamed state
-      // arrives via the todo-9/13 channel, so the UI never blocks here.
-      const ok = await submitPrompt(app.messenger, payload, reportError);
-      if (ok) {
-        store.markUserSent();
-        setText("");
-        drafts.clear(target);
-        drafts.clear(HOME_DRAFT_KEY);
+        const payload = buildPromptPayload({
+          sessionId: target,
+          text: effectiveText,
+          attachments: chips,
+          ...(effectiveAgent === undefined ? {} : { agent: effectiveAgent }),
+          ...(effectiveModel === undefined ? {} : { model: effectiveModel }),
+          ...(currentVariant === undefined ? {} : { variant: currentVariant }),
+        });
+        // Fire-and-observe: the reply only gates the draft clear; streamed state
+        // arrives via the todo-9/13 channel, so the UI never blocks here.
+        const ok = await submitPrompt(app.messenger, payload, reportError);
+        if (ok) {
+          store.markUserSent();
+          setText("");
+          drafts.clear(target);
+          drafts.clear(HOME_DRAFT_KEY);
+        }
+      } finally {
+        sendInFlightRef.current = false;
       }
     })();
-  }, [app.messenger, busy, canSend, chips, currentVariant, drafts, props.agent, props.model, reportError, sessionId, text, store]);
+  }, [
+    activeModelId,
+    app.messenger,
+    busy,
+    canSend,
+    chips,
+    currentVariant,
+    drafts,
+    props.agent,
+    props.model,
+    reportError,
+    selection.agent,
+    selection.model,
+    sessionId,
+    text,
+    store,
+  ]);
 
   const handleAbort = useCallback(() => {
     if (sessionId === undefined) return;

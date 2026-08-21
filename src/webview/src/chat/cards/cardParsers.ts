@@ -24,14 +24,14 @@ function stringsOf(value: unknown): readonly string[] {
   });
 }
 
-function parseQuestionOption(value: unknown): QuestionOptionVM | undefined {
+export function parseQuestionOption(value: unknown): QuestionOptionVM | undefined {
   if (!isRecord(value)) return undefined;
   const label = stringOr(value.label);
   if (label === undefined) return undefined;
   return { label, description: stringOr(value.description) };
 }
 
-function parseQuestionPrompt(value: unknown): QuestionPromptVM | undefined {
+export function parseQuestionPrompt(value: unknown): QuestionPromptVM | undefined {
   if (!isRecord(value)) return undefined;
   const question = stringOr(value.question);
   if (question === undefined) return undefined;

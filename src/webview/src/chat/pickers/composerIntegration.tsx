@@ -33,7 +33,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "../../app/context.js";
 import { useActiveSession } from "../activeSession.js";
-import { buildPromptExtras } from "../composerState.js";
+import { buildPromptExtras, usePickerSelection } from "../composerState.js";
 import { ChatDock, type ChatDockProps } from "../Composer.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
 import { ChatPickers } from "./ChatPickers.js";
@@ -49,6 +49,7 @@ export function useComposerPickers(): ComposerPickerProps {
   const { messenger } = useApp();
   const sessionId = useActiveSession();
   const snapshot = useCapabilitySnapshot();
+  const selection = usePickerSelection(sessionId ?? "");
 
   useEffect(() => {
     attachCapabilityStore(messenger);

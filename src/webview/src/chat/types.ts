@@ -89,11 +89,22 @@ export interface MessageVM {
 
 export function parseToolStatus(value: unknown): ToolStatus {
   if (value === "running" || value === "completed" || value === "error") return value;
+  if (value === "done" || value === "success" || value === "finished") return "completed";
   return "pending";
 }
 
 function stringOr(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
+}
+
+function formatOutput(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 /**
@@ -118,16 +129,21 @@ export function parsePart(value: unknown, fallbackId: string): PartVM {
       return { kind: "reasoning", id, text: stringOr(value.text) ?? "" };
     case "tool": {
       const state = isRecord(value.state) ? value.state : {};
+      const output = formatOutput(state.output ?? value.output ?? state.response ?? value.response);
+      let status = parseToolStatus(state.status ?? value.status);
+      if (status === "pending" && output !== undefined && output.length > 0) {
+        status = "completed";
+      }
       return {
         kind: "tool",
         id,
         tool: stringOr(value.tool) ?? stringOr(value.name) ?? "tool",
         callID: stringOr(value.callID),
-        status: parseToolStatus(state.status),
+        status,
         title: stringOr(state.title),
-        input: state.input,
-        output: stringOr(state.output),
-        error: stringOr(state.error),
+        input: state.input ?? value.input,
+        output,
+        error: stringOr(state.error ?? value.error),
         raw: value,
       };
     }

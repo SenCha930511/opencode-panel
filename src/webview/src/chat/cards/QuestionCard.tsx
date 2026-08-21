@@ -78,7 +78,7 @@ export function QuestionCard(props: QuestionCardProps) {
   const submittable = answers.every((answer) => answer.length > 0);
 
   return (
-    <div className="my-2 rounded-2xl border border-accent/40 bg-panel-bg/95 p-3.5 shadow-xl backdrop-blur-xl ring-1 ring-black/10 text-xs text-fg transition-all">
+    <div className="my-1.5 rounded-2xl border border-accent/50 bg-panel-bg/95 p-3.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/15 text-xs text-fg transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-3">
       <div className="flex items-start gap-2.5">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent shadow-2xs">
           <QuestionIcon />

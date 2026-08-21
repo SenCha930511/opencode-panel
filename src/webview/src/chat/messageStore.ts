@@ -97,6 +97,11 @@ export class MessageStore {
   /** Called by the composer only when the user actually hit send. */
   markUserSent(): void {
     this.userScrollRequested = true;
+    if (this.sessionId !== undefined) {
+      this.revertedMessageIds.delete(this.sessionId);
+    }
+    this.status = "busy";
+    this.publish();
   }
 
   /** Consumes the scroll request exactly once; nothing else in the store can arm it. */
@@ -153,6 +158,9 @@ export class MessageStore {
   applyReverted(messageId: string): void {
     if (this.sessionId === undefined) return;
     this.revertedMessageIds.set(this.sessionId, messageId);
+    this.status = "idle";
+    this.streamTails.clear();
+    this.placeholderPartIds.clear();
     this.publish();
   }
 
@@ -160,6 +168,7 @@ export class MessageStore {
   clearReverted(): void {
     if (this.sessionId === undefined) return;
     if (!this.revertedMessageIds.delete(this.sessionId)) return;
+    this.status = "idle";
     this.publish();
   }
 
@@ -212,6 +221,9 @@ export class MessageStore {
   /** One streamed delta: append into the (possibly placeholder) part. */
   applyStreamDelta(entry: DeltaBatchEntry): void {
     if (!this.targetsSession(entry.sessionID)) return;
+    if (this.sessionId !== undefined && this.revertedMessageIds.has(this.sessionId)) {
+      this.revertedMessageIds.delete(this.sessionId);
+    }
     const oldTail = this.streamTails.get(entry.partID) ?? "";
     const tail = oldTail + entry.delta;
     this.streamTails.set(entry.partID, tail);

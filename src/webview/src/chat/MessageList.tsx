@@ -149,6 +149,14 @@ export function MessageList(props: MessageListProps) {
     const lastUserIdx = findLatestUserMessageIndex(messages);
     const lastUser = lastUserIdx >= 0 ? messages[lastUserIdx] : undefined;
     lastHandledUserMessageIdRef.current = lastUser !== undefined ? lastUser.id : null;
+    if (messages.length > 0) {
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({
+          index: messages.length - 1,
+          align: "end",
+        });
+      }, 30);
+    }
   }, [activeSessionId, store]);
 
   useEffect(() => {
@@ -194,11 +202,6 @@ export function MessageList(props: MessageListProps) {
     return () => clearTimeout(timer);
   }, [state.messages, store]);
 
-  const initialTopIndex = useMemo(() => {
-    const idx = findLatestUserMessageIndex(state.messages);
-    return idx >= 0 ? { index: idx, align: "start" as const } : { index: "LAST" as const, align: "end" as const };
-  }, [activeSessionId]);
-
   const body =
     state.messages.length === 0 ? (
       <WelcomeHero emptyLabel={t("messages.empty")} />
@@ -207,8 +210,8 @@ export function MessageList(props: MessageListProps) {
         ref={virtuosoRef}
         data={state.messages}
         className="h-full"
-        // Mount anchored at the latest user message: the opening view shows the user prompt at top
-        initialTopMostItemIndex={initialTopIndex}
+        // Mount anchored at the bottom: opening view shows the latest conversation
+        initialTopMostItemIndex={state.messages.length > 0 ? state.messages.length - 1 : 0}
         atBottomThreshold={80}
         followOutput={park.current.followFor}
         atBottomStateChange={(isBottom: boolean) => {

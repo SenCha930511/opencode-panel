@@ -1,23 +1,4 @@
-/**
- * Session menu (plan todo 19, webview side): the overflow actions for the
- * active session — Summarize/compact and Share link copy (todo-12 share
- * wire + clipboard, toast on copied). The row model + items renderer live
- * in ./sessionMenuRows; this file is the wired wrapper (guards, select
- * orchestration, trigger). The shell command + export transcript rows were
- * retired from this menu; the shell wire itself stays reachable from the
- * VS Code command palette (`opencodePanel.runShell` / `.exportTranscript`).
- *
- * SHELL GUARD (plan hard rule: never show shell when hasShell is false): the
- * production wrapper folds the todo-20 capability-flag store's `shell` bit —
- * the ONLY wire carrier of hasShell (todo-3 init names fork/question/todo
- * only) — into the resolved availability via {@link applyShellFlag}, and
- * attaches the store to the messenger (idempotent; the integration wave may
- * attach it earlier from bootstrap, which changes nothing). The injected
- * `availability` prop stays verbatim for tests.
- */
-
 import { useEffect, type ReactNode } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useStrings } from "../../../lib/i18n.js";
 import { useApp } from "../../app/context.js";
 import { attachCapabilityFlags, useCapabilityFlags } from "../../mcp/capabilityFlags.js";
@@ -32,11 +13,7 @@ import {
   resolveMessageOpAvailability,
   type MessageOpAvailability,
 } from "./logic.js";
-import {
-  SessionMenuItems,
-  sessionMenuModel,
-  type SessionMenuAction,
-} from "./sessionMenuRows.js";
+import { sessionMenuModel } from "./sessionMenuRows.js";
 
 export type { SessionMenuAction } from "./sessionMenuRows.js";
 
@@ -45,6 +22,42 @@ export interface SessionMenuProps {
   readonly availability?: MessageOpAvailability;
   readonly reporter?: MessageOpReporter;
   readonly clipboard?: ClipboardLike;
+}
+
+function CompressIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6 2.5v2.5H3.5M10 2.5v2.5h2.5M6 13.5v-2.5H3.5M10 13.5v-2.5h2.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2.5 8h11"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeDasharray="1.5 1.5"
+      />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="4" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="m5.8 7.1 4.4-2.2M5.8 8.9l4.4 2.2"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+    </svg>
+  );
 }
 
 export function SessionMenu(props: SessionMenuProps): ReactNode {
@@ -72,73 +85,62 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
     hasSession: props.sessionId !== undefined,
   });
 
-  const onSelect = (action: SessionMenuAction): void => {
+  const onSummarize = (): void => {
     const sessionId = props.sessionId;
     if (sessionId === undefined) return;
-    switch (action) {
-      case "summarize":
-        void requestSummarize(app.messenger, { id: sessionId }, reporter);
-        return;
-      case "share": {
-        const clipboard = props.clipboard ?? {
-          writeText: (text: string) => navigator.clipboard.writeText(text), // i18n-allow-literal
-        };
-        void copyShareLink(app.messenger, sessionId, clipboard).then((outcome) => {
-          switch (outcome.kind) {
-            case "copied":
-              app.pushToast("info", t("sessions.shareCopied"));
-              return;
-            case "share-failed":
-              reporter.error(outcome.message);
-              return;
-            case "clipboard-failed":
-              return;
-            default: {
-              const exhaustive: never = outcome;
-              return exhaustive;
-            }
-          }
-        });
-        return;
+    void requestSummarize(app.messenger, { id: sessionId }, reporter);
+  };
+
+  const onShare = (): void => {
+    const sessionId = props.sessionId;
+    if (sessionId === undefined) return;
+    const clipboard = props.clipboard ?? {
+      writeText: (text: string) => navigator.clipboard.writeText(text),
+    };
+    void copyShareLink(app.messenger, sessionId, clipboard).then((outcome) => {
+      switch (outcome.kind) {
+        case "copied":
+          app.pushToast("info", t("sessions.shareCopied"));
+          return;
+        case "share-failed":
+          reporter.error(outcome.message);
+          return;
+        case "clipboard-failed":
+          return;
+        default: {
+          const exhaustive: never = outcome;
+          return exhaustive;
+        }
       }
-      default: {
-        const exhaustive: never = action;
-        return exhaustive;
-      }
-    }
+    });
   };
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
+    <div aria-label={t("commands.title")} className="flex items-center gap-1.5 shrink-0">
+      {model.summarize ? (
         <button
           type="button"
-          aria-label={t("commands.title")}
-          className="rounded p-1.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
+          title={t("messages.summarize")}
+          aria-label={t("messages.summarize")}
+          onClick={onSummarize}
+          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <circle cx="3" cy="8" r="1.4" />
-            <circle cx="8" cy="8" r="1.4" />
-            <circle cx="13" cy="8" r="1.4" />
-          </svg>
+          <CompressIcon />
+          <span className="font-medium">{t("messages.summarize")}</span>
         </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="end"
-          sideOffset={4}
-          className="z-50 min-w-44 rounded border border-border bg-panel-bg p-1 shadow-lg"
+      ) : null}
+      {model.share ? (
+        <button
+          type="button"
+          title={t("sessions.share")}
+          aria-label={t("sessions.share")}
+          onClick={onShare}
+          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none"
         >
-          <SessionMenuItems
-            model={model}
-            labels={{
-              summarize: t("messages.summarize"),
-              share: t("sessions.share"),
-            }}
-            onSelect={onSelect}
-          />
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+          <ShareIcon />
+          <span className="font-medium">{t("sessions.share")}</span>
+        </button>
+      ) : null}
+    </div>
   );
 }

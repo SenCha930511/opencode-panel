@@ -108,7 +108,7 @@ export function ChatCardsDock(props: ChatCardsDockProps) {
   if (cards.length === 0 && othersCount === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2 px-3 py-2" data-oc-dock="cards">
+    <div className="flex flex-col gap-2 px-4.5 sm:px-5 py-1 z-10 transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-2" data-oc-dock="cards">
       {cards.map((card) =>
         card.kind === "permission" ? (
           <PermissionCard

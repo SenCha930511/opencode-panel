@@ -138,7 +138,7 @@ export function ChatSlot(props: ChatSlotProps): ReactNode {
         data-oc-chat-toolbar
         className={
           used !== null
-            ? "flex shrink-0 items-center justify-between gap-2 border-b border-border/70 bg-bg/50 px-2 py-0.5 backdrop-blur-xs"
+            ? "flex shrink-0 items-center justify-between gap-2 border-b border-card-border/60 bg-panel-bg/70 px-3.5 py-1 backdrop-blur-md text-xs transition-all"
             : "hidden"
         }
       >
