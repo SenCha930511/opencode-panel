@@ -169,8 +169,8 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
       align="end"
       groups={groups}
       open={open}
-      locked={props.locked}
-      onLockedClick={props.onLockedClick}
+      {...(props.locked === undefined ? {} : { locked: props.locked })}
+      {...(props.onLockedClick === undefined ? {} : { onLockedClick: props.onLockedClick })}
       {...(props.value === undefined ? {} : { currentLabel: props.value })}
       {...(shortLabel === undefined ? {} : { displayLabel: shortLabel })}
       {...(fullTooltip === undefined ? {} : { tooltip: fullTooltip })}
@@ -247,11 +247,9 @@ export function ChatPickers(): ReactNode {
       <ModelPicker
         providers={snapshot.providers}
         locked={isLockedAgent}
-        lockedReason={
-          isLockedAgent
-            ? `🔒 智慧體「${activeAgent}」已鎖定使用專屬模型「${lockedModelId}」，無法手動切換。`
-            : undefined
-        }
+        {...(isLockedAgent
+          ? { lockedReason: `🔒 智慧體「${activeAgent}」已鎖定使用專屬模型「${lockedModelId}」，無法手動切換。` }
+          : {})}
         onLockedClick={() => {
           app.pushToast(
             "info",
