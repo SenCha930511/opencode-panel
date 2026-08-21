@@ -158,7 +158,7 @@ export function MessageList(props: MessageListProps) {
     });
   }, [props.source, store]);
 
-  // When a new user message is sent, jump that user message to the very top
+  // When a new user message is sent, smooth scroll that user message to the very top
   useEffect(() => {
     if (state.messages.length === 0) return;
     const latestUserIdx = findLatestUserMessageIndex(state.messages);
@@ -174,20 +174,25 @@ export function MessageList(props: MessageListProps) {
       virtuosoRef.current?.scrollToIndex({
         index: latestUserIdx,
         align: "start",
-        behavior: "auto",
+        behavior: "smooth",
       });
 
       const timer = setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: latestUserIdx,
           align: "start",
-          behavior: "auto",
+          behavior: "smooth",
         });
       }, 50);
 
       return () => clearTimeout(timer);
     }
   }, [state.messages]);
+
+  const initialTopIndex = useMemo(() => {
+    const idx = findLatestUserMessageIndex(state.messages);
+    return idx >= 0 ? { index: idx, align: "start" as const } : { index: "LAST" as const, align: "end" as const };
+  }, [activeSessionId]);
 
   const body =
     state.messages.length === 0 ? (
@@ -197,9 +202,8 @@ export function MessageList(props: MessageListProps) {
         ref={virtuosoRef}
         data={state.messages}
         className="h-full"
-        // Mount anchored at the tail: the opening view always lands at the
-        // bottom (the rAF scrollToIndex below only carries follow-up updates).
-        initialTopMostItemIndex={{ index: "LAST", align: "end" }}
+        // Mount anchored at the latest user message: the opening view shows the user prompt at top
+        initialTopMostItemIndex={initialTopIndex}
         atBottomThreshold={80}
         followOutput={park.current.followFor}
         atBottomStateChange={(isBottom: boolean) => {
@@ -235,8 +239,8 @@ export function MessageList(props: MessageListProps) {
           <button
             type="button"
             data-oc-scroll-bottom
-            title="捲動至最新訊息 (Scroll to bottom)"
-            aria-label="捲動至最新訊息"
+            title={t("chat.scrollBottom")}
+            aria-label={t("chat.scrollBottom")}
             className="absolute bottom-3 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-card-border/80 bg-panel-bg text-fg shadow-lg transition-all duration-150 hover:bg-hover-bg hover:scale-105 active:scale-95 cursor-pointer ring-1 ring-black/10"
             onClick={() => {
               park.current.onAtBottomChange(true);

@@ -15,6 +15,7 @@
 
 import type { ReactNode } from "react";
 import type { MessageVM } from "./types.js";
+import { useStrings } from "../../lib/i18n.js";
 
 export interface StickyAnchor {
   readonly index: number;
@@ -80,6 +81,7 @@ export function StickyPromptBar(props: {
   readonly anchor: StickyAnchor;
   onJump(index: number): void;
 }): ReactNode {
+  const { t } = useStrings();
   return (
     <div
       data-oc-sticky-prompt
@@ -87,7 +89,7 @@ export function StickyPromptBar(props: {
     >
       <button
         type="button"
-        title="回到此處 (Jump to prompt)"
+        title={t("chat.jumpBack")}
         className="pointer-events-auto group flex w-full items-start justify-between gap-2.5 rounded-2xl border border-card-border/80 bg-panel-bg p-3 text-left shadow-md transition-all duration-150 hover:border-focus-ring/60 active:scale-[0.99] cursor-pointer"
         onClick={() => {
           props.onJump(props.anchor.index);

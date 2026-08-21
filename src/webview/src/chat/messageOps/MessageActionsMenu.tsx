@@ -307,7 +307,7 @@ export function UserCheckpointButton(props: {
     <>
       <button
         type="button"
-        title="回到此處 (Checkpoint)"
+        title={t("messages.revert")}
         aria-label={t("messages.revert")}
         className="flex h-6 w-6 items-center justify-center rounded-md text-muted-fg/70 transition-colors hover:bg-hover-bg hover:text-fg cursor-pointer"
         onClick={() => {
