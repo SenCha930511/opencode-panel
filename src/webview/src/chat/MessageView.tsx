@@ -62,7 +62,7 @@ export function MessageView(props: {
       data-in-flight={message.inFlight}
       className={`group relative text-[13px] transition-all break-words [overflow-wrap:anywhere] ${
         isUser
-          ? "my-1.5 w-full rounded-2xl border border-card-border/80 bg-panel-bg p-3 shadow-md text-fg"
+          ? "sticky top-0 z-10 my-1.5 w-full rounded-2xl border border-card-border/80 bg-panel-bg/95 p-3 shadow-md text-fg backdrop-blur-md"
           : "my-1.5 w-full px-0.5 py-1 text-fg"
       }`}
     >

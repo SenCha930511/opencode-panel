@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
 import { getWebviewMessenger } from "../../../lib/messenger.js";
 import type { StringId } from "../../../../shared/strings.js";
@@ -123,6 +123,7 @@ function verbForTool(tool: string): string {
 function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
   const { t } = useStrings();
   const [expanded, setExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const slice = expanded ? { text: output, truncated: false, remaining: 0 } : truncateToolOutput(output);
   if (!slice.truncated) {
     return (
@@ -132,7 +133,7 @@ function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
     );
   }
   return (
-    <div className="[contain:content]">
+    <div ref={containerRef} className="[contain:content]">
       <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2 font-mono text-[11px] text-fg">
         {slice.text}
       </pre>
@@ -140,7 +141,12 @@ function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
         type="button"
         data-oc-tool-output-expand
         className="mt-1.5 text-[10px] font-semibold text-accent/90 hover:text-accent hover:underline cursor-pointer"
-        onClick={() => setExpanded(true)}
+        onClick={() => {
+          setExpanded(true);
+          setTimeout(() => {
+            containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 50);
+        }}
       >
         {t("tool.output.expand").replace("{count}", `+${Math.max(slice.remaining, 0)}`)}
       </button>
@@ -484,7 +490,17 @@ function StandardToolDetails(props: { readonly part: ToolPart }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <details className="group m-0 overflow-hidden rounded-lg text-xs transition-all">
+    <details
+      className="group m-0 overflow-hidden rounded-lg text-xs transition-all"
+      onToggle={(e) => {
+        if (e.currentTarget.open) {
+          const el = e.currentTarget;
+          setTimeout(() => {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 50);
+        }
+      }}
+    >
       <summary className="flex cursor-pointer select-none items-center gap-1.5 py-1 pr-1.5 text-muted-fg hover:text-fg font-medium transition-colors">
         <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
           ▶

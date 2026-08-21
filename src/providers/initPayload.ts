@@ -74,6 +74,8 @@ function wireCapabilities(capabilities: Capabilities): ServerCapabilities {
     fork: capabilities.hasFork,
     question: capabilities.hasQuestion,
     todo: capabilities.hasTodo,
+    omo: capabilities.omoDetected,
+    omoMcpNote: capabilities.omoMcpNote,
   };
 }
 

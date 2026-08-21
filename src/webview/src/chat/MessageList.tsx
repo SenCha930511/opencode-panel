@@ -182,8 +182,8 @@ export function MessageList(props: MessageListProps) {
     lastHandledUserMessageIdRef.current = latestUserMsg.id;
 
     if (!store.takeUserScrollRequest()) return;
-    park.current.onAtBottomChange(false);
-    setAtBottom(false);
+    park.current.onAtBottomChange(true);
+    setAtBottom(true);
 
     virtuosoRef.current?.scrollToIndex({
       index: latestUserIdx,

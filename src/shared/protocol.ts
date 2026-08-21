@@ -45,6 +45,8 @@ export interface ServerCapabilities {
   readonly fork: boolean;
   readonly question: boolean;
   readonly todo: boolean;
+  readonly omo?: boolean;
+  readonly omoMcpNote?: boolean;
 }
 
 export interface SessionSummary {
