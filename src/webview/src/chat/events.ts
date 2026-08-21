@@ -21,6 +21,7 @@ import { parseDeltaBatch, parseDeltaEntry } from "./types.js";
 export const DELTA_EVENT_TYPE = "message.part.delta";
 export const DELTA_BATCH_EVENT_TYPE = "message.part.deltaBatch";
 export const PART_UPDATED_EVENT_TYPE = "message.part.updated";
+export const MESSAGE_UPDATED_EVENT_TYPE = "message.updated";
 export const SESSION_STATUS_EVENT_TYPE = "session.status";
 export const SESSION_IDLE_EVENT_TYPE = "session.idle";
 export const MESSAGES_SYNC_EVENT_TYPE = "messages.sync";
@@ -93,6 +94,11 @@ export function routeChatEvent(store: MessageStore, event: ChatEvent): void {
     case PART_UPDATED_EVENT_TYPE: {
       bindSession(store);
       store.applyPartUpdated(event.payload);
+      return;
+    }
+    case MESSAGE_UPDATED_EVENT_TYPE: {
+      bindSession(store);
+      store.applyMessageUpdated(event.payload);
       return;
     }
     case SESSION_STATUS_EVENT_TYPE: {

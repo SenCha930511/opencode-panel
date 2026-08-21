@@ -73,6 +73,13 @@ function stringOr(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function createdMs(info: Record<string, unknown>): number | undefined {
+  const time = info.time;
+  if (!isRecord(time)) return undefined;
+  const created = time.created;
+  return typeof created === "number" ? created : undefined;
+}
+
 export class MessageStore {
   private state: ChatStoreState = { sessionId: undefined, messages: [], status: "idle" };
   /** Raw merged list — writers build from THIS, never from the visible one. */
@@ -248,6 +255,46 @@ export class MessageStore {
       parts[at] = finalized;
       message.parts = parts;
     }
+    this.messages = messages;
+    this.publish();
+  }
+
+  /** `message.updated`: adopt the final info; clear inFlight on merge, else insert an info-only placeholder in created-time order (a messages.sync supplies parts later). */
+  applyMessageUpdated(payload: unknown): void {
+    if (!isRecord(payload) || !isRecord(payload.info)) return;
+    const info = payload.info;
+    const id = stringOr(info.id);
+    const sessionId = stringOr(info.sessionID);
+    if (id === undefined || !this.targetsSession(sessionId)) return;
+    const at = this.messages.findIndex((message) => message.id === id);
+    if (at !== -1) {
+      const messages = [...this.messages];
+      const existing = messages[at];
+      messages[at] = {
+        ...existing,
+        info,
+        inFlight: false,
+        ...(existing.role === "assistant" || typeof info.role !== "string" ? {} : { role: info.role }),
+      };
+      this.messages = messages;
+      this.publish();
+      return;
+    }
+    const incoming: MessageVM = {
+      id,
+      sessionID: sessionId,
+      role: stringOr(info.role) ?? "assistant",
+      info,
+      inFlight: false,
+      parts: [],
+    };
+    const insertAt = this.messages.findIndex((message) => {
+      const a = createdMs(message.info);
+      const b = createdMs(info);
+      return a !== undefined && b !== undefined ? a > b : false;
+    });
+    const messages = [...this.messages];
+    messages.splice(insertAt === -1 ? messages.length : insertAt, 0, incoming);
     this.messages = messages;
     this.publish();
   }

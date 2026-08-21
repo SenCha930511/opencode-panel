@@ -367,6 +367,62 @@ describe("streaming", () => {
   });
 });
 
+describe("message.updated final info", () => {
+  it("adopts the completed info into the in-flight message and clears inFlight", () => {
+    setActiveSession(SESSION);
+    const store = new MessageStore();
+    routeChatEvent(store, {
+      type: "message.part.deltaBatch",
+      payload: {
+        parts: [{ sessionID: SESSION, messageID: "msg_a1", partID: "prt_1", field: "text", delta: "hello " }],
+      },
+    });
+    const before = store.getState().messages.find((m) => m.id === "msg_a1");
+    expect(before?.inFlight).toBe(true);
+    expect(before?.info.tokens).toBeUndefined();
+
+    routeChatEvent(store, {
+      type: "message.updated",
+      payload: {
+        info: {
+          id: "msg_a1",
+          sessionID: SESSION,
+          role: "assistant",
+          finish: "stop",
+          time: { created: 1000, completed: 2000 },
+          tokens: { input: 10, output: 42, reasoning: 7 },
+        },
+      },
+    });
+
+    const after = store.getState().messages.find((m) => m.id === "msg_a1");
+    expect(after?.inFlight).toBe(false);
+    expect(after?.info.finish).toBe("stop");
+    expect((after?.info.tokens as Record<string, unknown> | undefined)?.output).toBe(42);
+    // Streamed text must survive the info merge.
+    expect(renderMessages(storedMessages(store))).toContain("hello");
+  });
+
+  it("a foreign session's message.updated NEVER touches this store", () => {
+    setActiveSession(SESSION);
+    const store = new MessageStore();
+    routeChatEvent(store, {
+      type: "message.part.deltaBatch",
+      payload: {
+        parts: [{ sessionID: SESSION, messageID: "msg_mine", partID: "prt_1", field: "text", delta: "mine" }],
+      },
+    });
+    routeChatEvent(store, {
+      type: "message.updated",
+      payload: {
+        info: { id: "msg_foreign", sessionID: "ses_foreign", role: "assistant", finish: "stop" },
+      },
+    });
+    expect(store.getState().messages.find((m) => m.id === "msg_foreign")).toBeUndefined();
+    expect(renderMessages(storedMessages(store))).not.toContain("foreign");
+  });
+});
+
 describe("session.status and busy state", () => {
   it("drives busy on session.status and back to idle", () => {
     const store = new MessageStore();
