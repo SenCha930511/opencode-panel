@@ -119,6 +119,10 @@ body {
   overflow-x: auto;
   max-width: 100%;
   contain: content;
+  font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.85em;
+  line-height: 1.45;
+}
 
 @keyframes oc-sticky-fade-in {
   from {
@@ -133,10 +137,6 @@ body {
 
 .oc-sticky-enter {
   animation: oc-sticky-fade-in 180ms ease-out;
-}
-  font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
-  font-size: 0.85em;
-  line-height: 1.45;
 }
 
 
