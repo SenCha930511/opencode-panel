@@ -171,14 +171,21 @@ export class MessageStore {
     const removedSet = new Set(removed);
     const messages = this.messages.filter((message) => !removedSet.has(message.id));
     const positionOf = new Map(messages.map((message, index) => [message.id, index]));
+    let addedAny = false;
     for (const raw of parseMessageList(upsertedPayload)) {
       const message = this.reconcileMessage(raw);
       const at = positionOf.get(message.id);
       if (at === undefined) {
         messages.push(message);
+        addedAny = true;
       } else {
         messages[at] = message;
       }
+    }
+    if (addedAny) {
+      // New messages must land in server time order; blindly appending after
+      // the last entry loses revert/fork-driven mid-list inserts server-side.
+      messages.sort((a, b) => (createdMs(a.info) ?? 0) - (createdMs(b.info) ?? 0));
     }
     this.messages = messages;
     this.pruneTails(messages);

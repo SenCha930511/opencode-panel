@@ -456,6 +456,31 @@ describe("session.status and busy state", () => {
 });
 
 describe("large-session delta sync (host >250 merge)", () => {
+  it("upserts land in server time order, not at the end of the tail", () => {
+    setActiveSession(SESSION);
+    const store = new MessageStore();
+    // Preload three messages from a "server" with distinct created times.
+    const seed = [
+      { id: "msg_1", t: 100 },
+      { id: "msg_2", t: 200 },
+      { id: "msg_3", t: 300 },
+    ];
+    store.applyFullSync(SESSION, seed.map((entry) => ({
+      info: { id: entry.id, sessionID: SESSION, role: "user", time: { created: entry.t } },
+      parts: [],
+    })));
+    // Server inserts msg_new between msg_2 and msg_3 (revert/fork-driven).
+    store.applyDeltaSync(SESSION, [
+      {
+        info: { id: "msg_new", sessionID: SESSION, role: "assistant", time: { created: 250 } },
+        parts: [],
+      },
+    ], []);
+    const ids = store.getState().messages.map((m) => m.id);
+    expect(ids).toEqual(["msg_1", "msg_2", "msg_new", "msg_3"]);
+  });
+
+
   it("keyed delta upserts edits and drops removed messages", () => {
     const store = new MessageStore();
     store.applyFullSync(SESSION, [textMessage("msg_a", "first"), textMessage("msg_b", "second")]);
