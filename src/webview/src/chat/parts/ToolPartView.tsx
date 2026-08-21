@@ -163,6 +163,37 @@ function getQuestionKey(part: ToolPart): string {
   return part.callID ?? part.id;
 }
 
+function extractAnswers(
+  submitted: readonly string[] | null,
+  output: string | undefined,
+): readonly string[] {
+  if (submitted && submitted.length > 0) return submitted;
+  if (output) {
+    try {
+      const parsed = JSON.parse(output);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item));
+      }
+      if (isRecord(parsed)) {
+        if (Array.isArray(parsed.answers)) {
+          return (parsed.answers as unknown[]).map(String);
+        }
+        if (Array.isArray(parsed.response)) {
+          return (parsed.response as unknown[]).map(String);
+        }
+        if (typeof parsed.answer === "string") {
+          return [parsed.answer];
+        }
+      }
+    } catch {
+      if (output.trim().length > 0 && output !== "null" && output !== "undefined") {
+        return [output.trim()];
+      }
+    }
+  }
+  return [];
+}
+
 function QuestionToolCard(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
@@ -200,24 +231,54 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
   }
 
   if (isCompleted || part.status === "completed" || localStatus === "replied") {
+    const effectiveAnswers = extractAnswers(
+      submittedAnswers ?? (qKey ? answeredQuestionsMap.get(qKey) ?? null : null),
+      part.output,
+    );
+
     return (
-      <div className="my-2 rounded-2xl border border-ok/30 bg-panel-bg/95 p-3.5 text-xs text-fg shadow-md backdrop-blur-md">
-        <div className="flex items-center justify-between gap-2">
+      <div className="my-2 rounded-2xl border border-ok/30 bg-panel-bg/95 p-3.5 text-xs text-fg shadow-md backdrop-blur-md transition-all">
+        <div className="flex items-center justify-between gap-2 border-b border-card-border/40 pb-2">
           <div className="flex items-center gap-2 text-ok font-semibold text-xs">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px]">✓</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px] font-bold">✓</span>
             <span>{t("question.title")} - 已完成</span>
           </div>
-          {submittedAnswers && (
-            <span className="text-[10px] text-muted-fg font-medium">
-              {submittedAnswers.join(", ")}
-            </span>
-          )}
         </div>
-        {part.output ? (
-          <div className="mt-2 rounded-lg bg-card-bg/70 p-2 font-mono text-[11px] text-muted-fg border border-card-border/40">
-            {part.output}
-          </div>
-        ) : null}
+
+        <div className="mt-2.5 space-y-2">
+          {parsedCard.questions.map((q, qIdx) => {
+            const answer = effectiveAnswers[qIdx] ?? (effectiveAnswers.length === 1 ? effectiveAnswers[0] : undefined);
+            return (
+              <div key={qIdx} className="rounded-xl border border-card-border/50 bg-card-bg/60 p-2.5">
+                <div className="text-[11px] font-medium text-fg/90 mb-1.5">
+                  {q.prompt}
+                </div>
+                {answer ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-muted-fg shrink-0">已選擇：</span>
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-accent/40 bg-accent/15 px-2 py-0.5 text-xs font-semibold text-fg shadow-2xs">
+                      <span className="text-ok font-bold">✓</span>
+                      <span>{answer}</span>
+                    </span>
+                  </div>
+                ) : effectiveAnswers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-[10px] text-muted-fg shrink-0">已選擇：</span>
+                    {effectiveAnswers.map((ans, aIdx) => (
+                      <span
+                        key={aIdx}
+                        className="inline-flex items-center gap-1 rounded-lg border border-accent/40 bg-accent/15 px-2 py-0.5 text-xs font-semibold text-fg shadow-2xs"
+                      >
+                        <span className="text-ok font-bold">✓</span>
+                        <span>{ans}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }

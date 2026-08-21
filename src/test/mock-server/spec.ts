@@ -70,6 +70,27 @@ export interface OpenApiSpec {
   paths: Record<string, Record<string, { summary: string; responses: Record<string, { description: string }> }>>;
 }
 
+/**
+ * Question reply route shapes as advertised by the LIVE 1.18.15 doc probe:
+ * the unprefixed `/session/{id}/question…` family fluctuates in and out of
+ * the inventory, while the global routes and the `/api`-prefixed session
+ * routes are stable — a capability detector must accept every family.
+ */
+const MODERN_QUESTION_ROWS: ReadonlyArray<RouteRow> = [
+  ["post", "/session/{id}/question/{requestID}/reply", "Reply to a question request", true],
+  ["post", "/session/{id}/question/{requestID}/reject", "Reject a question request", true],
+  ["post", "/api/session/{sessionID}/question/{requestID}/reply", "Reply to a question request", true],
+  ["post", "/api/session/{sessionID}/question/{requestID}/reject", "Reject a question request", true],
+  ["post", "/question/{requestID}/reply", "Reply to a question request", true],
+  ["post", "/question/{requestID}/reject", "Reject a question request", true],
+];
+
+export type DocVariant = "modern";
+
+/** When `docVariant` is "modern", the legacy assumed question row is swapped
+ *  for the real-world route families (mock `/doc?qshape=modern`). */
+export type BuildSpecDocVariant = DocVariant | undefined;
+
 export function buildOpenApiSpec(scenario: ScenarioName, version: string): OpenApiSpec {
   const oldServer = scenario === "old-server";
   const paths: OpenApiSpec["paths"] = {};
