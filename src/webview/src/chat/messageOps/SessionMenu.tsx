@@ -123,9 +123,12 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
           title={t("messages.summarize")}
           aria-label={t("messages.summarize")}
           onClick={onSummarize}
-          className="flex h-6.5 w-6.5 items-center justify-center rounded-lg border border-card-border/60 bg-card-bg/60 text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none shrink-0"
+          className="group flex h-6.5 items-center gap-0 rounded-lg border border-card-border/60 bg-card-bg/60 px-1.5 text-muted-fg shadow-2xs transition-all duration-200 ease-out hover:bg-hover-bg hover:text-fg hover:border-card-border hover:gap-1 hover:px-2 cursor-pointer select-none shrink-0"
         >
           <CompressIcon />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-medium opacity-0 transition-all duration-200 ease-out group-hover:max-w-xs group-hover:opacity-100">
+            壓縮
+          </span>
         </button>
       ) : null}
       {model.share ? (
@@ -134,9 +137,12 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
           title={t("sessions.share")}
           aria-label={t("sessions.share")}
           onClick={onShare}
-          className="flex h-6.5 w-6.5 items-center justify-center rounded-lg border border-card-border/60 bg-card-bg/60 text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none shrink-0"
+          className="group flex h-6.5 items-center gap-0 rounded-lg border border-card-border/60 bg-card-bg/60 px-1.5 text-muted-fg shadow-2xs transition-all duration-200 ease-out hover:bg-hover-bg hover:text-fg hover:border-card-border hover:gap-1 hover:px-2 cursor-pointer select-none shrink-0"
         >
           <ShareIcon />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-medium opacity-0 transition-all duration-200 ease-out group-hover:max-w-xs group-hover:opacity-100">
+            {t("sessions.share")}
+          </span>
         </button>
       ) : null}
     </div>
