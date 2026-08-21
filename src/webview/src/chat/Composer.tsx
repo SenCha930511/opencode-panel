@@ -361,6 +361,8 @@ export function Composer(props: ComposerProps): ReactNode {
           // bring it back so the user's draft is never silently lost.
           setText(promptToSend.text);
           drafts.write(target, promptToSend.text);
+        } else {
+          store.markUserSent();
         }
       })();
     }
@@ -414,11 +416,12 @@ export function Composer(props: ComposerProps): ReactNode {
       // arrives via the todo-9/13 channel, so the UI never blocks here.
       const ok = await submitPrompt(app.messenger, payload, reportError);
       if (ok) {
+        store.markUserSent();
         setText("");
         drafts.clear(target);
       }
     })();
-  }, [app.messenger, busy, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text]);
+  }, [app.messenger, busy, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text, store]);
 
   const handleAbort = useCallback(() => {
     if (sessionId === undefined) return;

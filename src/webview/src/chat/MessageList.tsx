@@ -158,36 +158,41 @@ export function MessageList(props: MessageListProps) {
     });
   }, [props.source, store]);
 
-  // When a new user message is sent, smooth scroll that user message to the very top
+  // When a NEW user message sent from THIS panel lands, scroll it to the
+  // very top. Gated by the store's one-shot markUserSent flag: passive
+  // inserts from the debounced sync (and any other client's sends) must
+  // never yank the user's scroll position — this was the "Stop jumps to
+  // top" bug: the ref-gate was the ONLY discriminator, and any fresh user
+  // id seen AFTER the initial sync fired it.
   useEffect(() => {
     if (state.messages.length === 0) return;
     const latestUserIdx = findLatestUserMessageIndex(state.messages);
     if (latestUserIdx === -1) return;
     const latestUserMsg = state.messages[latestUserIdx];
     if (latestUserMsg === undefined) return;
+    if (lastHandledUserMessageIdRef.current === latestUserMsg.id) return;
+    lastHandledUserMessageIdRef.current = latestUserMsg.id;
 
-    if (lastHandledUserMessageIdRef.current !== latestUserMsg.id) {
-      lastHandledUserMessageIdRef.current = latestUserMsg.id;
-      park.current.onAtBottomChange(false);
-      setAtBottom(false);
+    if (!store.takeUserScrollRequest()) return;
+    park.current.onAtBottomChange(false);
+    setAtBottom(false);
 
+    virtuosoRef.current?.scrollToIndex({
+      index: latestUserIdx,
+      align: "start",
+      behavior: "smooth",
+    });
+
+    const timer = setTimeout(() => {
       virtuosoRef.current?.scrollToIndex({
         index: latestUserIdx,
         align: "start",
         behavior: "smooth",
       });
+    }, 50);
 
-      const timer = setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({
-          index: latestUserIdx,
-          align: "start",
-          behavior: "smooth",
-        });
-      }, 50);
-
-      return () => clearTimeout(timer);
-    }
-  }, [state.messages]);
+    return () => clearTimeout(timer);
+  }, [state.messages, store]);
 
   const initialTopIndex = useMemo(() => {
     const idx = findLatestUserMessageIndex(state.messages);

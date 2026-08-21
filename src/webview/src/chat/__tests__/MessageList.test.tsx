@@ -384,6 +384,32 @@ describe("streaming", () => {
   });
 });
 
+describe("user-send scroll contract (stop-yank fix)", () => {
+  it("passive inserts (message.updated sync) do NOT request a user scroll", () => {
+    setActiveSession(SESSION);
+    const store = new MessageStore();
+    store.applyFullSync(SESSION, []);
+    routeChatEvent(store, {
+      type: "message.updated",
+      payload: {
+        info: { id: "msg_passive", sessionID: SESSION, role: "user", time: { created: 5 } },
+      },
+    });
+    expect(store.takeUserScrollRequest()).toBe(false);
+  });
+
+  it("markUserSent arms exactly one scroll request; setSession clears a stray arm", () => {
+    const store = new MessageStore();
+    store.markUserSent();
+    expect(store.takeUserScrollRequest()).toBe(true);
+    expect(store.takeUserScrollRequest()).toBe(false);
+
+    store.markUserSent();
+    store.setSession("ses_other");
+    expect(store.takeUserScrollRequest()).toBe(false);
+  });
+});
+
 describe("message.updated final info", () => {
   it("adopts the completed info into the in-flight message and clears inFlight", () => {
     setActiveSession(SESSION);

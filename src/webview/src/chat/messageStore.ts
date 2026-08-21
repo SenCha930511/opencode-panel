@@ -91,6 +91,20 @@ export class MessageStore {
   private readonly placeholderPartIds = new Set<string>();
   /** sessionId -> reverted-to message id; survives session switches. */
   private readonly revertedMessageIds = new Map<string, string>();
+  /** Exact-one shot request from the UI that the NEXT publish scrolls to the newest user message. */
+  private userScrollRequested = false;
+
+  /** Called by the composer only when the user actually hit send. */
+  markUserSent(): void {
+    this.userScrollRequested = true;
+  }
+
+  /** Consumes the scroll request exactly once; nothing else in the store can arm it. */
+  takeUserScrollRequest(): boolean {
+    const armed = this.userScrollRequested;
+    this.userScrollRequested = false;
+    return armed;
+  }
 
   readonly subscribe = (listener: StoreListener): (() => void) => {
     this.listeners.add(listener);
@@ -121,6 +135,7 @@ export class MessageStore {
     this.streamTails.clear();
     this.placeholderPartIds.clear();
     this.messages = [];
+    this.userScrollRequested = false;
     this.sessionId = sessionId;
     this.status = "idle";
     this.publish();
