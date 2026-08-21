@@ -154,7 +154,7 @@ export function DiffsPanel(props: {
           diff={diff}
           sessionId={props.sessionId}
           actions={props.actions}
-          openFileLabel={t("dock.diffs.openFile")}
+          openDiffLabel={t("dock.diffs.openDiff")}
         />
       ))}
     </ul>
@@ -165,14 +165,15 @@ export function DiffsPanel(props: {
  * Hook-free file-change row: labels are resolved by the hook-driven parent.
  * Exported as the direct-invocation click-walk target (todo-16
  * PermissionReplyButtons test pattern). The row's primary action opens the
- * FILE — the native-diff entry was retired, the +/− counters and open-file
- * affordance carry the value now.
+ * native vscode.diff (report §3.1 P0-1) — clicking a changed file surfaces
+ * before/after in the editor's split view; openFile survives as the
+ * right-click-fallback if the session-id bind is undefined.
  */
 export function DiffFileRow(props: {
   readonly diff: DockDiffFileVM;
   readonly sessionId: string | undefined;
   readonly actions: DockActions;
-  readonly openFileLabel: string;
+  readonly openDiffLabel: string;
 }): ReactNode {
   const { diff } = props;
   return (
@@ -181,9 +182,15 @@ export function DiffFileRow(props: {
         type="button"
         data-open-file={diff.file}
         title={diff.file}
-        aria-label={props.openFileLabel}
+        aria-label={props.openDiffLabel}
         className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-start font-medium text-fg/90 hover:text-accent cursor-pointer"
-        onClick={() => props.actions.openFile(diff.file)}
+        onClick={() => {
+          if (props.sessionId !== undefined) {
+            props.actions.openDiff({ sessionId: props.sessionId, file: diff.file });
+            return;
+          }
+          props.actions.openFile(diff.file);
+        }}
       >
         <span className="shrink-0 text-muted-fg"><FileIcon /></span>
         <span className="truncate">{diff.file}</span>
