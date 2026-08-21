@@ -65,6 +65,35 @@ OMO is fully optional. When installed:
 
 Without OMO everything behaves identically, minus the note.
 
+## Installation
+
+The extension is not on the Marketplace yet — install it from a packaged
+`.vsix`:
+
+1. Get `opencode-panel-x.y.z.vsix` from
+   [Releases](https://github.com/SenCha930511/opencode-panel/releases), or
+   build it yourself (see below).
+2. In the **Extensions** view, open the `...` menu → **Install from VSIX...**
+   and pick the file. Or from a terminal:
+   `code --install-extension opencode-panel-x.y.z.vsix` (use your editor's
+   bundled CLI).
+3. Reload the window when prompted — the panel icon appears in the Activity
+   Bar.
+
+### Build from source
+
+```bash
+git clone https://github.com/SenCha930511/opencode-panel.git
+cd opencode-panel
+npm install
+npm run build && npm run build:webview
+npx vsce package   # produces opencode-panel-<version>.vsix
+```
+
+Development loop: run `npm run watch` (extension host) plus
+`npm run watch:webview` (webview), then press **F5** to launch the Extension
+Development Host.
+
 ## Requirements
 
 - **opencode** installed and on your `PATH` (or configure
@@ -126,6 +155,14 @@ UI is always one click away.
 > - Settings page
 > - 繁體中文介面一覽
 
+## Contributing
+
+Issues and pull requests are welcome at
+[SenCha930511/opencode-panel](https://github.com/SenCha930511/opencode-panel).
+Before sending a PR, keep the quality gates green: `npm run build`,
+`node scripts/check-i18n.mjs`, `node scripts/check-coverage.mjs`, and
+`npm run test:unit`.
+
 ---
 
 # 繁體中文
@@ -174,6 +211,32 @@ OMO 為**選配**。有安裝時：
   伺服器，這些不一定會出現在清單中——面板內會顯示這則提醒。
 
 未安裝 OMO 時，除上述提醒外行為完全一致。
+
+## 安裝方式
+
+本擴充套件尚未上架 Marketplace，請安裝打包好的 `.vsix`：
+
+1. 從 [Releases](https://github.com/SenCha930511/opencode-panel/releases)
+   取得最新的 `opencode-panel-x.y.z.vsix`，或依下節說明自行建置。
+2. 在「擴充功能」檢視中，從 `...` 選單選擇**「從 VSIX 安裝...」**並選取該
+   檔案；或在終端機執行
+   `code --install-extension opencode-panel-x.y.z.vsix`（使用你編輯器
+   內建的 CLI）。
+3. 依提示重新載入視窗，活動列就會出現面板圖示。
+
+### 從原始碼建置
+
+```bash
+git clone https://github.com/SenCha930511/opencode-panel.git
+cd opencode-panel
+npm install
+npm run build && npm run build:webview
+npx vsce package   # 產生 opencode-panel-<version>.vsix
+```
+
+開發流程：執行 `npm run watch`（extension host）搭配
+`npm run watch:webview`（webview），再按 **F5** 啟動 Extension
+Development Host。
 
 ## 需求
 
@@ -231,6 +294,14 @@ SecretStorage。
 > - 待辦與差異側欄、原生 diff 預覽
 > - 設定頁
 > - 英文介面一覽
+
+## 貢獻
+
+歡迎到
+[SenCha930511/opencode-panel](https://github.com/SenCha930511/opencode-panel)
+開 issue 或送 PR。送出前請確認品質關卡全數通過：`npm run build`、
+`node scripts/check-i18n.mjs`、`node scripts/check-coverage.mjs` 與
+`npm run test:unit`。
 
 ---
 

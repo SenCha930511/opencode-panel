@@ -19,6 +19,18 @@
     "type": "git",
     "url": "https://github.com/SenCha930511/opencode-panel.git"
   },
+  "bugs": {
+    "url": "https://github.com/SenCha930511/opencode-panel/issues"
+  },
+  "homepage": "https://github.com/SenCha930511/opencode-panel",
+  "keywords": [
+    "opencode",
+    "ai",
+    "llm",
+    "chat",
+    "agent",
+    "coding-agent"
+  ],
   "categories": [
     "Chat",
     "Other"
