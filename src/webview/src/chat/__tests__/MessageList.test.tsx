@@ -281,6 +281,23 @@ describe("MessageList rendering", () => {
   });
 });
 
+describe("whitespace placeholders during streaming", () => {
+  it("a whitespace-only in-flight placeholder renders (no early-flicker disappearance)", () => {
+    setActiveSession(SESSION);
+    const store = new MessageStore();
+    routeChatEvent(store, {
+      type: "message.part.deltaBatch",
+      payload: {
+        parts: [{ sessionID: SESSION, messageID: "msg_w", partID: "prt_1", field: "text", delta: " " }],
+      },
+    });
+    const html = renderMessages(storedMessages(store));
+    // A whitespace-only placeholder part still renders its row
+    expect(html).toContain("prose-oc");
+    expect(html).toContain('data-in-flight="true"');
+  });
+});
+
 describe("streaming", () => {
   it("appends 3 in-order deltas into the in-flight part", () => {
     setActiveSession(SESSION);

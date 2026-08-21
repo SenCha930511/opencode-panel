@@ -70,7 +70,11 @@ export function MessageView(props: {
         {orderedParts
           // Whitespace-only text parts render as empty rows that leak stray
           // spacing between real blocks; nothing meaningful is dropped.
-          .filter((part) => part.kind !== "text" || part.text.trim().length > 0)
+          .filter((part) =>
+            message.inFlight === true
+              ? true
+              : part.kind !== "text" || part.text.trim().length > 0,
+          )
           .map((part) => (
             <PartView key={part.id} part={part} />
           ))}
