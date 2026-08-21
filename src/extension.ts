@@ -351,12 +351,12 @@ export function activate(
     });
   };
 
-  panel.registerHandler("openSettingsTab" as any, async () => {
+  panel.registerHandler("openSettingsTab", async () => {
     void openSettingsTab();
     return null;
   });
 
-  panel.registerHandler("closeSettingsTab" as any, async () => {
+  panel.registerHandler("closeSettingsTab", async () => {
     settingsPanel?.dispose();
     return null;
   });

@@ -611,6 +611,21 @@ export function Composer(props: ComposerProps): ReactNode {
                       {t("composer.effort.none")}
                     </div>
                   )}
+
+                  <DropdownMenu.Separator className="my-1 h-px bg-card-border/40" />
+
+                  {/* Section: Open Settings */}
+                  <DropdownMenu.Item
+                    className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs cursor-pointer outline-none transition-colors hover:bg-hover-bg text-muted-fg hover:text-fg select-none"
+                    onSelect={() => {
+                      void app.messenger.request("openSettingsTab", {}).catch(() => {
+                        app.navigate("settings");
+                      });
+                    }}
+                  >
+                    <GearIcon />
+                    <span>{t("composer.openSettings")}</span>
+                  </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
