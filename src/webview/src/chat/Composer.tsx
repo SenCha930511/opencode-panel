@@ -319,11 +319,16 @@ export function Composer(props: ComposerProps): ReactNode {
 
   const inputDisabled = composerDisabled(status);
   const [creating, setCreating] = useState(false);
+  // Synchronous double-Enter guard; state settles a render too late.
+  const creatingRef = useRef(false);
+  // Same for the queued send effect: no re-entry mid-await.
+  const queueInFlightRef = useRef(false);
   const [queuedPrompt, setQueuedPrompt] = useState<{
     text: string;
     chips: readonly ComposerAttachment[];
     agent?: string | undefined;
     model?: string | undefined;
+    variant?: string | undefined;
   } | null>(null);
 
   // Clear queue on session switch
@@ -333,38 +338,48 @@ export function Composer(props: ComposerProps): ReactNode {
 
   // When model finishes outputting (busy -> false), automatically send queued prompt
   useEffect(() => {
-    if (!busy && queuedPrompt && !inputDisabled) {
+    if (!busy && queuedPrompt && !inputDisabled && !queueInFlightRef.current) {
       const promptToSend = queuedPrompt;
       setQueuedPrompt(null);
+      queueInFlightRef.current = true;
       void (async () => {
-        let target = sessionId;
-        if (target === undefined) {
-          setCreating(true);
-          try {
-            target = await ensureSessionForSend(app.messenger, sessionId);
-          } catch (error) {
+        try {
+          let target = sessionId;
+          if (target === undefined) {
+            setCreating(true);
+            creatingRef.current = true;
+            try {
+              target = await ensureSessionForSend(app.messenger, sessionId);
+            } catch (error) {
+              setCreating(false);
+              creatingRef.current = false;
+              reportError(error instanceof Error ? error.message : String(error));
+              return;
+            }
             setCreating(false);
-            reportError(error instanceof Error ? error.message : String(error));
-            return;
+            creatingRef.current = false;
           }
-          setCreating(false);
-        }
-        const payload = buildPromptPayload({
-          sessionId: target,
-          text: promptToSend.text,
-          attachments: promptToSend.chips,
-          ...(promptToSend.agent === undefined ? {} : { agent: promptToSend.agent }),
-          ...(promptToSend.model === undefined ? {} : { model: promptToSend.model }),
-          ...(currentVariant === undefined ? {} : { variant: currentVariant }),
-        });
-        const ok = await submitPrompt(app.messenger, payload, reportError);
-        if (ok) {
-          store.markUserSent();
-        } else {
-          // The queued path cleared the text up front; a send failure must
-          // bring it back so the user's draft is never silently lost.
-          setText(promptToSend.text);
-          drafts.write(target, promptToSend.text);
+          const payload = buildPromptPayload({
+            sessionId: target,
+            text: promptToSend.text,
+            attachments: promptToSend.chips,
+            ...(promptToSend.agent === undefined ? {} : { agent: promptToSend.agent }),
+            ...(promptToSend.model === undefined ? {} : { model: promptToSend.model }),
+            ...(promptToSend.variant === undefined ? {} : { variant: promptToSend.variant }),
+          });
+          const ok = await submitPrompt(app.messenger, payload, reportError);
+          if (ok) {
+            store.markUserSent();
+            drafts.clear(target);
+            drafts.clear(HOME_DRAFT_KEY);
+          } else {
+            // The queued path cleared the text up front; a send failure must
+            // bring it back so the user's draft is never silently lost.
+            setText(promptToSend.text);
+            drafts.write(target, promptToSend.text);
+          }
+        } finally {
+          queueInFlightRef.current = false;
         }
       })();
     }
@@ -385,26 +400,33 @@ export function Composer(props: ComposerProps): ReactNode {
         chips,
         agent: props.agent,
         model: props.model,
+        variant: currentVariant,
       });
       setText("");
       if (sessionId !== undefined) {
         drafts.clear(sessionId);
+      } else {
+        drafts.clear(HOME_DRAFT_KEY);
       }
       return;
     }
 
+    if (creatingRef.current || queueInFlightRef.current) return;
     void (async () => {
       let target = sessionId;
       if (target === undefined) {
         setCreating(true);
+        creatingRef.current = true;
         try {
           target = await ensureSessionForSend(app.messenger, sessionId);
         } catch (error) {
           setCreating(false);
+          creatingRef.current = false;
           reportError(error instanceof Error ? error.message : String(error));
           return;
         }
         setCreating(false);
+        creatingRef.current = false;
       }
       const payload = buildPromptPayload({
         sessionId: target,
@@ -424,7 +446,7 @@ export function Composer(props: ComposerProps): ReactNode {
         drafts.clear(HOME_DRAFT_KEY);
       }
     })();
-  }, [app.messenger, busy, canSend, chips, drafts, props.agent, props.model, reportError, sessionId, text, store]);
+  }, [app.messenger, busy, canSend, chips, currentVariant, drafts, props.agent, props.model, reportError, sessionId, text, store]);
 
   const handleAbort = useCallback(() => {
     if (sessionId === undefined) return;
@@ -489,6 +511,7 @@ export function Composer(props: ComposerProps): ReactNode {
               className="ml-2 text-[11px] opacity-70 hover:opacity-100 hover:underline cursor-pointer"
               onClick={() => {
                 setText(queuedPrompt.text);
+                drafts.write(sessionId ?? HOME_DRAFT_KEY, queuedPrompt.text);
                 setQueuedPrompt(null);
               }}
             >
