@@ -197,7 +197,12 @@ export function activate(
     emptyDiffText: () =>
       buildInitStrings(vscode.env.language, config.read().language).strings["dock.diffs.empty"],
   });
-  registerDockHandlers(panel.registerHandler, { service: dockService, notify: dockNotify });
+  registerDockHandlers(panel.registerHandler, {
+    service: dockService,
+    notify: dockNotify,
+    sessionLostText: () =>
+      buildInitStrings(vscode.env.language, config.read().language).strings["dock.diffs.openUnavailable"],
+  });
   const dockSync = new DockSync({
     source: managerSessionSource(manager),
     sink: panel.chat,

@@ -879,6 +879,8 @@ export interface DockDomainDeps {
   readonly service: DockService;
   /** Error-toast seam: every openDiff failure becomes visible feedback. */
   readonly notify?: { (level: ToastLevel, text: string): void };
+  /** Localized toast for an openDiff payload that lost its session (defaults en). */
+  readonly sessionLostText?: () => string;
 }
 
 /**
@@ -893,6 +895,11 @@ export function registerDockHandlers(register: RegisterHandler, deps: DockDomain
   register(
     "openDiff",
     async (payload): Promise<FromWebviewResponse["openDiff"]> => {
+      if (typeof payload.sessionId !== "string" || payload.sessionId.length === 0) {
+        if (deps.notify === undefined || deps.sessionLostText === undefined) return null;
+        deps.notify("error", deps.sessionLostText());
+        return null;
+      }
       try {
         await service.openDiff(payload);
       } catch (error) {

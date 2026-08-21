@@ -954,4 +954,64 @@ describe("registerDockHandlers", () => {
       name: "DockOpenDiffError",
     });
   });
+
+  it("openFile folds a service failure into an error toast like openDiff (sweep E1)", async () => {
+    const failing: DockService = {
+      openDiff: () => Promise.resolve(),
+      openFile: () => Promise.reject(new DockOpenFileError("cannot resolve: no workspace folder is open")),
+    };
+    const toasts: Array<{ readonly level: string; readonly text: string }> = [];
+    const handlers = new Map<string, (payload: never, ctx: HandlerContext) => unknown>();
+    registerDockHandlers(
+      (type, handler) => {
+        handlers.set(type, handler as (payload: never, ctx: HandlerContext) => unknown);
+      },
+      {
+        service: failing,
+        notify: (level, text) => {
+          toasts.push({ level, text });
+        },
+      },
+    );
+    const openFile = handlers.get("openFile");
+    if (openFile === undefined) throw new Error("handlers missing");
+    expect(await openFile({ path: "src/a.ts" } as never, undefined as never)).toBeNull();
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.level).toBe("error");
+    expect(toasts[0]?.text).toContain("no workspace folder");
+  });
+
+  it("openDiff with a missing sessionId toasts the localized guard instead of calling the service (sweep MED-3)", async () => {
+    let called = false;
+    const service: DockService = {
+      openDiff: () => {
+        called = true;
+        return Promise.resolve();
+      },
+      openFile: () => Promise.resolve(),
+    };
+    const toasts: Array<{ readonly level: string; readonly text: string }> = [];
+    const handlers = new Map<string, (payload: never, ctx: HandlerContext) => unknown>();
+    registerDockHandlers(
+      (type, handler) => {
+        handlers.set(type, handler as (payload: never, ctx: HandlerContext) => unknown);
+      },
+      {
+        service,
+        notify: (level, text) => {
+          toasts.push({ level, text });
+        },
+        sessionLostText: () => "session lost",
+      },
+    );
+    const openDiff = handlers.get("openDiff");
+    if (openDiff === undefined) throw new Error("handlers missing");
+    expect(await openDiff({} as never, undefined as never)).toBeNull();
+    expect(await openDiff({ sessionId: "" } as never, undefined as never)).toBeNull();
+    expect(called).toBe(false);
+    expect(toasts).toEqual([
+      { level: "error", text: "session lost" },
+      { level: "error", text: "session lost" },
+    ]);
+  });
 });
