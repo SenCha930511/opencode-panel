@@ -1,8 +1,28 @@
+import { useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
 import type { StringId } from "../../../../shared/strings.js";
 import { isRecord } from "../../../../shared/protocol.js";
 import type { PartVM, ToolStatus } from "../types.js";
 import { ToolIcon, toolIconKind } from "./toolIcon.js";
+
+const TOOL_OUTPUT_LINE_CAP = 80;
+
+interface OutputSlice {
+  readonly text: string;
+  readonly truncated: boolean;
+  readonly remaining: number;
+}
+
+/** First N lines of an output string, plus the hidden-tail size for the +N chip. */
+export function truncateToolOutput(output: string, cap = TOOL_OUTPUT_LINE_CAP): OutputSlice {
+  const lines = output.split("\n");
+  if (lines.length <= cap) return { text: output, truncated: false, remaining: 0 };
+  return {
+    text: lines.slice(0, cap).join("\n"),
+    truncated: true,
+    remaining: lines.length - cap,
+  };
+}
 
 type ToolPart = Extract<PartVM, { kind: "tool" }>;
 
@@ -94,6 +114,34 @@ function verbForTool(tool: string): string {
   return tool;
 }
 
+function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
+  const { t } = useStrings();
+  const [expanded, setExpanded] = useState(false);
+  const slice = expanded ? { text: output, truncated: false, remaining: 0 } : truncateToolOutput(output);
+  if (!slice.truncated) {
+    return (
+      <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2 font-mono text-[11px] text-fg [contain:content]">
+        {slice.text}
+      </pre>
+    );
+  }
+  return (
+    <div className="[contain:content]">
+      <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2 font-mono text-[11px] text-fg">
+        {slice.text}
+      </pre>
+      <button
+        type="button"
+        data-oc-tool-output-expand
+        className="mt-1.5 text-[10px] font-semibold text-accent/90 hover:text-accent hover:underline cursor-pointer"
+        onClick={() => setExpanded(true)}
+      >
+        {t("tool.output.expand").replace("{count}", `+${Math.max(slice.remaining, 0)}`)}
+      </button>
+    </div>
+  );
+}
+
 /**
  * OMO HARD REQUIREMENT (plan §OMO caveat 2): this card is fully data-driven.
  * The title is the payload's tool name VERBATIM, the icon comes from a
@@ -102,6 +150,7 @@ function verbForTool(tool: string): string {
  * tool name anywhere in the renderer, so unknown names (skill_mcp,
  * team_*, plain-opencode built-ins) render identically by construction.
  */
+
 export function GenericToolCard(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
@@ -148,9 +197,7 @@ export function GenericToolCard(props: { readonly part: ToolPart }) {
           </pre>
         ) : null}
         {part.output !== undefined ? (
-          <pre className="overflow-x-auto rounded-lg border border-card-border/60 bg-black/20 p-2 font-mono text-[11px] text-fg">
-            {part.output}
-          </pre>
+          <ToolOutputBlock output={part.output} />
         ) : null}
         {part.error !== undefined ? (
           <pre className="overflow-x-auto rounded-lg border border-err/30 bg-err/10 p-2 font-mono text-[11px] text-err">

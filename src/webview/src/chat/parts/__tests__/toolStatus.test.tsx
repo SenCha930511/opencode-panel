@@ -21,6 +21,7 @@ type ToolPart = Extract<PartVM, { kind: "tool" }>;
 function toolPart(overrides: {
   readonly status?: ToolStatus;
   readonly raw?: Readonly<Record<string, unknown>>;
+  readonly output?: string;
 }): ToolPart {
   return {
     kind: "tool",
@@ -30,7 +31,7 @@ function toolPart(overrides: {
     status: overrides.status ?? "completed",
     title: "ls -la",
     input: {},
-    output: undefined,
+    output: overrides.output,
     error: undefined,
     raw: overrides.raw ?? {},
   };
@@ -69,7 +70,7 @@ describe("GenericToolCard long-output truncation", () => {
   it("an output over 80 lines renders truncated with an expand affordance", () => {
     const longOutput = Array.from({ length: 120 }, (_, i) => `line-${i + 1}`).join("\n");
     const html = render(
-      <GenericToolCard part={toolPart({ status: "completed", raw: { output: longOutput } })} />,
+      <GenericToolCard part={{ ...toolPart({ status: "completed" }), output: longOutput }} />,
     );
     expect(html).toContain("line-80");
     expect(html).not.toContain("line-81");
@@ -80,7 +81,7 @@ describe("GenericToolCard long-output truncation", () => {
   it("an output of 80 lines or fewer renders whole (no expand control)", () => {
     const shortOutput = Array.from({ length: 80 }, (_, i) => `line-${i + 1}`).join("\n");
     const html = render(
-      <GenericToolCard part={toolPart({ status: "completed", raw: { output: shortOutput } })} />,
+      <GenericToolCard part={{ ...toolPart({ status: "completed" }), output: shortOutput }} />,
     );
     expect(html).toContain("line-80");
     expect(html).not.toContain("data-oc-tool-output-expand");

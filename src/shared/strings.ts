@@ -171,6 +171,7 @@ export const STRING_IDS = [
   // generic tool-call card status chips
   "tool.status.completed",
   "tool.status.failed",
+  "tool.output.collapse",
   "tool.output.expand",
   "tool.status.pending",
   "tool.status.running",
@@ -329,6 +330,7 @@ export const en: Record<StringId, string> = {
   "settings.validationFailed": "Invalid value",
   "tool.status.completed": "Completed",
   "tool.status.failed": "Failed",
+  "tool.output.collapse": "Show less",
   "tool.output.expand": "Show more (+{count} lines)",
   "tool.status.pending": "Pending",
   "tool.status.running": "Running",
@@ -485,6 +487,7 @@ export const zhTW: Record<StringId, string> = {
   "settings.validationFailed": "值無效",
   "tool.status.completed": "已完成",
   "tool.status.failed": "失敗",
+  "tool.output.collapse": "收起日誌",
   "tool.output.expand": "展開更多日誌 (+{count} 行)",
   "tool.status.pending": "等待中",
   "tool.status.running": "執行中",
