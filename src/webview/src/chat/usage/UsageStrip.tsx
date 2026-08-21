@@ -42,23 +42,23 @@ export function UsageStrip(props: UsageStripProps): ReactNode {
     <span
       data-oc-usage
       title={t("chat.usage")}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-mono shadow-2xs transition-all select-none ${colorClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-mono shadow-2xs transition-all select-none whitespace-nowrap shrink-0 ${colorClass}`}
     >
       <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-80">
         <MemoryChipIcon />
       </span>
       {hasWindow && percent !== null ? (
-        <div className="flex items-center gap-1.5">
-          <div className="h-1.5 w-9 overflow-hidden rounded-full bg-black/25 dark:bg-white/10 shrink-0">
+        <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <div className="h-1.5 w-8 overflow-hidden rounded-full bg-black/25 dark:bg-white/10 shrink-0">
             <div
               className={`h-full rounded-full transition-all duration-300 ${barColor}`}
               style={{ width: `${percent}%` }}
             />
           </div>
-          <span className="font-medium tracking-tight">{formatContextUsage(used, contextWindow)}</span>
+          <span className="font-medium tracking-tight whitespace-nowrap">{formatContextUsage(used, contextWindow)}</span>
         </div>
       ) : (
-        <span className="font-medium tracking-tight">{formatContextUsage(used, undefined)}</span>
+        <span className="font-medium tracking-tight whitespace-nowrap">{formatContextUsage(used, undefined)}</span>
       )}
     </span>
   );

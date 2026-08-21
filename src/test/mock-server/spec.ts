@@ -77,8 +77,6 @@ export interface OpenApiSpec {
  * routes are stable — a capability detector must accept every family.
  */
 const MODERN_QUESTION_ROWS: ReadonlyArray<RouteRow> = [
-  ["post", "/session/{id}/question/{requestID}/reply", "Reply to a question request", true],
-  ["post", "/session/{id}/question/{requestID}/reject", "Reject a question request", true],
   ["post", "/api/session/{sessionID}/question/{requestID}/reply", "Reply to a question request", true],
   ["post", "/api/session/{sessionID}/question/{requestID}/reject", "Reject a question request", true],
   ["post", "/question/{requestID}/reply", "Reply to a question request", true],
@@ -91,10 +89,18 @@ export type DocVariant = "modern";
  *  for the real-world route families (mock `/doc?qshape=modern`). */
 export type BuildSpecDocVariant = DocVariant | undefined;
 
-export function buildOpenApiSpec(scenario: ScenarioName, version: string): OpenApiSpec {
+export function buildOpenApiSpec(
+  scenario: ScenarioName,
+  version: string,
+  docVariant?: BuildSpecDocVariant,
+): OpenApiSpec {
   const oldServer = scenario === "old-server";
+  const rows =
+    docVariant === "modern"
+      ? [...ROUTES.filter((row) => !row[1].includes("questions")), ...MODERN_QUESTION_ROWS]
+      : ROUTES;
   const paths: OpenApiSpec["paths"] = {};
-  for (const [method, path, summary, modernOnly] of ROUTES) {
+  for (const [method, path, summary, modernOnly] of rows) {
     if (oldServer && modernOnly) continue;
     paths[path] = {
       ...(paths[path] ?? {}),

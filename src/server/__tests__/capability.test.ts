@@ -131,6 +131,18 @@ describe("capability detection against the mock server", () => {
     });
   });
 
+  it("modern question doc shapes (global + /api-prefixed routes): hasQuestion stays true", async () => {
+    // Given a server whose /doc advertises question support ONLY through the
+    // modern route families (the live 1.18.15 inventory: global
+    // `/question/{requestID}/reply` and `/api/session/{sessionID}/…` routes)
+    const env = await boot("basic-chat");
+    const detector = makeDetector(env.logger, { docQuery: "qshape=modern" });
+    // When
+    const caps = await detector.detect(env.panel.client, env.server.url);
+    // Then: the detector must NOT conclude the feature is unsupported
+    expect(caps.hasQuestion).toBe(true); // live-doc probe proves these routes answer
+  });
+
   it("omo-agents: agents signal fires deterministically and data stays populated", async () => {
     // Given an OMO-flavoured server but NO OMO config files and NO /plugin routes
     const env = await boot("omo-agents");

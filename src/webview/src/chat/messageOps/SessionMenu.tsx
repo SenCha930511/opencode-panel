@@ -116,17 +116,17 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
   };
 
   return (
-    <div aria-label={t("commands.title")} className="flex items-center gap-1.5 shrink-0">
+    <div aria-label={t("commands.title")} className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
       {model.summarize ? (
         <button
           type="button"
           title={t("messages.summarize")}
           aria-label={t("messages.summarize")}
           onClick={onSummarize}
-          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none"
+          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none whitespace-nowrap shrink-0"
         >
           <CompressIcon />
-          <span className="font-medium">{t("messages.summarize")}</span>
+          <span className="font-medium">壓縮</span>
         </button>
       ) : null}
       {model.share ? (
@@ -135,7 +135,7 @@ export function SessionMenu(props: SessionMenuProps): ReactNode {
           title={t("sessions.share")}
           aria-label={t("sessions.share")}
           onClick={onShare}
-          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none"
+          className="flex h-6.5 items-center gap-1 rounded-md border border-card-border/60 bg-card-bg/60 px-2 py-0.5 text-[11px] text-muted-fg shadow-2xs transition-all hover:bg-hover-bg hover:text-fg hover:border-card-border cursor-pointer select-none whitespace-nowrap shrink-0"
         >
           <ShareIcon />
           <span className="font-medium">{t("sessions.share")}</span>

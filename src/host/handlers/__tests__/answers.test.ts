@@ -376,12 +376,12 @@ describe("answers domain handlers (plan todo 16)", () => {
     expect(reply.content).not.toContain("QuestionUnsupportedError");
   });
 
-  it("question reply posts {answers} verbatim to the assumed mirror route", async () => {
+  it("question reply posts the canonical /api route with per-question label arrays", async () => {
     mock = await startMockServer(0);
     const seen: { url: string; method: string; body: string }[] = [];
     const raw: ProbeFetch = (request) => globalThis.fetch(request);
     const tapping: ProbeFetch = async (request) => {
-      if (request.url.includes("/questions/")) {
+      if (request.url.includes("/question/")) {
         const clone = request.clone();
         seen.push({ url: request.url, method: request.method, body: await clone.text() });
       }
@@ -402,8 +402,9 @@ describe("answers domain handlers (plan todo 16)", () => {
     const hit = seen[0];
     if (hit === undefined) throw new Error("no question route hit recorded");
     expect(hit.method).toBe("POST");
-    expect(new URL(hit.url).pathname).toBe("/session/ses_x/questions/qst_7");
-    expect(JSON.parse(hit.body)).toEqual({ answers: ["alpha", "beta"] });
+    // Official v1.18.x canonical route/instance form …/question/{requestID}/reply
+    expect(new URL(hit.url).pathname).toBe("/api/session/ses_x/question/qst_7/reply");
+    expect(JSON.parse(hit.body)).toEqual({ answers: [["alpha"], ["beta"]] });
     // sanity for the fixture helper
     expect(assistantTextOf({ info: {}, parts: [{ type: "text", text: "x" }] })).toBe("x");
   });

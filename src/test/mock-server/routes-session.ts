@@ -151,5 +151,14 @@ export function buildSessionRoutes(srv: MockHttpServer): Route[] {
       pending.settle({ answers: body.answers, reject: body.reject === true });
       json(res, 200, true);
     }))],
+    ["POST", "/api/session/:id/question/:requestID/reply", modern("/api/session/:id/question/:requestID/reply", byId((rec, { params, body, state }, res) => {
+      const pending = state.pendingQuestions.get(params.requestID ?? "");
+      if (pending === undefined || pending.request.sessionID !== rec.info.id) {
+        sendApiError(res, 404, `question not found: ${params.requestID ?? ""}`);
+        return;
+      }
+      pending.settle({ answers: body.answers, reject: body.reject === true });
+      json(res, 200, true);
+    }))],
   ];
 }

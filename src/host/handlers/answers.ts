@@ -13,10 +13,12 @@
  * - NO question-reply method exists in this SDK build (verified: grep over
  *   dist/gen has no questions route), so the question reply is a raw POST
  *   through the todo-7 `probeFetch` (same basic-auth injection) to the
- *   assumed mirror route `POST {baseUrl}/session/:id/questions/:requestID`
- *   with body `{answers}` — verbatim from the wire payload, matching the
- *   todo-5 mock contract (todo 5 documents this assumption; old servers 404
- *   it and todo 7 exposes `hasQuestion` for pre-hiding).
+ *   canonical v1.18.x route `POST {baseUrl}/api/session/:id/question/:requestID/reply`
+ *   with body `{answers: string[][]}` — the wire carries per-index label
+ *   choices, each wrapped as its own single-label list to satisfy the
+ *   server's schema (liberarian-verified against the official question
+ *   group; old servers 404 the route and todo 7 exposes `hasQuestion`
+ *   for pre-hiding).
  *
  * TYPED ERROR CONTRACT (webview consumes via the todo-3 error reply text):
  * - Any question-reply 404 becomes {@link QuestionUnsupportedError}. The name
@@ -161,7 +163,7 @@ async function postQuestionReply(
     new Request(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers: answers.map((answer) => (Array.isArray(answer) ? answer : [answer])) }),
     }),
   );
   if (response.status === 404) {
@@ -192,9 +194,11 @@ export function createAnswerService(deps: AnswerServiceDeps): AnswerService {
     async answerQuestion({ sessionId, requestID, answers }) {
       const connection = await deps.source.connect();
       const base = connection.baseUrl.replace(/\/+$/, "");
+      // Canonical v1.18.x question reply route (official + live-probe verified):
+      // the earlier mirror-assumption route `/session/:id/questions/:id` never existed.
       const url =
-        `${base}/session/${encodeURIComponent(sessionId)}` +
-        `/questions/${encodeURIComponent(requestID)}`;
+        `${base}/api/session/${encodeURIComponent(sessionId)}` +
+        `/question/${encodeURIComponent(requestID)}/reply`;
       await postQuestionReply(deps, connection.probeFetch, url, answers);
     },
   };

@@ -157,10 +157,55 @@ function ToolOutputBlock({ output }: { readonly output: string }): ReactNode {
  * team_*, plain-opencode built-ins) render identically by construction.
  */
 
-const answeredQuestionsMap = new Map<string, readonly string[]>();
+const STORAGE_KEY = "opencode:answeredQuestions";
+const inMemoryAnsweredMap = new Map<string, readonly string[]>();
 
-function getQuestionKey(part: ToolPart): string {
-  return part.callID ?? part.id;
+function getStoredAnswers(): Map<string, readonly string[]> {
+  try {
+    if (typeof localStorage !== "undefined" && typeof localStorage.getItem === "function") {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === "object") {
+          for (const [k, v] of Object.entries(obj)) {
+            if (Array.isArray(v)) {
+              inMemoryAnsweredMap.set(k, v.map(String));
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+  return inMemoryAnsweredMap;
+}
+
+function persistAnswer(key: string, answers: readonly string[]): void {
+  inMemoryAnsweredMap.set(key, answers);
+  try {
+    if (typeof localStorage !== "undefined" && typeof localStorage.setItem === "function") {
+      const obj: Record<string, readonly string[]> = {};
+      for (const [k, v] of inMemoryAnsweredMap.entries()) {
+        obj[k] = v;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    }
+  } catch {}
+}
+
+function findStoredAnswer(part: ToolPart, sessionId?: string): readonly string[] | undefined {
+  const map = getStoredAnswers();
+  const keys = [
+    part.callID,
+    part.id,
+    sessionId && part.callID ? `${sessionId}:${part.callID}` : undefined,
+    sessionId && part.id ? `${sessionId}:${part.id}` : undefined,
+  ].filter((k): k is string => Boolean(k));
+
+  for (const k of keys) {
+    const val = map.get(k);
+    if (val && val.length > 0) return val;
+  }
+  return undefined;
 }
 
 function extractAnswers(
@@ -197,18 +242,18 @@ function extractAnswers(
 function QuestionToolCard(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
-  const qKey = getQuestionKey(part);
-  const previouslySubmitted = answeredQuestionsMap.get(qKey);
+  const sessionId = getActiveSession() ?? "";
+  const stored = findStoredAnswer(part, sessionId);
   const isCompleted =
     part.status === "completed" ||
     part.output !== undefined ||
-    previouslySubmitted !== undefined;
+    stored !== undefined;
 
   const [localStatus, setLocalStatus] = useState<"pending" | "replying" | "replied">(
     isCompleted ? "replied" : "pending"
   );
   const [submittedAnswers, setSubmittedAnswers] = useState<readonly string[] | null>(
-    previouslySubmitted ?? null
+    stored ?? null
   );
 
   const parsedCard = useMemo(() => {
@@ -219,12 +264,12 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
     if (questions.length === 0) return null;
     return {
       kind: "question" as const,
-      sessionId: getActiveSession() ?? "",
+      sessionId,
       requestId: part.callID ?? part.id,
       questions,
       status: isCompleted || localStatus === "replied" ? ("replied" as const) : localStatus === "replying" ? ("replying" as const) : ("pending" as const),
     };
-  }, [part.input, part.callID, part.id, isCompleted, localStatus]);
+  }, [part.input, part.callID, part.id, sessionId, isCompleted, localStatus]);
 
   if (!parsedCard) {
     return <StandardToolDetails part={part} />;
@@ -232,7 +277,7 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
 
   if (isCompleted || part.status === "completed" || localStatus === "replied") {
     const effectiveAnswers = extractAnswers(
-      submittedAnswers ?? (qKey ? answeredQuestionsMap.get(qKey) ?? null : null),
+      submittedAnswers ?? findStoredAnswer(part, sessionId) ?? null,
       part.output,
     );
 
@@ -288,13 +333,20 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
       card={parsedCard}
       onSubmit={(answers) => {
         setSubmittedAnswers(answers);
-        answeredQuestionsMap.set(qKey, answers);
+        const currentSessionId = getActiveSession() ?? "";
+        if (part.callID) {
+          persistAnswer(part.callID, answers);
+          if (currentSessionId) persistAnswer(`${currentSessionId}:${part.callID}`, answers);
+        }
+        if (part.id) {
+          persistAnswer(part.id, answers);
+          if (currentSessionId) persistAnswer(`${currentSessionId}:${part.id}`, answers);
+        }
         setLocalStatus("replying");
-        const sessionId = getActiveSession() ?? "";
         const questionID = part.callID ?? part.id;
         void getWebviewMessenger()
           .request("answerQuestion", {
-            sessionId,
+            sessionId: currentSessionId,
             questionID,
             answers,
           })
@@ -307,7 +359,15 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
           });
       }}
       onDismiss={() => {
-        answeredQuestionsMap.set(qKey, []);
+        const currentSessionId = getActiveSession() ?? "";
+        if (part.callID) {
+          persistAnswer(part.callID, []);
+          if (currentSessionId) persistAnswer(`${currentSessionId}:${part.callID}`, []);
+        }
+        if (part.id) {
+          persistAnswer(part.id, []);
+          if (currentSessionId) persistAnswer(`${currentSessionId}:${part.id}`, []);
+        }
         setLocalStatus("replied");
       }}
     />

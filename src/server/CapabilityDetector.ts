@@ -110,10 +110,13 @@ export function createCapabilityDetector(options: CapabilityDetectorOptions): Ca
 // vs `:id`) by matching a single non-slash segment between `session` and the
 // leaf. The question reply route shape is the mock's documented assumption.
 
-const FORK_PATH = /^\/session\/[^/]+\/fork$/;
-const TODO_PATH = /^\/session\/[^/]+\/todo$/;
-const SHELL_PATH = /^\/session\/[^/]+\/shell$/;
-const QUESTION_PATH = /^\/session\/[^/]+\/questions?(?:\/|$)/;
+// Route families serve under BOTH the unprefixed and the `/api`-prefixed
+// mount (live 1.18.15 doc evidence); question additionally exposes global
+// routes (`/question/{requestID}/reply`) per the official server source.
+const FORK_PATH = /^\/(?:api\/)?session\/[^/]+\/fork$/;
+const TODO_PATH = /^\/(?:api\/)?session\/[^/]+\/todo$/;
+const SHELL_PATH = /^\/(?:api\/)?session\/[^/]+\/shell$/;
+const QUESTION_PATH = /^\/(?:api\/)?(?:session\/[^/]+\/)?questions?(?:\/|$)/;
 
 interface RouteFlags {
   readonly hasFork: boolean;

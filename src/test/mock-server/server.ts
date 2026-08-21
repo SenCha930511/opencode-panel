@@ -33,6 +33,7 @@ export const MODERN_ONLY = [
   "/session/:id/fork",
   "/session/:id/todo",
   "/session/:id/questions/:requestID",
+  "/api/session/:id/question/:requestID/reply",
   "/session/:id/prompt_async",
 ] as const;
 
@@ -163,7 +164,11 @@ function buildRoutes(srv: MockHttpServer): Route[] {
   return [
     ["GET", "/global/health", ({ state }, _req, res) => sendJson(res, 200, { healthy: true, version: state.version })],
     ["GET", "/doc", ({ state, query }, _req, res) => {
-      const spec = buildOpenApiSpec(state.scenario, state.version);
+      const spec = buildOpenApiSpec(
+        state.scenario,
+        state.version,
+        query.get("qshape") === "modern" ? "modern" : undefined,
+      );
       if (query.get("raw") === "1") sendJson(res, 200, spec);
       else sendHtml(res, 200, renderDocHtml(spec));
     }],

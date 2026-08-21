@@ -57,7 +57,7 @@ function CommandGlyph(props: { readonly name: string }): ReactNode {
 }
 
 const MENU_CLASS =
-  "absolute bottom-full left-0 right-0 z-50 mb-2 max-h-60 overflow-y-auto rounded-2xl border border-card-border bg-panel-bg p-1.5 shadow-2xl ring-1 ring-black/20 text-xs";
+  "absolute bottom-full left-0 right-0 z-50 mb-2 max-h-72 overflow-y-auto rounded-2xl border border-card-border/80 bg-panel-bg/95 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black/20 text-xs";
 
 export interface CommandPaletteProps {
   readonly commands: readonly CommandEntry[];
@@ -80,7 +80,7 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
       aria-label={t("commands.title")}
       className={MENU_CLASS}
     >
-      <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
+      <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-fg border-b border-card-border/40 mb-1">
         <span className="flex items-center gap-1.5">
           <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-accent/20 text-accent text-[9px] font-bold">/</span>
           <span>{t("commands.title")}</span>
@@ -102,7 +102,7 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
                   title={command.description ? `${command.name} — ${command.description}` : command.name}
                   aria-selected={isActive}
                   data-active={isActive}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-1.5 text-start transition-colors cursor-pointer group ${
+                  className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-start transition-colors cursor-pointer group ${
                     isActive ? "bg-hover-bg text-fg font-medium" : "text-fg/90 hover:bg-hover-bg/70 hover:text-fg"
                   }`}
                   onMouseDown={(event) => {
@@ -114,18 +114,22 @@ export function CommandPalette(props: CommandPaletteProps): ReactNode {
                     props.onHover?.(index);
                   }}
                 >
-                  <div className="flex min-w-0 shrink-0 items-center gap-2">
+                  <div className="mt-0.5 shrink-0">
                     <CommandGlyph name={command.name} />
-                    <span className="font-medium text-fg">{command.name}</span>
                   </div>
-                  {command.description !== undefined && (
-                    <span
-                      title={command.description}
-                      className="min-w-0 flex-1 truncate text-[11px] text-muted-fg/70 group-hover:text-muted-fg text-right font-normal"
-                    >
-                      {command.description}
-                    </span>
-                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-xs text-fg tracking-tight">{command.name}</span>
+                    </div>
+                    {command.description !== undefined && (
+                      <div
+                        title={command.description}
+                        className="text-[11px] text-muted-fg/80 group-hover:text-muted-fg font-normal leading-relaxed line-clamp-2 break-words"
+                      >
+                        {command.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </li>
             );
