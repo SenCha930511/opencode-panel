@@ -65,6 +65,28 @@ describe("readFileDiffStat", () => {
   });
 });
 
+describe("GenericToolCard long-output truncation", () => {
+  it("an output over 80 lines renders truncated with an expand affordance", () => {
+    const longOutput = Array.from({ length: 120 }, (_, i) => `line-${i + 1}`).join("\n");
+    const html = render(
+      <GenericToolCard part={toolPart({ status: "completed", raw: { output: longOutput } })} />,
+    );
+    expect(html).toContain("line-80");
+    expect(html).not.toContain("line-81");
+    expect(html).toContain("data-oc-tool-output-expand");
+    expect(html).toContain("+40");
+  });
+
+  it("an output of 80 lines or fewer renders whole (no expand control)", () => {
+    const shortOutput = Array.from({ length: 80 }, (_, i) => `line-${i + 1}`).join("\n");
+    const html = render(
+      <GenericToolCard part={toolPart({ status: "completed", raw: { output: shortOutput } })} />,
+    );
+    expect(html).toContain("line-80");
+    expect(html).not.toContain("data-oc-tool-output-expand");
+  });
+});
+
 describe("GenericToolCard status display", () => {
   it("completed renders ✓ (glyph on screen, localized word on the aria)", () => {
     const html = render(<GenericToolCard part={toolPart({ status: "completed" })} />);
