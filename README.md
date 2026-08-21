@@ -2,6 +2,11 @@
 
 English · [繁體中文](README.zh-TW.md)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-panel/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-panel)](https://github.com/SenCha930511/opencode-panel/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-panel)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-panel?style=social)](https://github.com/SenCha930511/opencode-panel/stargazers)
+
 A sidebar chat extension for VS Code that drives your **locally installed
 [opencode](https://opencode.ai)** through its official headless server —
 a Codex/Cursor-grade GUI chat panel without leaving your editor.

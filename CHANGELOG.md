@@ -3,6 +3,14 @@
 All notable changes to **OpenCode Panel** are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.0] — 2026-08-22
+
+### Changed
+
+- First public release: open-sourced under MIT with a bilingual README
+  (English / 繁體中文 split across dedicated files) and the full
+  `opencodePanel.*` settings surface documented.
+
 ## [0.8.15] — 2026-08-21
 
 ### Fixed
@@ -85,4 +93,5 @@ Incremental fixes and polish.
 - Chat-first layout: conversation owns the sidebar; session list becomes a
   left drawer.
 
+[1.0.0]: https://github.com/SenCha930511/opencode-panel/releases
 [0.8.15]: https://github.com/SenCha930511/opencode-panel/releases
