@@ -379,6 +379,31 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
         });
 
         if (childSessions.length === 0) {
+          // Fallback: inspect parent session for task description or background launcher parts
+          try {
+            const parentMsgResult = await connection.client.session.messages({ path: { id: input.sessionId } });
+            if (parentMsgResult.data && Array.isArray(parentMsgResult.data)) {
+              const steps: string[] = [];
+              for (const envelope of parentMsgResult.data) {
+                const parts = (envelope.parts ?? []) as any[];
+                for (const p of parts) {
+                  const partType = p.type ?? p.kind ?? "";
+                  const toolState = (p.state && typeof p.state === "object") ? p.state : p;
+                  const toolName = p.tool ?? p.name ?? toolState.tool ?? "";
+                  if (partType === "tool" && (toolName === "task" || toolName === "explore" || toolName === "background_task" || toolName === "subagent")) {
+                    const inputObj = toolState.input ?? p.input ?? {};
+                    const desc = inputObj.description || inputObj.prompt || inputObj.task || inputObj.command || "";
+                    if (desc) steps.push(`🚀 [任務指令] ${desc}`);
+                  }
+                }
+              }
+              if (steps.length > 0) {
+                return { steps, isRunning: false };
+              }
+            }
+          } catch {
+            // ignore
+          }
           return { steps: [], isRunning: false };
         }
 
@@ -437,8 +462,13 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
             } else if (partType === "reasoning") {
               const txt = (p.text ?? toolState.text ?? "").trim();
               if (txt) {
-                const firstLine = txt.split("\n")[0] ?? "";
-                steps.push(`🧠 思考: ${firstLine.slice(0, 80)}`);
+                const lines = txt.split("\n").map((l) => l.trim()).filter(Boolean);
+                if (lines.length <= 2) {
+                  steps.push(`🧠 思考: ${lines.join(" ")}`);
+                } else {
+                  const lastSnippet = lines.slice(-2).join(" ");
+                  steps.push(`🧠 思考: ...${lastSnippet}`);
+                }
               }
             } else if (partType === "text" && role === "assistant") {
               const txt = (p.text ?? toolState.text ?? "").trim();

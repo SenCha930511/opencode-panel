@@ -180,6 +180,37 @@ async function postQuestionReply(
   }
 }
 
+interface PendingQuestionRecord {
+  readonly id: string;
+  readonly sessionID?: string;
+}
+
+async function fetchPendingQuestions(
+  probeFetch: ProbeFetch,
+  baseUrl: string,
+): Promise<readonly PendingQuestionRecord[]> {
+  try {
+    const response = await probeFetch(
+      new Request(`${baseUrl}/question`, {
+        method: "GET",
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    if (!response.ok) return [];
+    const data: unknown = await response.json().catch(() => []);
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+      .map((item) => ({
+        id: typeof item.id === "string" ? item.id : "",
+        sessionID: typeof item.sessionID === "string" ? item.sessionID : typeof item.sessionId === "string" ? item.sessionId : undefined,
+      }))
+      .filter((q) => q.id.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export function createAnswerService(deps: AnswerServiceDeps): AnswerService {
   return {
     async answerPermission({ sessionId, permissionID, response }) {

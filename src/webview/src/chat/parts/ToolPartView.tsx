@@ -658,6 +658,11 @@ function extractSubagentInfo(part: ToolPart): {
       description = `搜尋: ${input.query}`;
     }
 
+    if (!description && taskId) {
+      description = `背景任務 (${taskId})`;
+      hint = taskId;
+    }
+
     if (!title && description) {
       const firstLine = description.trim().split("\n")[0] ?? "";
       title = firstLine.length > 55 ? firstLine.slice(0, 55) + "..." : firstLine;
@@ -703,7 +708,14 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
   const subagentInfo = useMemo(() => extractSubagentInfo(part), [part]);
   const [isOpen, setIsOpen] = useState(false);
   const [liveSteps, setLiveSteps] = useState<readonly string[]>([]);
-  const [loadingSteps, setLoadingSteps] = useState(false);
+  const logBoxRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll the log container to the bottom on new steps/thoughts
+  useEffect(() => {
+    if (logBoxRef.current && isOpen) {
+      logBoxRef.current.scrollTop = logBoxRef.current.scrollHeight;
+    }
+  }, [liveSteps, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -711,7 +723,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
     let cancelled = false;
     const fetchLogs = async () => {
       try {
-        const sessionId = getActiveSession() ?? "";
+        const sessionId = (part.raw?.sessionID as string) || getActiveSession() || "";
         if (!sessionId) return;
         const res = await getWebviewMessenger().request("getSubagentLogs", {
           sessionId,
@@ -722,13 +734,10 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
           setLiveSteps(res.steps);
         }
       } catch {
-        // Safe fallback to previewOutput
-      } finally {
-        if (!cancelled) setLoadingSteps(false);
+        // Safe fallback
       }
     };
 
-    setLoadingSteps(true);
     void fetchLogs();
 
     if (isRunning) {
@@ -744,7 +753,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, isRunning, subagentInfo.taskId, subagentInfo.hint]);
+  }, [isOpen, isRunning, subagentInfo.taskId, subagentInfo.hint, part.raw]);
 
   return (
     <details
@@ -786,7 +795,7 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
         )}
       </summary>
       <div className="border-t border-card-border/40 p-2.5 space-y-2 bg-black/10">
-        {subagentInfo.description ? (
+        {subagentInfo.description && subagentInfo.description !== subagentInfo.title ? (
           <div className="rounded-lg bg-card-bg/70 border border-card-border/50 p-2 text-[11px]">
             <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務說明</div>
             <div className="text-fg/90 leading-relaxed break-words">{subagentInfo.description}</div>
@@ -803,26 +812,28 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
               </span>
             ) : null}
           </div>
-          <div className="max-h-48 overflow-y-auto font-mono text-[11px] space-y-1.5 p-2 bg-black/50 rounded-lg border border-card-border/40 text-fg/90 leading-relaxed">
+          <div
+            ref={logBoxRef}
+            className="max-h-48 overflow-y-auto font-mono text-[11px] space-y-1.5 p-2 bg-black/50 rounded-lg border border-card-border/40 text-fg/90 leading-relaxed scroll-smooth"
+          >
+            <div className="text-accent/90 break-words flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>{subagentInfo.description || `任務: ${subagentInfo.title}`}</span>
+            </div>
+
             {liveSteps.length > 0 ? (
               liveSteps.map((step, idx) => (
                 <div key={idx} className="break-all">{step}</div>
               ))
             ) : subagentInfo.previewOutput ? (
               <div className="whitespace-pre-wrap">{subagentInfo.previewOutput}</div>
-            ) : subagentInfo.description ? (
-              <div className="space-y-1">
-                <div className="text-accent/90 break-words">🚀 任務啟動: {subagentInfo.description}</div>
-                <div className="text-muted-fg/70 italic text-[10px]">
-                  {isRunning ? "● 子智慧體正在背景並行執行中..." : "✓ 子智慧體已完成任務。"}
-                </div>
-              </div>
             ) : isRunning ? (
-              <div className="text-muted-fg/70 italic">
-                {loadingSteps ? "正在連線讀取子智慧體執行歷程..." : "子智慧體正在背景並行執行中..."}
+              <div className="text-muted-fg/70 italic text-[10px] flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
+                <span>子智慧體背景運算中，正在執行任務...</span>
               </div>
             ) : (
-              <div className="text-muted-fg/70 italic">✓ 子智慧體已完成任務。</div>
+              <div className="text-muted-fg/70 italic text-[10px]">✓ 子智慧體已完成任務。</div>
             )}
           </div>
         </div>
