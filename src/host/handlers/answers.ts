@@ -201,10 +201,16 @@ async function fetchPendingQuestions(
     if (!Array.isArray(data)) return [];
     return data
       .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-      .map((item) => ({
-        id: typeof item.id === "string" ? item.id : "",
-        sessionID: typeof item.sessionID === "string" ? item.sessionID : typeof item.sessionId === "string" ? item.sessionId : undefined,
-      }))
+      .map((item) => {
+        const id = typeof item.id === "string" ? item.id : "";
+        const sessionID =
+          typeof item.sessionID === "string"
+            ? item.sessionID
+            : typeof item.sessionId === "string"
+              ? item.sessionId
+              : undefined;
+        return sessionID === undefined ? { id } : { id, sessionID };
+      })
       .filter((q) => q.id.length > 0);
   } catch {
     return [];
