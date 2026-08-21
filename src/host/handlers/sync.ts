@@ -239,6 +239,13 @@ export function wireSessionsDomain(deps: SessionsWiringDeps): SessionsWiring {
         logger.warn(`event stream resync dropped ${droppedEventCount} queued event(s)`);
       }
       void sessionSync.refresh();
+      // Zero-reload recovery (report §4.2): a dead-then-reconnected server
+      // leaves stale message/dock state on screen; the sessions-only refresh
+      // the original code did silently left those behind. Fan out the other
+      // sync kinds against the consumers' active pin — each drops the call
+      // if it has nothing selected, so these are safe no-ops otherwise.
+      hub.dispatch("messages", undefined);
+      hub.dispatch("todos", undefined);
     },
     serverLost: (notice: ServerLostNotice) => {
       logger.warn(

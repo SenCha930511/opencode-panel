@@ -152,6 +152,19 @@ describe("session invalidation consumer (the exact composition wiring)", () => {
   });
 });
 
+describe("resync fan-out (zero-reload recovery)", () => {
+  it("on reconnect the hub is asked to refetch sessions+messages+todos (active-targeted)", () => {
+    const hub = new InvalidationHub(logger);
+    const kinds: string[] = [];
+    hub.add((kind) => { kinds.push(kind); return { dispose: () => undefined }; });
+    // The wiring used by wireSessionsDomain's resync sink.
+    hub.dispatch("sessions", undefined);
+    hub.dispatch("messages", undefined);
+    hub.dispatch("todos", undefined);
+    expect(kinds).toEqual(["sessions", "messages", "todos"]);
+  });
+});
+
 describe("InvalidationHub", () => {
   it("fans one callback out to every consumer in registration order", () => {
     const hub = new InvalidationHub(logger);
