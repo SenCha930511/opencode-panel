@@ -173,7 +173,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-bg text-fg">
       {/* Top Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/70 bg-panel-bg/95 px-3.5 py-2.5 backdrop-blur-md">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/60 bg-panel-bg/95 px-3.5 py-2 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
           {isDirtyOverall ? (
@@ -188,7 +188,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
             <>
               <button
                 type="button"
-                className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
                 disabled={!dirty || store.hasErrors() || disabled}
                 onClick={() => {
                   void store.apply(send).then((ok) => {
@@ -200,7 +200,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-lg border border-card-border/60 bg-transparent px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 disabled={!dirty || disabled}
                 onClick={() => {
                   store.revert();
@@ -214,7 +214,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
             <>
               <button
                 type="button"
-                className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
                 disabled={!cfgDirty || cfgBlocked}
                 onClick={() => {
                   void cfgStore.save(activeTab, configScope).then((ok) => {
@@ -226,7 +226,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="rounded-lg border border-card-border/60 bg-transparent px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 disabled={!cfgDirty || cfgSlot?.saving === true}
                 onClick={() => {
                   cfgStore.revert(activeTab, configScope);
@@ -238,7 +238,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           )}
           <button
             type="button"
-            className="rounded-xl border border-card-border/80 bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
+            className="rounded-lg border border-card-border/60 bg-transparent px-2 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg cursor-pointer"
             onClick={() => {
               void send("closeSettingsTab" as any, {}).catch(() => {});
               navigate("chat");
@@ -249,46 +249,49 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
         </div>
       </div>
 
-      {/* Tabs Navigation Bar */}
-      <div className="flex items-center gap-1 border-b border-card-border/60 bg-panel-bg/60 px-3.5 py-1.5">
-        <button
-          type="button"
-          onClick={() => setActiveTab("general")}
-          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-            activeTab === "general"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
-          }`}
-        >
-          <span>⚙️</span>
-          <span>{t("cfg.tab.general")}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("opencode")}
-          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-            activeTab === "opencode"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
-          }`}
-        >
-          <span>🤖</span>
-          <span>{t("cfg.tab.opencode")}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("omo")}
-          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-            activeTab === "omo"
-              ? "bg-accent/15 text-accent font-semibold shadow-2xs border border-accent/25"
-              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg border border-transparent"
-          }`}
-        >
-          <span>⚡</span>
-          <span>{t("cfg.tab.omo")}</span>
-        </button>
-        {activeTab !== "general" ? (
-          <span className="ml-auto flex items-center gap-1 rounded-xl bg-card-bg/60 border border-card-border/60 p-0.5">
+      {/* Unified Navigation & Scope / Search Bar */}
+      <div className="flex items-center justify-between gap-2 border-b border-card-border/50 bg-panel-bg/40 px-3.5 py-1.5">
+        {/* Clean Segmented Tab Switcher */}
+        <div className="inline-flex items-center rounded-lg bg-card-bg/60 p-0.5 border border-card-border/50">
+          {(["general", "opencode", "omo"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-md px-2.5 py-0.5 text-xs font-medium transition-all cursor-pointer ${
+                activeTab === tab
+                  ? "bg-accent text-accent-fg font-semibold shadow-xs"
+                  : "text-muted-fg hover:text-fg"
+              }`}
+            >
+              {tab === "general" ? t("cfg.tab.general") : tab === "opencode" ? t("cfg.tab.opencode") : t("cfg.tab.omo")}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Input for General or Scope Toggle for Config Tabs */}
+        {activeTab === "general" ? (
+          <div className="relative flex items-center max-w-[170px] w-full">
+            <span className="absolute left-2 text-muted-fg/60 text-[10px] pointer-events-none">🔍</span>
+            <input
+              type="text"
+              placeholder="搜尋設定..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md border border-card-border/50 bg-card-bg/50 pl-5.5 pr-4 py-0.5 text-[11px] text-fg placeholder:text-muted-fg/40 focus:border-accent focus:outline-none transition-colors"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-1.5 text-[10px] text-muted-fg hover:text-fg cursor-pointer"
+              >
+                ✕
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="inline-flex items-center rounded-lg bg-card-bg/60 p-0.5 border border-card-border/50">
             {(["global", "project"] as const).map((choice) => (
               <button
                 key={choice}
@@ -296,49 +299,26 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                 onClick={() => {
                   setConfigScope(choice);
                 }}
-                className={`rounded-lg px-2.5 py-0.5 text-[11px] font-medium transition-all cursor-pointer ${
+                className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-all cursor-pointer ${
                   configScope === choice
-                    ? "bg-accent text-accent-fg font-semibold shadow-2xs"
+                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
                     : "text-muted-fg hover:text-fg"
                 }`}
               >
                 {t(choice === "global" ? "cfg.scope.global" : "cfg.scope.project")}
               </button>
             ))}
-          </span>
-        ) : null}
+          </div>
+        )}
       </div>
 
-      {/* Quick Search Bar for General Settings */}
-      {activeTab === "general" ? (
-        <div className="flex items-center gap-2 border-b border-card-border/40 bg-card-bg/25 px-3.5 py-1.5">
-          <span className="text-muted-fg/60 text-xs">🔍</span>
-          <input
-            type="text"
-            placeholder="搜尋設定項目 (Filter settings...)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent text-xs text-fg placeholder:text-muted-fg/45 outline-none"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="text-[11px] text-muted-fg hover:text-fg px-1 cursor-pointer"
-            >
-              ✕
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
       {view.saveFailed ? (
-        <p role="alert" className="border-b border-err/30 bg-err/10 px-3.5 py-2 text-xs text-err font-medium">
+        <p role="alert" className="border-b border-err/30 bg-err/10 px-3.5 py-1.5 text-xs text-err font-medium">
           {t("settings.saveFailed")}
         </p>
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-3.5">
         {activeTab === "opencode" && <OpenCodeConfigTab store={cfgStore} scope={configScope} />}
         {activeTab === "omo" && <OmoConfigTab store={cfgStore} scope={configScope} />}
         {activeTab === "general" && (
@@ -359,12 +339,12 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
               }
 
               return (
-                <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
-                    <span className="text-muted-fg">{getSectionIcon(section)}</span>
+                <section key={section} className="flex flex-col gap-3 rounded-xl border border-card-border/60 bg-card-bg/30 p-3.5">
+                  <div className="flex items-center gap-2 border-b border-card-border/40 pb-2">
+                    <span className="text-muted-fg text-xs">{getSectionIcon(section)}</span>
                     <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
                   </div>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {filteredFields.map((field) => (
                       <SettingFieldRow
                         key={`${field.shortKey}:${String(resetSignal)}`}
@@ -383,74 +363,74 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                       />
                     ))}
                   </div>
-                {section === "server" ? (
-                  <>
-                    <SettingsSecretsPanel
-                      secrets={view.secrets}
-                      disabled={disabled}
-                      onSave={(kind, value) => runSecret(kind, value)}
-                      onClear={(kind) => runSecret(kind, "")}
-                    />
-                    <div className="flex flex-col gap-2 border-t border-card-border/50 pt-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className="rounded-xl border border-card-border bg-card-bg/80 px-3 py-1.5 text-xs font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer shadow-2xs"
-                          disabled={disabled}
-                          onClick={() => {
-                            void store.testConnection(send);
-                          }}
-                        >
-                          {t("settings.testConnection")}
-                        </button>
-                        {view.serverHealth === null ? null : (
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                              view.serverHealth.status === "ok" ? "bg-ok/15 text-ok border border-ok/30" : "bg-err/15 text-err border border-err/30"
-                            }`}
+                  {section === "server" ? (
+                    <>
+                      <SettingsSecretsPanel
+                        secrets={view.secrets}
+                        disabled={disabled}
+                        onSave={(kind, value) => runSecret(kind, value)}
+                        onClear={(kind) => runSecret(kind, "")}
+                      />
+                      <div className="flex flex-col gap-2 border-t border-card-border/40 pt-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="rounded-lg border border-card-border/60 bg-card-bg/60 px-2.5 py-1 text-xs font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer"
+                            disabled={disabled}
+                            onClick={() => {
+                              void store.testConnection(send);
+                            }}
                           >
-                            <span className={`h-1.5 w-1.5 rounded-full ${view.serverHealth.status === "ok" ? "bg-ok" : "bg-err"}`} />
-                            <span>
-                              {view.serverHealth.status === "ok"
-                                ? t("settings.connectionOk")
-                                : t("settings.connectionFailed")}
-                              {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
-                              {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
+                            {t("settings.testConnection")}
+                          </button>
+                          {view.serverHealth === null ? null : (
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                                view.serverHealth.status === "ok" ? "bg-ok/15 text-ok border border-ok/30" : "bg-err/15 text-err border border-err/30"
+                              }`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${view.serverHealth.status === "ok" ? "bg-ok" : "bg-err"}`} />
+                              <span>
+                                {view.serverHealth.status === "ok"
+                                  ? t("settings.connectionOk")
+                                  : t("settings.connectionFailed")}
+                                {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
+                                {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
+                              </span>
                             </span>
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </div>
+                    </>
+                  ) : null}
+                  {section === "diagnostics" ? (
+                    <div className="flex flex-col gap-1.5 border-t border-card-border/40 pt-2.5">
+                      <div className="flex items-center gap-2 text-xs font-medium text-fg/80">
+                        <span className="h-1.5 w-1.5 rounded-full bg-ok animate-pulse" />
+                        <span className="font-mono text-[11px]">
+                          {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
+                          {init.server.version === null ? "" : ` — ${init.server.version}`}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-muted-fg/70">{t("settings.serverActionsHint")}</p>
                     </div>
-                  </>
-                ) : null}
-                {section === "diagnostics" ? (
-                  <div className="flex flex-col gap-1.5 border-t border-card-border/50 pt-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-fg/80">
-                      <span className="h-2 w-2 rounded-full bg-ok animate-pulse" />
-                      <span className="font-mono text-[11px]">
-                        {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
-                        {init.server.version === null ? "" : ` — ${init.server.version}`}
-                      </span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed text-muted-fg">{t("settings.serverActionsHint")}</p>
-                  </div>
-                ) : null}
-              </section>
-            );
-          })}
-            <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
-              <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
-                <span className="text-accent"><ZapIcon /></span>
+                  ) : null}
+                </section>
+              );
+            })}
+            <section className="flex flex-col gap-3 rounded-xl border border-card-border/60 bg-card-bg/30 p-3.5">
+              <div className="flex items-center gap-2 border-b border-card-border/40 pb-2">
+                <span className="text-accent text-xs"><ZapIcon /></span>
                 <h3 className="text-xs font-semibold text-fg/90">{t("settings.section.capabilities")}</h3>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {Object.entries(init.capabilities).map(([name, enabled]) => (
                   <span
                     key={name}
-                    className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                    className={`flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[10px] font-medium transition-all ${
                       enabled
                         ? "border-ok/30 bg-ok/10 text-ok"
-                        : "border-card-border/60 bg-card-bg/60 text-muted-fg/60"
+                        : "border-card-border/40 bg-card-bg/40 text-muted-fg/60"
                     }`}
                   >
                     <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-ok" : "bg-off"}`} />
@@ -459,7 +439,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
                 ))}
               </div>
               {capabilities === undefined ? null : (
-                <p className="text-[11px] font-medium leading-relaxed text-muted-fg/80 pt-1 border-t border-card-border/30">
+                <p className="text-[10px] font-medium leading-relaxed text-muted-fg/70 pt-1 border-t border-card-border/20">
                   {`${capabilities.agents.length} agents / ${capabilities.commands.length} commands / ${capabilities.providers.length} providers`}
                 </p>
               )}

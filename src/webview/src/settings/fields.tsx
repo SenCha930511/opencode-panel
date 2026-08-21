@@ -24,7 +24,7 @@ import {
 } from "../../../shared/settingsSchema.js";
 
 const INPUT_CLASS =
-  "w-full rounded-xl border border-card-border/80 bg-input-card-bg/90 px-3 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/45 hover:border-card-border focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none disabled:opacity-50 shadow-2xs";
+  "w-full rounded-lg border border-card-border/60 bg-input-card-bg/60 px-2.5 py-1.5 text-xs text-fg transition-all placeholder:text-muted-fg/40 hover:border-card-border focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none disabled:opacity-50";
 
 export interface FieldRowProps {
   readonly field: SettingField;
@@ -48,7 +48,7 @@ function ScopeChip(props: {
   return (
     <select
       aria-label={t(props.labelId)}
-      className="cursor-pointer rounded-lg border border-card-border/70 bg-card-bg/80 px-2 py-0.5 text-[10px] text-muted-fg font-medium outline-none transition-all hover:border-accent/60 hover:text-fg focus:border-accent focus:ring-1 focus:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-md border border-card-border/40 bg-transparent px-1.5 py-0.5 text-[10px] text-muted-fg/70 font-medium outline-none transition-all hover:border-card-border hover:text-fg focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
       disabled={props.disabled}
       value={props.scope}
       onChange={(event) => {
