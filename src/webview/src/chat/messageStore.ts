@@ -109,7 +109,7 @@ export class MessageStore {
   }
 
   /** Switch sessions (T12 drives this): state resets; tails are per-session. */
-  setSession(sessionId: string): void {
+  setSession(sessionId: string | undefined): void {
     if (this.sessionId === sessionId) return;
     this.streamTails.clear();
     this.placeholderPartIds.clear();

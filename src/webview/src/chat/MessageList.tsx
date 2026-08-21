@@ -144,13 +144,11 @@ export function MessageList(props: MessageListProps) {
   const lastHandledUserMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (activeSessionId) {
-      store.setSession(activeSessionId);
-      const messages = store.getState().messages;
-      const lastUserIdx = findLatestUserMessageIndex(messages);
-      const lastUser = lastUserIdx >= 0 ? messages[lastUserIdx] : undefined;
-      lastHandledUserMessageIdRef.current = lastUser !== undefined ? lastUser.id : null;
-    }
+    store.setSession(activeSessionId);
+    const messages = store.getState().messages;
+    const lastUserIdx = findLatestUserMessageIndex(messages);
+    const lastUser = lastUserIdx >= 0 ? messages[lastUserIdx] : undefined;
+    lastHandledUserMessageIdRef.current = lastUser !== undefined ? lastUser.id : null;
   }, [activeSessionId, store]);
 
   useEffect(() => {

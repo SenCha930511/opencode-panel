@@ -423,6 +423,32 @@ describe("large-session delta sync (host >250 merge)", () => {
   });
 });
 
+describe("active session cleared (deleted sessions)", () => {
+  it("setSession(undefined) empties the view so a deleted session cannot linger as busy", () => {
+    const store = new MessageStore();
+    store.applyFullSync(SESSION, basicChatMessages());
+    expect(store.getState().messages.length).toBeGreaterThan(0);
+
+    store.setSession(undefined);
+    expect(store.getState().sessionId).toBeUndefined();
+    expect(store.getState().messages).toEqual([]);
+    expect(store.getState().status).toBe("idle");
+  });
+
+  it("selecting a fresh session after clearing repopulates from its sync", () => {
+    const store = new MessageStore();
+    store.applyFullSync(SESSION, basicChatMessages());
+    store.setSession(undefined);
+    store.setSession("ses_next");
+    store.applyFullSync("ses_next", basicChatMessages().map((raw) => ({
+      ...(raw as Record<string, unknown>),
+      info: { ...((raw as { info: Record<string, unknown> }).info), sessionID: "ses_next" },
+    })));
+    expect(store.getState().sessionId).toBe("ses_next");
+    expect(store.getState().messages.length).toBeGreaterThan(0);
+  });
+});
+
 describe("AutoScrollPark", () => {
   it("pins to bottom until the user scrolls up; re-bottom re-pins", () => {
     const park = new AutoScrollPark();
