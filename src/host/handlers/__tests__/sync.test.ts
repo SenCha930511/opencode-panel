@@ -78,6 +78,7 @@ function countingService(entries: readonly SessionListEntry[]): {
     forkSession: () => Promise.resolve(session),
     setSessionAuto: () => Promise.resolve(),
     getSessionAuto: () => Promise.resolve(false),
+    getSubagentLogs: () => Promise.resolve({ steps: [], isRunning: false }),
   };
   return { service: stub, calls: () => calls };
 }
@@ -123,6 +124,7 @@ describe("SessionSync", () => {
       forkSession: () => Promise.reject(new Error("unused")),
       setSessionAuto: () => Promise.reject(new Error("unused")),
       getSessionAuto: () => Promise.reject(new Error("unused")),
+      getSubagentLogs: () => Promise.resolve({ steps: [], isRunning: false }),
     };
     const sink = new RecordingEventSink();
     const sync = new SessionSync({ service: failing, sink, logger });

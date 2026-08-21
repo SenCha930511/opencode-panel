@@ -33,6 +33,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "../../app/context.js";
 import { useActiveSession } from "../activeSession.js";
+import { ChatDock, type ChatDockProps } from "../Composer.js";
 import { buildPromptExtras, usePickerSelection } from "../composerState.js";
 import type { MessageStore } from "../messageStore.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
@@ -55,10 +56,12 @@ export function useComposerPickers(store?: MessageStore): ComposerPickerProps {
     attachCapabilityStore(messenger);
   }, [messenger]);
 
-  if (snapshot === undefined) return { extras: <ChatPickers store={store} /> };
+  if (snapshot === undefined) {
+    return { extras: <ChatPickers {...(store === undefined ? {} : { store })} /> };
+  }
   const selected = buildPromptExtras(sessionId ?? "", snapshot);
   return {
-    extras: <ChatPickers store={store} />,
+    extras: <ChatPickers {...(store === undefined ? {} : { store })} />,
     ...(selected.agent === undefined ? {} : { agent: selected.agent }),
     ...(selected.model === undefined ? {} : { model: selected.model }),
   };

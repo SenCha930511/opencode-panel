@@ -30,6 +30,7 @@ import {
   usePickerSelection,
 } from "../composerState.js";
 import { useChatStore } from "../MessageList.js";
+import type { MessageStore } from "../messageStore.js";
 import type { MessageVM } from "../types.js";
 import type { AgentEntry, ProviderEntry } from "./constants.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
@@ -88,7 +89,10 @@ export function extractSessionAgentAndModel(
     if (agent && model) break;
   }
 
-  return { agent, model };
+  return {
+    ...(agent === undefined ? {} : { agent }),
+    ...(model === undefined ? {} : { model }),
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -698,7 +698,14 @@ function extractSubagentInfo(part: ToolPart): {
     }
   }
 
-  return { agentName, title, description, previewOutput, taskId, hint };
+  return {
+    ...(agentName !== undefined ? { agentName } : {}),
+    title,
+    ...(description !== undefined ? { description } : {}),
+    previewOutput,
+    ...(taskId !== undefined ? { taskId } : {}),
+    ...(hint !== undefined ? { hint } : {}),
+  };
 }
 
 function SubagentToolCard(props: { readonly part: ToolPart }) {
@@ -727,8 +734,8 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
         if (!sessionId) return;
         const res = await getWebviewMessenger().request("getSubagentLogs", {
           sessionId,
-          taskId: subagentInfo.taskId,
-          hint: subagentInfo.hint,
+          ...(subagentInfo.taskId !== undefined ? { taskId: subagentInfo.taskId } : {}),
+          ...(subagentInfo.hint !== undefined ? { hint: subagentInfo.hint } : {}),
         });
         if (!cancelled && res && Array.isArray(res.steps) && res.steps.length > 0) {
           setLiveSteps(res.steps);

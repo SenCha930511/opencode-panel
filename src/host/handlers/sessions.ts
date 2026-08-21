@@ -462,7 +462,7 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
             } else if (partType === "reasoning") {
               const txt = (p.text ?? toolState.text ?? "").trim();
               if (txt) {
-                const lines = txt.split("\n").map((l) => l.trim()).filter(Boolean);
+                const lines = txt.split("\n").map((l: string) => l.trim()).filter(Boolean);
                 if (lines.length <= 2) {
                   steps.push(`🧠 思考: ${lines.join(" ")}`);
                 } else {
@@ -564,7 +564,11 @@ export function registerSessionHandlers(register: RegisterHandler, deps: Session
   });
 
   register("getSubagentLogs", async ({ sessionId, taskId, hint }): Promise<FromWebviewResponse["getSubagentLogs"]> => {
-    const result = await service.getSubagentLogs({ sessionId, taskId, hint });
+    const result = await service.getSubagentLogs({
+      sessionId,
+      ...(taskId !== undefined ? { taskId } : {}),
+      ...(hint !== undefined ? { hint } : {}),
+    });
     return result;
   });
 }
