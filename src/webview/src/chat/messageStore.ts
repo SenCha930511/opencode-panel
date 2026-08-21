@@ -200,7 +200,9 @@ export class MessageStore {
     if (addedAny) {
       // New messages must land in server time order; blindly appending after
       // the last entry loses revert/fork-driven mid-list inserts server-side.
-      messages.sort((a, b) => (createdMs(a.info) ?? 0) - (createdMs(b.info) ?? 0));
+      // Uncreated entries (in-flight placeholder, info:{}) claim the tail.
+      const NEWEST = Number.POSITIVE_INFINITY;
+      messages.sort((a, b) => (createdMs(a.info) ?? NEWEST) - (createdMs(b.info) ?? NEWEST));
     }
     this.messages = messages;
     this.pruneTails(messages);
@@ -237,12 +239,17 @@ export class MessageStore {
       const placeholder: PartVM = { kind: "text", id: entry.partID, text: tail };
       message.parts = [...message.parts, placeholder].sort(this.partOrder);
     } else if (part.kind === "text" || part.kind === "reasoning") {
-      const base = part.text.endsWith(oldTail)
-        ? part.text.slice(0, part.text.length - oldTail.length)
-        : part.text;
-      const parts = [...message.parts];
-      parts[at] = { ...part, text: base + tail } as PartVM;
-      message.parts = parts;
+      // Reconnect-replay guard: when the full sync that follows a reconnect
+      // already folded this delta into the authoritative text, the SSE replay
+      // of the same delta must not append it twice (sweep A3).
+      if (!part.text.endsWith(tail)) {
+        const base = part.text.endsWith(oldTail)
+          ? part.text.slice(0, part.text.length - oldTail.length)
+          : part.text;
+        const parts = [...message.parts];
+        parts[at] = { ...part, text: base + tail } as PartVM;
+        message.parts = parts;
+      }
     }
     // Non-text parts never mutate from deltas; the updated/sync path owns them.
     this.messages = messages;
@@ -310,10 +317,11 @@ export class MessageStore {
       inFlight: false,
       parts: [],
     };
+    // Same "uncreated = newest" contract as the delta-sync sort (sweep A2).
+    const b = createdMs(info) ?? Number.POSITIVE_INFINITY;
     const insertAt = this.messages.findIndex((message) => {
-      const a = createdMs(message.info);
-      const b = createdMs(info);
-      return a !== undefined && b !== undefined ? a > b : false;
+      const a = createdMs(message.info) ?? Number.POSITIVE_INFINITY;
+      return a > b;
     });
     const messages = [...this.messages];
     messages.splice(insertAt === -1 ? messages.length : insertAt, 0, incoming);
@@ -325,7 +333,17 @@ export class MessageStore {
   applySessionStatus(sessionId: string | undefined, type: string | undefined): void {
     if (!this.targetsSession(sessionId)) return;
     const status: SessionStatus = type === "idle" ? "idle" : "busy";
-    if (status === this.status) return;
+    // Going idle finalizes the turn: any message still flagged inFlight never
+    // received its message.updated (abort, crash, dropped event) and would
+    // otherwise render a typing row forever (sweep A4).
+    let messages = this.messages;
+    if (status === "idle" && messages.some((message) => message.inFlight)) {
+      messages = messages.map((message) => {
+        return message.inFlight ? { ...message, inFlight: false } : message;
+      });
+    }
+    if (status === this.status && messages === this.messages) return;
+    if (messages !== this.messages) this.messages = messages;
     this.status = status;
     this.publish();
   }
