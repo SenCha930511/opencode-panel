@@ -30,7 +30,7 @@ import {
 } from "../composerState.js";
 import type { AgentEntry, ProviderEntry } from "./constants.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
-import { agentRows, resolveInitialModel } from "./logic.js";
+import { agentRows, isCustomAgent, resolveInitialModel } from "./logic.js";
 import { PickerDropdown, type PickerGroup, type PickerRow } from "./PickerDropdown.js";
 
 // ---------------------------------------------------------------------------
@@ -107,31 +107,39 @@ export function AgentPicker(props: AgentPickerProps): ReactNode {
 
 export interface ModelPickerProps {
   readonly providers: readonly ProviderEntry[];
-  /** Effective current value "provider/model" (selection or server default). */
-  readonly value?: string;
-  onPick(id: string): void;
-  /** Test seam: SSR suites render the menu deterministically open. */
+  readonly value?: string | undefined;
   readonly initialOpen?: boolean;
+  readonly locked?: boolean;
+  readonly lockedReason?: string;
+  onPick(id: string): void;
+  onLockedClick?(): void;
 }
 
 export function ModelPicker(props: ModelPickerProps): ReactNode {
   const { t } = useStrings();
-  const [open, setOpen] = useState(props.initialOpen === true);
-  const groups: PickerGroup[] = [];
-  let currentModelName: string | undefined;
+  const [open, setOpen] = useState(props.initialOpen ?? false);
+
   let currentProviderName: string | undefined;
+  let currentModelName: string | undefined;
+
+  const groups: PickerGroup[] = [];
   for (const provider of props.providers) {
     if (provider.models.length === 0) continue;
     groups.push({
       label: provider.name,
       rows: provider.models.map((model) => {
-        const key = `${provider.id}/${model.id}`;
-        const isSelected = key === props.value || model.id === props.value;
+        const rowKey = `${provider.id}/${model.id}`;
+        const isSelected = props.value === rowKey;
         if (isSelected) {
-          currentModelName = model.name;
           currentProviderName = provider.name;
+          currentModelName = model.name;
         }
-        return { key, primary: model.name, secondary: model.id, selected: isSelected };
+        return {
+          key: rowKey,
+          primary: model.name,
+          secondary: model.id,
+          selected: isSelected,
+        };
       }),
     });
   }
@@ -146,11 +154,13 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
   }
 
   // Full tooltip on mouse hover
-  const fullTooltip = props.value
-    ? currentProviderName && currentModelName
-      ? `${currentProviderName} / ${currentModelName} (${props.value})`
-      : props.value
-    : undefined;
+  const fullTooltip = props.locked && props.lockedReason
+    ? props.lockedReason
+    : props.value
+      ? currentProviderName && currentModelName
+        ? `${currentProviderName} / ${currentModelName} (${props.value})`
+        : props.value
+      : undefined;
 
   return (
     <PickerDropdown
@@ -159,6 +169,8 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
       align="end"
       groups={groups}
       open={open}
+      locked={props.locked}
+      onLockedClick={props.onLockedClick}
       {...(props.value === undefined ? {} : { currentLabel: props.value })}
       {...(shortLabel === undefined ? {} : { displayLabel: shortLabel })}
       {...(fullTooltip === undefined ? {} : { tooltip: fullTooltip })}
@@ -169,6 +181,7 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
         setOpen(false);
       }}
       onPick={(key) => {
+        if (props.locked) return;
         setOpen(false);
         props.onPick(key);
       }}
@@ -180,27 +193,35 @@ export function ModelPicker(props: ModelPickerProps): ReactNode {
 // The T14 mount point: both pickers over the live stores.
 
 export function ChatPickers(): ReactNode {
-  const { messenger } = useApp();
+  const app = useApp();
   const sessionId = useActiveSession();
   const snapshot = useCapabilitySnapshot();
   const selection = usePickerSelection(sessionId ?? "");
 
   useEffect(() => {
-    attachCapabilityStore(messenger);
-  }, [messenger]);
+    attachCapabilityStore(app.messenger);
+  }, [app.messenger]);
 
   if (snapshot === undefined) return null;
   const showAgent = snapshot.agents.length > 0;
   const showModel = snapshot.providers.some((provider) => provider.models.length > 0);
   if (!showAgent && !showModel) return null;
 
+  const activeAgent = selection.agent;
+  const currentAgentEntry = snapshot.agents.find((a) => a.name === activeAgent);
+  const isLockedAgent = currentAgentEntry?.model !== undefined && currentAgentEntry.model.length > 0;
+  const lockedModelId = currentAgentEntry?.model;
+
   const modelValue =
+    (isLockedAgent ? lockedModelId : undefined) ??
     selection.model ??
     resolveInitialModel({
       providers: snapshot.providers,
       defaultModels: snapshot.defaultModels,
       ...(snapshot.defaultModel === undefined ? {} : { defaultModel: snapshot.defaultModel }),
     });
+
+  const hasCustomAgent = activeAgent !== undefined && isCustomAgent(activeAgent);
 
   return (
     <div data-oc="chat-pickers" className="flex items-center gap-1 min-w-0 flex-1 overflow-visible">
@@ -209,13 +230,43 @@ export function ChatPickers(): ReactNode {
         {...(selection.agent === undefined ? {} : { value: selection.agent })}
         onPick={(name) => {
           setAgentSelection(sessionId ?? "", name);
+          const pickedAgent = snapshot.agents.find((a) => a.name === name);
+          if (pickedAgent?.model) {
+            app.pushToast(
+              "info",
+              `智慧體「${name}」已鎖定專屬模型「${pickedAgent.model}」。`,
+            );
+          } else if (isCustomAgent(name)) {
+            app.pushToast(
+              "info",
+              `已選擇自訂智慧體「${name}」。`,
+            );
+          }
         }}
       />
       <ModelPicker
         providers={snapshot.providers}
+        locked={isLockedAgent}
+        lockedReason={
+          isLockedAgent
+            ? `🔒 智慧體「${activeAgent}」已鎖定使用專屬模型「${lockedModelId}」，無法手動切換。`
+            : undefined
+        }
+        onLockedClick={() => {
+          app.pushToast(
+            "info",
+            `智慧體「${activeAgent}」已綁定專屬模型「${lockedModelId}」。若要自由切換模型，請切換至通用智慧體 (build / general)。`,
+          );
+        }}
         {...(modelValue === undefined ? {} : { value: modelValue })}
         onPick={(id) => {
           setModelSelection(sessionId ?? "", id);
+          if (hasCustomAgent) {
+            app.pushToast(
+              "warning",
+              `已設定模型為「${id.split("/").pop() ?? id}」。目前使用中的自訂智慧體「${activeAgent}」若設定了專屬模型，後端將優先以智慧體模型為主。若要完全自由指定模型，請切換至 build / general 通用智慧體。`,
+            );
+          }
         }}
       />
     </div>

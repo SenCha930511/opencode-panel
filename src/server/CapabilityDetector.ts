@@ -157,14 +157,39 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function parseAgentModel(model: unknown): string | undefined {
+  if (typeof model === "string" && model.length > 0) return model;
+  if (isRecord(model)) {
+    const provider =
+      typeof model.providerID === "string"
+        ? model.providerID
+        : typeof model.provider === "string"
+          ? model.provider
+          : "";
+    const id =
+      typeof model.modelID === "string"
+        ? model.modelID
+        : typeof model.model === "string"
+          ? model.model
+          : typeof model.id === "string"
+            ? model.id
+            : "";
+    if (provider && id) return `${provider}/${id}`;
+    if (id) return id;
+  }
+  return undefined;
+}
+
 function toAgentSummaries(payload: unknown): AgentSummary[] {
   if (!Array.isArray(payload)) return [];
   const agents: AgentSummary[] = [];
   for (const item of payload) {
     if (!isRecord(item) || typeof item.name !== "string" || item.name.length === 0) continue;
+    const model = parseAgentModel(item.model);
     agents.push({
       name: item.name,
       ...(typeof item.mode === "string" ? { mode: item.mode } : {}),
+      ...(model !== undefined ? { model } : {}),
       builtIn: item.builtIn === true,
     });
   }

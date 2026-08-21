@@ -34,22 +34,26 @@ export function UsageStrip(props: UsageStripProps): ReactNode {
     ? "text-err border-err/30 bg-err/10"
     : isMed
       ? "text-amber-400 border-amber-400/30 bg-amber-400/10"
-      : "text-muted-fg hover:text-fg border-card-border/70 bg-card-bg/60 hover:bg-hover-bg/80";
+      : "text-muted-fg hover:text-fg border-card-border/60 bg-card-bg/50 hover:bg-hover-bg/80";
 
   const barColor = isHigh ? "bg-err" : isMed ? "bg-amber-400" : "bg-accent";
+
+  const fullTooltip = hasWindow
+    ? `Token Usage: ${used.toLocaleString()} / ${contextWindow.toLocaleString()} (${percent}%)`
+    : `Token Usage: ${used.toLocaleString()} tokens`;
 
   return (
     <span
       data-oc-usage
       title={t("chat.usage")}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-mono shadow-2xs transition-all select-none whitespace-nowrap shrink-0 ${colorClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10.5px] font-mono shadow-2xs transition-all select-none whitespace-nowrap shrink-0 ${colorClass}`}
     >
-      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-80">
+      <span className="flex h-3 w-3 shrink-0 items-center justify-center opacity-80">
         <MemoryChipIcon />
       </span>
       {hasWindow && percent !== null ? (
         <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
-          <div className="h-1.5 w-8 overflow-hidden rounded-full bg-black/25 dark:bg-white/10 shrink-0">
+          <div className="h-1.5 w-6 overflow-hidden rounded-full bg-black/20 dark:bg-white/10 shrink-0">
             <div
               className={`h-full rounded-full transition-all duration-300 ${barColor}`}
               style={{ width: `${percent}%` }}

@@ -8,7 +8,7 @@
  * these view-models are what the parsers turn them into.
  */
 
-export type CardStatus = "pending" | "replying" | "expired";
+export type CardStatus = "pending" | "replying" | "expired" | "replied";
 
 export interface PermissionCardVM {
   readonly kind: "permission";

@@ -24,6 +24,7 @@ export interface AgentEntry {
   readonly name: string;
   /** Agent mode as reported (`primary` | `subagent` | `all`); absent when omitted. */
   readonly mode?: string;
+  readonly model?: string;
   readonly builtIn: boolean;
 }
 
@@ -70,6 +71,7 @@ function toAgentEntry(value: unknown): AgentEntry | undefined {
   return {
     name: value.name,
     ...(typeof value.mode === "string" ? { mode: value.mode } : {}),
+    ...(typeof value.model === "string" ? { model: value.model } : {}),
     builtIn: value.builtIn === true,
   };
 }

@@ -219,6 +219,9 @@ export function MessageList(props: MessageListProps) {
           setAtBottom(isBottom);
         }}
         rangeChanged={setVisibleRange}
+        components={{
+          Footer: () => <div className="h-8 w-full shrink-0" aria-hidden="true" />,
+        }}
         itemContent={(_index, message) => (
           <div className="px-4.5 py-1 sm:px-5 min-w-0 max-w-full overflow-hidden">
             <MessageView message={message} store={store} />

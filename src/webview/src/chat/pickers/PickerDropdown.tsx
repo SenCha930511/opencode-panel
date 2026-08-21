@@ -36,15 +36,26 @@ export interface PickerDropdownProps {
   readonly tooltip?: string;
   readonly groups: readonly PickerGroup[];
   readonly open: boolean;
+  readonly locked?: boolean;
   onToggle(): void;
   onClose(): void;
   onPick(key: string): void;
+  onLockedClick?(): void;
 }
 
 function ChevronIcon(): ReactNode {
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
       <path d="m2 3.5 3 3 3-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LockIcon(): ReactNode {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="7.5" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -92,13 +103,18 @@ export function PickerDropdown(props: PickerDropdownProps): ReactNode {
         aria-haspopup="listbox"
         aria-expanded={props.open}
         aria-label={props.title}
+        aria-disabled={props.locked}
         title={hoverTooltip}
-        className="flex max-w-[110px] sm:max-w-[160px] items-center gap-1 rounded-full border border-card-border/80 bg-card-bg/80 px-2 py-0.5 text-[11px] font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 shadow-2xs cursor-pointer shrink min-w-0"
-        onClick={props.onToggle}
+        className={`flex max-w-[110px] sm:max-w-[160px] items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-all shadow-2xs shrink min-w-0 ${
+          props.locked
+            ? "border-card-border/60 bg-card-bg/40 text-muted-fg cursor-not-allowed select-none opacity-80"
+            : "border-card-border/80 bg-card-bg/80 text-fg/90 hover:bg-hover-bg hover:text-fg hover:border-focus-ring/60 cursor-pointer"
+        }`}
+        onClick={props.locked ? props.onLockedClick : props.onToggle}
       >
         {props.icon && <span className="shrink-0 text-muted-fg">{props.icon}</span>}
         <span className="truncate min-w-0 flex-1 text-left">{textToShow}</span>
-        <span className="shrink-0 text-muted-fg/80"><ChevronIcon /></span>
+        <span className="shrink-0 text-muted-fg/80">{props.locked ? <LockIcon /> : <ChevronIcon />}</span>
       </button>
       {props.open ? (
         <div

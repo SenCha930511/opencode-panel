@@ -102,6 +102,11 @@ function ZapIcon(): ReactNode {
   );
 }
 
+import { OpenCodeConfigTab } from "./OpenCodeConfigTab.js";
+import { OmoConfigTab } from "./OmoConfigTab.js";
+
+type SettingsTab = "general" | "opencode" | "omo";
+
 function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
   const { init, messenger, send, pushToast, navigate } = useApp();
   const { t, locale } = useStrings();
@@ -109,6 +114,7 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
   const view = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const capabilities = useCapabilitySnapshot();
   const [resetSignal, setResetSignal] = useState(0);
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   useEffect(() => {
     attachCapabilityStore(messenger);
@@ -141,34 +147,39 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-bg">
+      {/* Top Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/70 bg-panel-bg/90 px-3.5 py-2.5 backdrop-blur-md">
-        <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
+        </div>
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            disabled={!dirty || store.hasErrors() || disabled}
-            onClick={() => {
-              void store.apply(send).then((ok) => {
-                if (ok) pushToast("info", t("settings.saved"));
-              });
-            }}
-          >
-            {t("settings.apply")}
-          </button>
-          <button
-            type="button"
-            className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            disabled={!dirty || disabled}
-            onClick={() => {
-              store.revert();
-              setResetSignal((value) => {
-                return value + 1;
-              });
-            }}
-          >
-            {t("settings.revert")}
-          </button>
+          {activeTab === "general" && (
+            <>
+              <button
+                type="button"
+                className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg shadow-2xs transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!dirty || store.hasErrors() || disabled}
+                onClick={() => {
+                  void store.apply(send).then((ok) => {
+                    if (ok) pushToast("info", t("settings.saved"));
+                  });
+                }}
+              >
+                {t("settings.apply")}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!dirty || disabled}
+                onClick={() => {
+                  store.revert();
+                  setResetSignal((value) => value + 1);
+                }}
+              >
+                {t("settings.revert")}
+              </button>
+            </>
+          )}
           <button
             type="button"
             className="rounded-xl border border-card-border bg-card-bg/80 px-2.5 py-1.5 text-xs text-muted-fg transition-all hover:bg-hover-bg hover:text-fg cursor-pointer"
@@ -181,117 +192,165 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
           </button>
         </div>
       </div>
+
+      {/* Tabs Navigation Bar */}
+      <div className="flex items-center gap-1 border-b border-card-border/60 bg-panel-bg/50 px-3.5 py-1.5">
+        <button
+          type="button"
+          onClick={() => setActiveTab("general")}
+          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+            activeTab === "general"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+          }`}
+        >
+          <span>⚙️</span>
+          <span>一般設定</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("opencode")}
+          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+            activeTab === "opencode"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+          }`}
+        >
+          <span>🤖</span>
+          <span>OpenCode 配置</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("omo")}
+          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+            activeTab === "omo"
+              ? "bg-accent/15 text-accent font-semibold shadow-2xs"
+              : "text-muted-fg hover:bg-hover-bg/70 hover:text-fg"
+          }`}
+        >
+          <span>⚡</span>
+          <span>OMO 配置</span>
+        </button>
+      </div>
+
       {view.saveFailed ? (
         <p role="alert" className="border-b border-err/30 bg-err/10 px-3.5 py-2 text-xs text-err font-medium">
           {t("settings.saveFailed")}
         </p>
       ) : null}
+
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3.5">
-        {SECTION_ORDER.map((section) => (
-          <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
-            <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
-              <span className="text-muted-fg">{getSectionIcon(section)}</span>
-              <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
-            </div>
-            <div className="flex flex-col gap-3">
-              {settingFieldsForSection(section).map((field) => (
-                <SettingFieldRow
-                  key={`${field.shortKey}:${String(resetSignal)}`}
-                  field={field}
-                  value={settingFieldValue(view.draft, field)}
-                  error={store.fieldError(field.shortKey)}
-                  scope={view.scope[field.shortKey] ?? "global"}
-                  disabled={disabled}
-                  locale={locale}
-                  onValueChange={(next) => {
-                    store.setValue(field.shortKey, next);
-                  }}
-                  onScopeChange={(choice) => {
-                    store.setScopeChoice(field.shortKey, choice);
-                  }}
-                />
-              ))}
-            </div>
-            {section === "server" ? (
-              <>
-                <SettingsSecretsPanel
-                  secrets={view.secrets}
-                  disabled={disabled}
-                  onSave={(kind, value) => runSecret(kind, value)}
-                  onClear={(kind) => runSecret(kind, "")}
-                />
-                <div className="flex flex-col gap-2 border-t border-card-border/50 pt-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      className="rounded-xl border border-card-border bg-card-bg/80 px-3 py-1.5 text-xs font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer shadow-2xs"
+        {activeTab === "opencode" && <OpenCodeConfigTab />}
+        {activeTab === "omo" && <OmoConfigTab />}
+        {activeTab === "general" && (
+          <>
+            {SECTION_ORDER.map((section) => (
+              <section key={section} className="flex flex-col gap-3.5 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+                <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
+                  <span className="text-muted-fg">{getSectionIcon(section)}</span>
+                  <h3 className="text-xs font-semibold text-fg/90">{t(SECTION_TITLE[section])}</h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {settingFieldsForSection(section).map((field) => (
+                    <SettingFieldRow
+                      key={`${field.shortKey}:${String(resetSignal)}`}
+                      field={field}
+                      value={settingFieldValue(view.draft, field)}
+                      error={store.fieldError(field.shortKey)}
+                      scope={view.scope[field.shortKey] ?? "global"}
                       disabled={disabled}
-                      onClick={() => {
-                        void store.testConnection(send);
+                      locale={locale}
+                      onValueChange={(next) => {
+                        store.setValue(field.shortKey, next);
                       }}
-                    >
-                      {t("settings.testConnection")}
-                    </button>
-                    {view.serverHealth === null ? null : (
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                          view.serverHealth.status === "ok" ? "bg-ok/15 text-ok border border-ok/30" : "bg-err/15 text-err border border-err/30"
-                        }`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${view.serverHealth.status === "ok" ? "bg-ok" : "bg-err"}`} />
-                        <span>
-                          {view.serverHealth.status === "ok"
-                            ? t("settings.connectionOk")
-                            : t("settings.connectionFailed")}
-                          {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
-                          {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
-                        </span>
+                      onScopeChange={(choice) => {
+                        store.setScopeChoice(field.shortKey, choice);
+                      }}
+                    />
+                  ))}
+                </div>
+                {section === "server" ? (
+                  <>
+                    <SettingsSecretsPanel
+                      secrets={view.secrets}
+                      disabled={disabled}
+                      onSave={(kind, value) => runSecret(kind, value)}
+                      onClear={(kind) => runSecret(kind, "")}
+                    />
+                    <div className="flex flex-col gap-2 border-t border-card-border/50 pt-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className="rounded-xl border border-card-border bg-card-bg/80 px-3 py-1.5 text-xs font-medium text-fg/90 transition-all hover:bg-hover-bg hover:text-fg disabled:opacity-40 cursor-pointer shadow-2xs"
+                          disabled={disabled}
+                          onClick={() => {
+                            void store.testConnection(send);
+                          }}
+                        >
+                          {t("settings.testConnection")}
+                        </button>
+                        {view.serverHealth === null ? null : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                              view.serverHealth.status === "ok" ? "bg-ok/15 text-ok border border-ok/30" : "bg-err/15 text-err border border-err/30"
+                            }`}
+                          >
+                            <span className={`h-1.5 w-1.5 rounded-full ${view.serverHealth.status === "ok" ? "bg-ok" : "bg-err"}`} />
+                            <span>
+                              {view.serverHealth.status === "ok"
+                                ? t("settings.connectionOk")
+                                : t("settings.connectionFailed")}
+                              {view.serverHealth.version === null ? "" : ` — ${view.serverHealth.version}`}
+                              {view.serverHealth.detail === undefined ? "" : `: ${view.serverHealth.detail}`}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+                {section === "diagnostics" ? (
+                  <div className="flex flex-col gap-1.5 border-t border-card-border/50 pt-3">
+                    <div className="flex items-center gap-2 text-xs font-medium text-fg/80">
+                      <span className="h-2 w-2 rounded-full bg-ok animate-pulse" />
+                      <span className="font-mono text-[11px]">
+                        {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
+                        {init.server.version === null ? "" : ` — ${init.server.version}`}
                       </span>
-                    )}
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-muted-fg">{t("settings.serverActionsHint")}</p>
                   </div>
-                </div>
-              </>
-            ) : null}
-            {section === "diagnostics" ? (
-              <div className="flex flex-col gap-1.5 border-t border-card-border/50 pt-3">
-                <div className="flex items-center gap-2 text-xs font-medium text-fg/80">
-                  <span className="h-2 w-2 rounded-full bg-ok animate-pulse" />
-                  <span className="font-mono text-[11px]">
-                    {init.server.url.length > 0 ? init.server.url : t("server.status.stopped")}
-                    {init.server.version === null ? "" : ` — ${init.server.version}`}
-                  </span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-muted-fg">{t("settings.serverActionsHint")}</p>
-              </div>
-            ) : null}
-          </section>
-        ))}
-        <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
-          <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
-            <span className="text-accent"><ZapIcon /></span>
-            <h3 className="text-xs font-semibold text-fg/90">{t("settings.section.capabilities")}</h3>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {Object.entries(init.capabilities).map(([name, enabled]) => (
-              <span
-                key={name}
-                className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[11px] font-medium transition-all ${
-                  enabled
-                    ? "border-ok/30 bg-ok/10 text-ok"
-                    : "border-card-border/60 bg-card-bg/60 text-muted-fg/60"
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-ok" : "bg-off"}`} />
-                <span>{name}</span>
-              </span>
+                ) : null}
+              </section>
             ))}
-          </div>
-          {capabilities === undefined ? null : (
-            <p className="text-[11px] font-medium leading-relaxed text-muted-fg/80 pt-1 border-t border-card-border/30">
-              {`${capabilities.agents.length} agents / ${capabilities.commands.length} commands / ${capabilities.providers.length} providers`}
-            </p>
-          )}
-        </section>
+            <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+              <div className="flex items-center gap-1.5 border-b border-card-border/50 pb-2">
+                <span className="text-accent"><ZapIcon /></span>
+                <h3 className="text-xs font-semibold text-fg/90">{t("settings.section.capabilities")}</h3>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(init.capabilities).map(([name, enabled]) => (
+                  <span
+                    key={name}
+                    className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                      enabled
+                        ? "border-ok/30 bg-ok/10 text-ok"
+                        : "border-card-border/60 bg-card-bg/60 text-muted-fg/60"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-ok" : "bg-off"}`} />
+                    <span>{name}</span>
+                  </span>
+                ))}
+              </div>
+              {capabilities === undefined ? null : (
+                <p className="text-[11px] font-medium leading-relaxed text-muted-fg/80 pt-1 border-t border-card-border/30">
+                  {`${capabilities.agents.length} agents / ${capabilities.commands.length} commands / ${capabilities.providers.length} providers`}
+                </p>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

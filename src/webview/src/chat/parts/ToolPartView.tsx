@@ -286,7 +286,7 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
         <div className="flex items-center justify-between gap-2 border-b border-card-border/40 pb-2">
           <div className="flex items-center gap-2 text-ok font-semibold text-xs">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px] font-bold">✓</span>
-            <span>{t("question.title")} - 已完成</span>
+            <span>{t("question.title")} - {t("question.completed")}</span>
           </div>
         </div>
 
@@ -296,11 +296,11 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
             return (
               <div key={qIdx} className="rounded-xl border border-card-border/50 bg-card-bg/60 p-2.5">
                 <div className="text-[11px] font-medium text-fg/90 mb-1.5">
-                  {q.prompt}
+                  {q.question}
                 </div>
                 {answer ? (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] text-muted-fg shrink-0">已選擇：</span>
+                    <span className="text-[10px] text-muted-fg shrink-0">{t("question.selectedPrefix")}</span>
                     <span className="inline-flex items-center gap-1 rounded-lg border border-accent/40 bg-accent/15 px-2 py-0.5 text-xs font-semibold text-fg shadow-2xs">
                       <span className="text-ok font-bold">✓</span>
                       <span>{answer}</span>
@@ -308,7 +308,7 @@ function QuestionToolCard(props: { readonly part: ToolPart }) {
                   </div>
                 ) : effectiveAnswers.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5 items-center">
-                    <span className="text-[10px] text-muted-fg shrink-0">已選擇：</span>
+                    <span className="text-[10px] text-muted-fg shrink-0">{t("question.selectedPrefix")}</span>
                     {effectiveAnswers.map((ans, aIdx) => (
                       <span
                         key={aIdx}
@@ -401,7 +401,12 @@ function extractQueryOrUrl(input: unknown): { query?: string; url?: string } | u
   if (!isRecord(input)) return undefined;
   const query = typeof input.query === "string" ? input.query : typeof input.Query === "string" ? input.Query : undefined;
   const url = typeof input.url === "string" ? input.url : typeof input.Url === "string" ? input.Url : undefined;
-  if (query || url) return { query, url };
+  if (query || url) {
+    return {
+      ...(query !== undefined ? { query } : {}),
+      ...(url !== undefined ? { url } : {}),
+    };
+  }
   return undefined;
 }
 
@@ -431,7 +436,7 @@ function PermissionToolCard(props: { readonly part: ToolPart }) {
       <div className="my-2 rounded-2xl border border-ok/30 bg-panel-bg/95 p-3 text-xs text-fg shadow-md backdrop-blur-md">
         <div className="flex items-center gap-2 text-ok font-semibold text-xs">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok/15 text-ok text-[11px]">✓</span>
-          <span>{t("permission.title")} - 已核准 (Approved)</span>
+          <span>{t("permission.title")} - {t("permission.approvedState")}</span>
         </div>
       </div>
     );
@@ -525,7 +530,7 @@ function StandardToolDetails(props: { readonly part: ToolPart }) {
                 setTimeout(() => setCopied(false), 1500);
               }}
             >
-              {copied ? "已複製 ✓" : "複製"}
+              {copied ? t("tool.copiedState") : t("tool.copyLabel")}
             </button>
           </div>
         ) : filePath ? (
@@ -544,7 +549,7 @@ function StandardToolDetails(props: { readonly part: ToolPart }) {
           </div>
         ) : queryOrUrl ? (
           <div className="rounded-lg bg-card-bg/60 p-2 text-[11px] text-fg border border-card-border/40">
-            {queryOrUrl.query && <div>🔍 搜尋詞：<span className="font-semibold">{queryOrUrl.query}</span></div>}
+            {queryOrUrl.query && <div>{t("tool.searchPrefix")}<span className="font-semibold">{queryOrUrl.query}</span></div>}
             {queryOrUrl.url && <div className="truncate font-mono text-accent">🌐 {queryOrUrl.url}</div>}
           </div>
         ) : part.input !== undefined ? (

@@ -184,6 +184,7 @@ export interface AgentSummary {
   readonly name: string;
   /** Agent mode as reported (`primary` | `subagent` | `all`); absent when the server omits it. */
   readonly mode?: string;
+  readonly model?: string;
   readonly builtIn: boolean;
 }
 
