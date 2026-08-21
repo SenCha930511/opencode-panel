@@ -23,10 +23,12 @@ export interface StickyAnchor {
   readonly text: string;
 }
 
+import { isSystemReminderText } from "./visibility.js";
+
 function visibleUserText(message: MessageVM): string {
   let text = "";
   for (const part of message.parts) {
-    if (part.kind === "text") text += part.text;
+    if (part.kind === "text" && !isSystemReminderText(part.text)) text += part.text;
   }
   return text.trim();
 }

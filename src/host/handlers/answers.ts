@@ -194,12 +194,33 @@ export function createAnswerService(deps: AnswerServiceDeps): AnswerService {
     async answerQuestion({ sessionId, requestID, answers }) {
       const connection = await deps.source.connect();
       const base = connection.baseUrl.replace(/\/+$/, "");
-      // Canonical v1.18.x question reply route (official + live-probe verified):
-      // the earlier mirror-assumption route `/session/:id/questions/:id` never existed.
-      const url =
+      const canonicalUrl =
         `${base}/api/session/${encodeURIComponent(sessionId)}` +
         `/question/${encodeURIComponent(requestID)}/reply`;
-      await postQuestionReply(deps, connection.probeFetch, url, answers);
+      try {
+        await postQuestionReply(deps, connection.probeFetch, canonicalUrl, answers);
+        return;
+      } catch (error) {
+        if (!(error instanceof QuestionUnsupportedError)) throw error;
+      }
+      // Canonical 404: the webview may send synthetic ids (e.g. "question:12")
+      // decoded from the tool-part callID instead of the real request id.
+      // Resolve through the instance-level pending list, then POST to the
+      // session-agnostic route.
+      const pending = await fetchPendingQuestions(connection.probeFetch, base);
+      const sessionPendings = pending.filter((q) => q.sessionID === sessionId);
+      const resolved =
+        pending.find((q) => q.id === requestID) ??
+        (sessionPendings.length === 1 ? sessionPendings[0] : undefined);
+      if (resolved === undefined) {
+        deps.logger.warn(
+          `answers domain: question reply unsupported: ${canonicalUrl} (HTTP 404),` +
+            ` GET /question: ${pending.length} pending, ${sessionPendings.length} for session`,
+        );
+        throw new QuestionUnsupportedError(`${canonicalUrl} (HTTP 404); no pending entry for session ${sessionId}`);
+      }
+      const instanceUrl = `${base}/question/${encodeURIComponent(resolved.id)}/reply`;
+      await postQuestionReply(deps, connection.probeFetch, instanceUrl, answers);
     },
   };
 }

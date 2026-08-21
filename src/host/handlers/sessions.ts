@@ -191,6 +191,11 @@ export interface SessionService {
    * is currently armed for this session on the server.
    */
   getSessionAuto(id: string): Promise<boolean>;
+  getSubagentLogs(input: {
+    readonly sessionId: string;
+    readonly taskId?: string;
+    readonly hint?: string;
+  }): Promise<{ readonly steps: readonly string[]; readonly isRunning: boolean }>;
 }
 
 export function isSessionAutoArmed(sessionData: unknown): boolean {
@@ -248,8 +253,8 @@ async function existingShareUrl(
     const connection = await deps.source.connect();
     const result = await connection.client.session.get({ path: { id } });
     if (result.error !== undefined || !isRecord(result.data)) return undefined;
-    const share = isRecord(result.data.share) ? result.data.share : undefined;
-    return share !== undefined && typeof share.url === "string" ? share.url : undefined;
+    const share = (result.data as { share?: { url?: string } }).share;
+    return typeof share?.url === "string" ? share.url : undefined;
   } catch {
     return undefined;
   }
@@ -258,15 +263,14 @@ async function existingShareUrl(
 export function createSessionService(deps: SessionServiceDeps): SessionService {
   return {
     async listSessions() {
-      const sessions = await fromSdk(deps, "list", (client) => client.session.list());
-      return sessions.filter((session) => !isSubagentSession(session)).map(toSessionListEntry);
+      const raw = await fromSdk(deps, "list", (client) => client.session.list());
+      return raw.filter((s) => !isSubagentSession(s)).map(toSessionListEntry);
     },
 
     async createSession(title) {
-      const session = await fromSdk(deps, "create", (client) =>
-        client.session.create({ ...(title === undefined ? {} : { body: { title } }) }),
-      );
-      return toSessionListEntry(session);
+      const body = title !== undefined && title.length > 0 ? { title } : {};
+      const raw = await fromSdk(deps, "create", (client) => client.session.create({ body }));
+      return toSessionListEntry(raw);
     },
 
     async deleteSession(id) {
@@ -281,62 +285,56 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
 
     async shareSession(id) {
       try {
-        const session = await fromSdk(deps, "share", (client) =>
+        const raw = await fromSdk(deps, "share", (client) =>
           client.session.share({ path: { id } }),
         );
-        const url = session.share?.url;
-        if (url === undefined) {
-          // A 200 share reply without share.url is a server contract violation;
-          // fall through to the recovery lookup before failing hard.
-          const recovered = await existingShareUrl(deps, id);
-          if (recovered !== undefined) return { url: recovered };
-          throw new SessionOperationError(
-            "share",
-            "server returned 200 share response without share.url",
-            200,
-          );
+        const url = raw.share?.url;
+        if (typeof url !== "string" || url.length === 0) {
+          throw new SessionOperationError("share", "server replied without a share url", undefined);
         }
         return { url };
       } catch (error) {
-        // Idempotency: if already shared, opencode returns a 500 whose body is
-        // generic; fetch the existing share URL so a double-click resolves cleanly.
-        const recovered = await existingShareUrl(deps, id);
-        if (recovered !== undefined) return { url: recovered };
+        if (error instanceof SessionOperationError && error.status === 500) {
+          const reused = await existingShareUrl(deps, id);
+          if (reused !== undefined) {
+            deps.logger.info(`sessions domain: folded 500 into existing share ${reused}`);
+            return { url: reused };
+          }
+        }
         throw error;
       }
     },
 
     async unshareSession(id) {
-      // SDK `session.unshare` issues DELETE /session/:id/share (the real verb).
       await fromSdk(deps, "unshare", (client) => client.session.unshare({ path: { id } }));
     },
 
     async forkSession(id, messageID) {
-      const session = await fromSdk(deps, "fork", (client) =>
-        client.session.fork({
-          path: { id },
-          ...(messageID === undefined ? {} : { body: { messageID } }),
-        }),
+      const body = messageID !== undefined ? { messageID } : {};
+      const raw = await fromSdk(deps, "fork", (client) =>
+        client.session.fork({ path: { id }, body }),
       );
-      return toSessionListEntry(session);
+      return toSessionListEntry(raw);
     },
 
     async setSessionAuto(id, enabled) {
       const connection = await deps.source.connect();
+      const payload = {
+        permission: enabled
+          ? [{ permission: "*", pattern: "*", action: "allow" }]
+          : [{ permission: "*", pattern: "*", action: "ask" }],
+      };
       const response = await connection.probeFetch(
         new Request(`${connection.baseUrl}/session/${encodeURIComponent(id)}`, {
           method: "PATCH",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            permission: [
-              { permission: "*", pattern: "*", action: enabled ? "allow" : "ask" },
-            ],
-          }),
+          body: JSON.stringify(payload),
         }),
       );
       if (!response.ok) {
-        const detail = `PATCH /session permission: HTTP ${String(response.status)}`;
-        deps.logger.warn(`sessions domain: setSessionAuto failed: ${detail}`);
+        const text = await response.text().catch(() => "");
+        const detail = `PATCH /session/${id} failed: ${text || response.statusText} (HTTP ${response.status})`;
+        deps.logger.warn(`sessions domain: ${detail}`);
         throw new SessionOperationError("setSessionAuto", detail, response.status);
       }
     },
@@ -358,6 +356,103 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
           `sessions domain: getSessionAuto failed: ${error instanceof Error ? error.message : String(error)}`,
         );
         return false;
+      }
+    },
+
+    async getSubagentLogs(input) {
+      try {
+        const connection = await deps.source.connect();
+        const listResult = await connection.client.session.list();
+        if (listResult.error !== undefined || !Array.isArray(listResult.data)) {
+          return { steps: [], isRunning: false };
+        }
+
+        // Find child sessions for this parent session or matching title/task
+        const allSessions = listResult.data as any[];
+        const childSessions = allSessions.filter((s) => {
+          const parent = s.parentID || s.parentId || s.parent_id;
+          if (parent === input.sessionId) return true;
+          if (input.taskId && typeof s.title === "string" && s.title.includes(input.taskId)) return true;
+          if (input.taskId && typeof s.id === "string" && s.id.includes(input.taskId)) return true;
+          if (s.id && s.id !== input.sessionId && typeof s.title === "string" && isSubagentSession(s)) return true;
+          return false;
+        });
+
+        if (childSessions.length === 0) {
+          return { steps: [], isRunning: false };
+        }
+
+        // Sort child sessions by newest first
+        childSessions.sort((a, b) => {
+          const timeA = a.time?.updated ?? a.time?.created ?? 0;
+          const timeB = b.time?.updated ?? b.time?.created ?? 0;
+          return timeB - timeA;
+        });
+
+        let targetSession = childSessions[0];
+        if (input.taskId) {
+          const match = childSessions.find((s) => typeof s.title === "string" && s.title.includes(input.taskId!));
+          if (match) targetSession = match;
+        } else if (input.hint) {
+          const lowerHint = input.hint.toLowerCase();
+          const match = childSessions.find((s) => typeof s.title === "string" && s.title.toLowerCase().includes(lowerHint));
+          if (match) targetSession = match;
+        }
+
+        const msgResult = await connection.client.session.messages({ path: { id: targetSession.id } });
+        if (msgResult.error !== undefined || !Array.isArray(msgResult.data)) {
+          return { steps: [], isRunning: false };
+        }
+
+        const steps: string[] = [];
+        for (const envelope of msgResult.data) {
+          const role = envelope.info?.role;
+          const parts = (envelope.parts ?? []) as any[];
+          for (const p of parts) {
+            const partType = p.type ?? p.kind ?? "";
+            const toolState = (p.state && typeof p.state === "object") ? p.state : p;
+
+            if (partType === "tool") {
+              const toolName = p.tool ?? p.name ?? toolState.tool ?? "tool";
+              const st = toolState.status ?? p.status;
+              const status = st === "completed" ? "✓" : st === "running" ? "⚡" : "○";
+              const inputObj = toolState.input ?? p.input ?? {};
+              let summary = "";
+              if (inputObj && typeof inputObj === "object") {
+                if (typeof inputObj.path === "string") summary = inputObj.path;
+                else if (typeof inputObj.filePath === "string") summary = inputObj.filePath;
+                else if (typeof inputObj.command === "string") summary = inputObj.command;
+                else if (typeof inputObj.CommandLine === "string") summary = inputObj.CommandLine;
+                else if (typeof inputObj.query === "string") summary = inputObj.query;
+                else if (typeof inputObj.description === "string") summary = inputObj.description;
+                else if (typeof inputObj.prompt === "string") summary = inputObj.prompt.slice(0, 50);
+              }
+              steps.push(`${status} [${toolName}] ${summary}`.trim());
+            } else if (partType === "subtask") {
+              const title = p.title ?? toolState.title ?? p.prompt ?? "Subtask";
+              steps.push(`📋 [子任務] ${title}`);
+            } else if (partType === "patch") {
+              const fileCount = Array.isArray(p.files) ? p.files.length : 1;
+              steps.push(`📝 檔案變更 (${fileCount} files)`);
+            } else if (partType === "reasoning") {
+              const txt = (p.text ?? toolState.text ?? "").trim();
+              if (txt) {
+                const firstLine = txt.split("\n")[0] ?? "";
+                steps.push(`🧠 思考: ${firstLine.slice(0, 80)}`);
+              }
+            } else if (partType === "text" && role === "assistant") {
+              const txt = (p.text ?? toolState.text ?? "").trim();
+              if (txt && !txt.startsWith("<system-reminder>") && !txt.startsWith("<!--")) {
+                const firstLine = txt.split("\n")[0] ?? "";
+                steps.push(`💬 ${firstLine.slice(0, 80)}`);
+              }
+            }
+          }
+        }
+
+        return { steps, isRunning: false };
+      } catch {
+        return { steps: [], isRunning: false };
       }
     },
   };
@@ -436,5 +531,10 @@ export function registerSessionHandlers(register: RegisterHandler, deps: Session
   register("getSessionAuto", async ({ sessionId }): Promise<FromWebviewResponse["getSessionAuto"]> => {
     const auto = await service.getSessionAuto(sessionId);
     return { auto };
+  });
+
+  register("getSubagentLogs", async ({ sessionId, taskId, hint }): Promise<FromWebviewResponse["getSubagentLogs"]> => {
+    const result = await service.getSubagentLogs({ sessionId, taskId, hint });
+    return result;
   });
 }

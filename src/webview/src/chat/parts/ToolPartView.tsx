@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
 import { getWebviewMessenger } from "../../../lib/messenger.js";
 import type { StringId } from "../../../../shared/strings.js";
@@ -623,10 +623,14 @@ function extractSubagentInfo(part: ToolPart): {
   title: string;
   description?: string;
   previewOutput: string;
+  taskId?: string;
+  hint?: string;
 } {
   let agentName: string | undefined;
   let title = part.title && part.title !== part.tool ? part.title : "";
   let description: string | undefined;
+  let taskId: string | undefined;
+  let hint: string | undefined;
 
   if (isRecord(part.input)) {
     const input = part.input as Record<string, unknown>;
@@ -635,18 +639,30 @@ function extractSubagentInfo(part: ToolPart): {
     else if (typeof input.task_name === "string") agentName = input.task_name;
     else if (typeof input.name === "string") agentName = input.name;
 
-    if (typeof input.description === "string") description = input.description;
-    else if (typeof input.prompt === "string") description = input.prompt;
-    else if (typeof input.task === "string") description = input.task;
-    else if (typeof input.instruction === "string") description = input.instruction;
-    else if (typeof input.command === "string") description = `$ ${input.command}`;
-    else if (typeof input.query === "string") description = `搜尋: ${input.query}`;
+    if (typeof input.task_id === "string") taskId = input.task_id;
+    if (typeof input.description === "string") {
+      description = input.description;
+      hint = input.description.slice(0, 40);
+    } else if (typeof input.prompt === "string") {
+      description = input.prompt;
+      hint = input.prompt.slice(0, 40);
+    } else if (typeof input.task === "string") {
+      description = input.task;
+      hint = input.task.slice(0, 40);
+    } else if (typeof input.instruction === "string") {
+      description = input.instruction;
+      hint = input.instruction.slice(0, 40);
+    } else if (typeof input.command === "string") {
+      description = `$ ${input.command}`;
+    } else if (typeof input.query === "string") {
+      description = `搜尋: ${input.query}`;
+    }
 
     if (!title && description) {
       const firstLine = description.trim().split("\n")[0] ?? "";
       title = firstLine.length > 55 ? firstLine.slice(0, 55) + "..." : firstLine;
-    } else if (!title && typeof input.task_id === "string") {
-      title = `背景任務 (${input.task_id})`;
+    } else if (!title && taskId) {
+      title = `背景任務 (${taskId})`;
     }
   }
 
@@ -677,7 +693,7 @@ function extractSubagentInfo(part: ToolPart): {
     }
   }
 
-  return { agentName, title, description, previewOutput };
+  return { agentName, title, description, previewOutput, taskId, hint };
 }
 
 function SubagentToolCard(props: { readonly part: ToolPart }) {
@@ -685,12 +701,58 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
   const { part } = props;
   const isRunning = part.status === "running";
   const subagentInfo = useMemo(() => extractSubagentInfo(part), [part]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [liveSteps, setLiveSteps] = useState<readonly string[]>([]);
+  const [loadingSteps, setLoadingSteps] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    const fetchLogs = async () => {
+      try {
+        const sessionId = getActiveSession() ?? "";
+        if (!sessionId) return;
+        const res = await getWebviewMessenger().request("getSubagentLogs", {
+          sessionId,
+          taskId: subagentInfo.taskId,
+          hint: subagentInfo.hint,
+        });
+        if (!cancelled && res && Array.isArray(res.steps) && res.steps.length > 0) {
+          setLiveSteps(res.steps);
+        }
+      } catch {
+        // Safe fallback to previewOutput
+      } finally {
+        if (!cancelled) setLoadingSteps(false);
+      }
+    };
+
+    setLoadingSteps(true);
+    void fetchLogs();
+
+    if (isRunning) {
+      const timer = setInterval(() => {
+        void fetchLogs();
+      }, 2500);
+      return () => {
+        cancelled = true;
+        clearInterval(timer);
+      };
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, isRunning, subagentInfo.taskId, subagentInfo.hint]);
 
   return (
     <details
       className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-1 scroll-mb-24 scroll-mt-12"
       onToggle={(e) => {
-        if (e.currentTarget.open) {
+        const open = e.currentTarget.open;
+        setIsOpen(open);
+        if (open) {
           scrollElementIntoViewSafe(e.currentTarget);
         }
       }}
@@ -729,32 +791,41 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
             <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務說明</div>
             <div className="text-fg/90 leading-relaxed break-words">{subagentInfo.description}</div>
           </div>
-        ) : part.input !== undefined && typeof part.input === "object" && Object.keys(part.input).length > 0 ? (
-          <div className="rounded-lg bg-card-bg/70 border border-card-border/50 p-2 text-[11px]">
-            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-0.5">任務參數</div>
-            <pre className="overflow-x-auto font-mono text-[11px] text-fg/85 whitespace-pre-wrap leading-relaxed">
-              {prettyJson(part.input)}
-            </pre>
-          </div>
         ) : null}
 
-        {isRunning ? (
-          <div className="flex items-center gap-2 rounded-lg bg-accent/10 border border-accent/20 px-2.5 py-1.5 text-[11px] text-accent">
-            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
-            <span>子智慧體正在背景並行執行中...</span>
+        <div className="rounded-lg bg-black/40 border border-card-border/60 p-2.5 text-xs">
+          <div className="flex items-center justify-between text-[11px] text-muted-fg/85 mb-1.5 gap-2">
+            <span className="font-medium truncate">執行步驟 (Subagent Logs)</span>
+            {isRunning ? (
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium whitespace-nowrap shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                即時執行中
+              </span>
+            ) : null}
           </div>
-        ) : null}
-
-        {subagentInfo.previewOutput ? (
-          <div className="rounded-lg bg-black/25 border border-card-border/50 p-2 text-[11px]">
-            <div className="text-[10px] font-semibold text-muted-fg/70 uppercase mb-1">
-              執行輸出預覽
-            </div>
-            <div className="max-h-40 overflow-y-auto font-mono text-[11px] text-fg/85 whitespace-pre-wrap leading-relaxed">
-              {subagentInfo.previewOutput}
-            </div>
+          <div className="max-h-48 overflow-y-auto font-mono text-[11px] space-y-1.5 p-2 bg-black/50 rounded-lg border border-card-border/40 text-fg/90 leading-relaxed">
+            {liveSteps.length > 0 ? (
+              liveSteps.map((step, idx) => (
+                <div key={idx} className="break-all">{step}</div>
+              ))
+            ) : subagentInfo.previewOutput ? (
+              <div className="whitespace-pre-wrap">{subagentInfo.previewOutput}</div>
+            ) : subagentInfo.description ? (
+              <div className="space-y-1">
+                <div className="text-accent/90 break-words">🚀 任務啟動: {subagentInfo.description}</div>
+                <div className="text-muted-fg/70 italic text-[10px]">
+                  {isRunning ? "● 子智慧體正在背景並行執行中..." : "✓ 子智慧體已完成任務。"}
+                </div>
+              </div>
+            ) : isRunning ? (
+              <div className="text-muted-fg/70 italic">
+                {loadingSteps ? "正在連線讀取子智慧體執行歷程..." : "子智慧體正在背景並行執行中..."}
+              </div>
+            ) : (
+              <div className="text-muted-fg/70 italic">✓ 子智慧體已完成任務。</div>
+            )}
           </div>
-        ) : null}
+        </div>
 
         {part.error !== undefined ? (
           <pre className="overflow-x-auto rounded-lg border border-err/30 bg-err/10 p-2 font-mono text-[11px] text-err">

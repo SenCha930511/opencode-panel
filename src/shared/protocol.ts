@@ -110,6 +110,11 @@ export interface FromWebviewProtocol {
   readonly getCapabilities: Record<string, never>;
   readonly setSessionAuto: { readonly sessionId: string; readonly enabled: boolean };
   readonly getSessionAuto: { readonly sessionId: string };
+  readonly getSubagentLogs: {
+    readonly sessionId: string;
+    readonly taskId?: string;
+    readonly hint?: string;
+  };
   readonly openSettingsTab: Record<string, never>;
   readonly closeSettingsTab: Record<string, never>;
 }
@@ -146,6 +151,10 @@ export interface FromWebviewResponse {
   readonly getCapabilities: CapabilitiesRefreshPayload | null;
   readonly setSessionAuto: null;
   readonly getSessionAuto: { readonly auto: boolean };
+  readonly getSubagentLogs: {
+    readonly steps: readonly string[];
+    readonly isRunning: boolean;
+  };
   readonly openSettingsTab: null;
   readonly closeSettingsTab: null;
 }

@@ -187,6 +187,27 @@ function buildRoutes(srv: MockHttpServer): Route[] {
       srv.emit({ type: "session.created", properties: { info: record.info } });
       sendJson(res, 200, record.info);
     }],
+    ["GET", "/question", srv.modern("/question", ({ state }, _req, res) => {
+      sendJson(res, 200, [...state.pendingQuestions.values()].map((p) => p.request));
+    })],
+    ["POST", "/question/:requestID/reply", srv.modern("/question/:requestID/reply", (ctx, _req, res) => {
+      const pending = ctx.state.pendingQuestions.get(ctx.params.requestID ?? "");
+      if (pending === undefined) {
+        sendApiError(res, 404, `question not found: ${ctx.params.requestID ?? ""}`);
+        return;
+      }
+      pending.settle({ answers: ctx.body.answers, reject: ctx.body.reject === true });
+      sendJson(res, 200, true);
+    })],
+    ["POST", "/session/:id/question/:requestID/reply", srv.modern("/session/:id/question/:requestID/reply", (ctx, _req, res) => {
+      const pending = ctx.state.pendingQuestions.get(ctx.params.requestID ?? "");
+      if (pending === undefined) {
+        sendApiError(res, 404, `question not found: ${ctx.params.requestID ?? ""}`);
+        return;
+      }
+      pending.settle({ answers: ctx.body.answers, reject: ctx.body.reject === true });
+      sendJson(res, 200, true);
+    })],
     ["GET", "/session/:id", one],
     ["PATCH", "/session/:id", srv.sessionHandler((rec, { body }, res) => {
       if (typeof body.title === "string") rec.info.title = body.title;

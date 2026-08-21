@@ -124,10 +124,17 @@ function ScrollBottomIcon(): ReactNode {
   );
 }
 
+import { isSystemReminderText } from "./visibility.js";
+
 function findLatestUserMessageIndex(messages: readonly MessageVM[]): number {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-    if (msg !== undefined && msg.role === "user") return i;
+    if (msg !== undefined && msg.role === "user") {
+      const isReminder =
+        msg.parts.length > 0 &&
+        msg.parts.every((p) => p.kind === "text" && isSystemReminderText(p.text));
+      if (!isReminder) return i;
+    }
   }
   return -1;
 }
@@ -248,7 +255,7 @@ export function MessageList(props: MessageListProps) {
         }}
         rangeChanged={setVisibleRange}
         components={{
-          Footer: () => <div className="h-28 w-full shrink-0" aria-hidden="true" />,
+          Footer: () => <div className="h-36 w-full shrink-0" aria-hidden="true" />,
         }}
         itemContent={(_index, message) => (
           <div className="px-4.5 py-1 sm:px-5 min-w-0 max-w-full overflow-hidden">
