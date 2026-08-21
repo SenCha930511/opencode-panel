@@ -74,10 +74,10 @@ function ErrorBoundaryFallback(props: {
   );
 }
 
-const TOAST_ACCENT: Readonly<Record<ToastLevel, string>> = {
-  info: "border-s-info",
-  warning: "border-s-warn",
-  error: "border-s-err",
+const TOAST_ACCENT: Record<ToastLevel, string> = {
+  info: "border-accent/40 bg-panel-bg/95",
+  warning: "border-amber-400/40 bg-panel-bg/95",
+  error: "border-err/40 bg-panel-bg/95",
 };
 
 function CloseIcon(): ReactNode {
@@ -89,8 +89,8 @@ function CloseIcon(): ReactNode {
 }
 
 /**
- * Transient toast stack anchored bottom-end. Mounted below every route so a
- * toast raised in chat stays visible after navigating to settings.
+ * Transient toast stack anchored at top. Mounted below every route so a
+ * toast raised in chat stays visible and never blocks the bottom input composer.
  */
 export function ToastViewport(): ReactNode {
   const { toasts, dismissToast } = useApp();
@@ -99,26 +99,26 @@ export function ToastViewport(): ReactNode {
     return null;
   }
   return (
-    <div className="pointer-events-none fixed bottom-3 end-3 z-50 flex flex-col items-end gap-2">
+    <div className="pointer-events-none fixed top-3 end-3 start-3 z-50 flex flex-col items-center gap-2 max-w-full">
       {toasts.map((toast) => (
         <div
           key={toast.id}
           role="status"
-          className={`pointer-events-auto w-64 rounded border border-s-2 bg-panel-bg px-3 py-2 text-xs shadow-lg ${TOAST_ACCENT[toast.level]}`}
+          className={`pointer-events-auto flex max-w-sm w-full items-start gap-2.5 rounded-2xl border p-3 text-xs shadow-2xl backdrop-blur-xl ring-1 ring-black/10 transition-all duration-200 ${TOAST_ACCENT[toast.level]}`}
         >
-          <div className="flex items-start gap-2">
-            <p className="min-w-0 flex-1 break-words text-fg">{toast.text}</p>
-            <button
-              type="button"
-              aria-label={t("common.close")}
-              className="shrink-0 rounded p-0.5 text-muted-fg hover:bg-hover-bg hover:text-fg"
-              onClick={() => {
-                dismissToast(toast.id);
-              }}
-            >
-              <CloseIcon />
-            </button>
+          <div className="min-w-0 flex-1 break-words text-fg text-[11px] leading-relaxed">
+            {toast.text}
           </div>
+          <button
+            type="button"
+            aria-label={t("common.close")}
+            className="shrink-0 rounded-lg p-1 text-muted-fg hover:bg-hover-bg hover:text-fg transition-colors cursor-pointer"
+            onClick={() => {
+              dismissToast(toast.id);
+            }}
+          >
+            <CloseIcon />
+          </button>
         </div>
       ))}
     </div>
