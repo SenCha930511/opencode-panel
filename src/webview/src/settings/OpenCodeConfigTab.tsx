@@ -87,7 +87,7 @@ export function OpenCodeConfigTab(props: {
   return (
     <div className="flex flex-col gap-4">
       {/* File chrome: path, state chips, create CTA, error lanes. */}
-      <section className="flex flex-col gap-2 rounded-2xl border border-card-border bg-card-bg/40 p-3.5 shadow-2xs backdrop-blur-xs">
+      <section className="flex flex-col gap-2 rounded-xl border border-card-border/60 bg-card-bg/30 p-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-fg/90">{t("cfg.file.path")}</span>
           <code className="min-w-0 flex-1 break-all rounded-lg border border-card-border/60 bg-card-bg/60 px-2 py-1 font-mono text-[11px] text-fg/90">

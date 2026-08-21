@@ -19,6 +19,7 @@ import type { ConfigScope } from "../../../shared/protocol.js";
 import { useStrings } from "../../lib/i18n.js";
 import type { StringId } from "../../../shared/strings.js";
 import {
+  fieldLabelId,
   settingFieldsForSection,
   settingFieldValue,
   type SettingSectionId,
@@ -172,144 +173,148 @@ function SettingsForm(props: { readonly store: SettingsFormStore }): ReactNode {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-bg text-fg">
-      {/* Top Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-card-border/60 bg-panel-bg/95 px-3.5 py-2 backdrop-blur-md">
-        <div className="flex items-center gap-2 min-w-0">
-          <h2 className="text-xs font-semibold text-fg tracking-tight">{t("settings.title")}</h2>
+      {/* Sleek Unified Header Bar */}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-card-border/60 bg-panel-bg/95 px-4 py-2.5 backdrop-blur-md">
+        {/* Left: Title + Segmented Tabs */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-fg tracking-wide uppercase">{t("settings.title")}</span>
+          <div className="h-3.5 w-px bg-card-border/60" />
+          <nav className="inline-flex items-center rounded-lg bg-card-bg/80 p-0.5 border border-card-border/60">
+            {(["general", "opencode", "omo"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer ${
+                  activeTab === tab
+                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
+                    : "text-muted-fg hover:text-fg hover:bg-hover-bg/40"
+                }`}
+              >
+                {tab === "general" ? t("cfg.tab.general") : tab === "opencode" ? t("cfg.tab.opencode") : t("cfg.tab.omo")}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Right: Search / Scope + Action Buttons */}
+        <div className="flex items-center gap-2">
+          {/* If General: Search Input */}
+          {activeTab === "general" ? (
+            <div className="relative flex items-center w-36 sm:w-44">
+              <span className="absolute left-2.5 text-muted-fg/60 text-[11px] pointer-events-none">🔍</span>
+              <input
+                type="text"
+                placeholder="搜尋設定..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-card-border/60 bg-card-bg/60 pl-6.5 pr-5 py-1 text-xs text-fg placeholder:text-muted-fg/40 focus:border-accent focus:outline-none transition-colors"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-1.5 text-[10px] text-muted-fg hover:text-fg cursor-pointer"
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            /* If Config File: Scope Switcher */
+            <div className="inline-flex items-center rounded-lg bg-card-bg/80 p-0.5 border border-card-border/60">
+              {(["global", "project"] as const).map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setConfigScope(choice)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+                    configScope === choice
+                      ? "bg-accent text-accent-fg font-semibold shadow-xs"
+                      : "text-muted-fg hover:text-fg hover:bg-hover-bg/40"
+                  }`}
+                >
+                  {t(choice === "global" ? "cfg.scope.global" : "cfg.scope.project")}
+                </button>
+              ))}
+            </div>
+          )}
+
           {isDirtyOverall ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-warn/15 border border-warn/30 px-2 py-0.5 text-[10px] font-medium text-warn animate-pulse shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-warn/15 border border-warn/30 px-2 py-0.5 text-[10px] font-medium text-warn animate-pulse shrink-0">
               <span className="h-1.5 w-1.5 rounded-full bg-warn" />
               <span>未儲存</span>
             </span>
           ) : null}
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {activeTab === "general" ? (
-            <>
-              <button
-                type="button"
-                className="rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
-                disabled={!dirty || store.hasErrors() || disabled}
-                onClick={() => {
-                  void store.apply(send).then((ok) => {
-                    if (ok) pushToast("info", t("settings.saved"));
-                  });
-                }}
-              >
-                {t("settings.apply")}
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-card-border/60 bg-transparent px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                disabled={!dirty || disabled}
-                onClick={() => {
-                  store.revert();
-                  setResetSignal((value) => value + 1); // i18n-allow-literal — code-only expression, no display copy
-                }}
-              >
-                {t("settings.revert")}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
-                disabled={!cfgDirty || cfgBlocked}
-                onClick={() => {
-                  void cfgStore.save(activeTab, configScope).then((ok) => {
-                    if (ok) pushToast("info", t("cfg.file.saved"));
-                  });
-                }}
-              >
-                {t("settings.apply")}
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-card-border/60 bg-transparent px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                disabled={!cfgDirty || cfgSlot?.saving === true}
-                onClick={() => {
-                  cfgStore.revert(activeTab, configScope);
-                }}
-              >
-                {t("settings.revert")}
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            className="rounded-lg border border-card-border/60 bg-transparent px-2 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg cursor-pointer"
-            onClick={() => {
-              void send("closeSettingsTab" as any, {}).catch(() => {});
-              navigate("chat");
-            }}
-          >
-            {t("common.close")}
-          </button>
-        </div>
-      </div>
 
-      {/* Unified Navigation & Scope / Search Bar */}
-      <div className="flex items-center justify-between gap-2 border-b border-card-border/50 bg-panel-bg/40 px-3.5 py-1.5">
-        {/* Clean Segmented Tab Switcher */}
-        <div className="inline-flex items-center rounded-lg bg-card-bg/60 p-0.5 border border-card-border/50">
-          {(["general", "opencode", "omo"] as const).map((tab) => (
+          <div className="h-3.5 w-px bg-card-border/60" />
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {activeTab === "general" ? (
+              <>
+                <button
+                  type="button"
+                  className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
+                  disabled={!dirty || store.hasErrors() || disabled}
+                  onClick={() => {
+                    void store.apply(send).then((ok) => {
+                      if (ok) pushToast("info", t("settings.saved"));
+                    });
+                  }}
+                >
+                  {t("settings.apply")}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-card-border/60 bg-card-bg/60 px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={!dirty || disabled}
+                  onClick={() => {
+                    store.revert();
+                    setResetSignal((value) => value + 1); // i18n-allow-literal — code-only expression, no display copy
+                  }}
+                >
+                  {t("settings.revert")}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accent-fg transition-all hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
+                  disabled={!cfgDirty || cfgBlocked}
+                  onClick={() => {
+                    void cfgStore.save(activeTab, configScope).then((ok) => {
+                      if (ok) pushToast("info", t("cfg.file.saved"));
+                    });
+                  }}
+                >
+                  {t("settings.apply")}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-card-border/60 bg-card-bg/60 px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={!cfgDirty || cfgSlot?.saving === true}
+                  onClick={() => {
+                    cfgStore.revert(activeTab, configScope);
+                  }}
+                >
+                  {t("settings.revert")}
+                </button>
+              </>
+            )}
             <button
-              key={tab}
               type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-md px-2.5 py-0.5 text-xs font-medium transition-all cursor-pointer ${
-                activeTab === tab
-                  ? "bg-accent text-accent-fg font-semibold shadow-xs"
-                  : "text-muted-fg hover:text-fg"
-              }`}
+              className="rounded-lg border border-card-border/60 bg-card-bg/60 px-2.5 py-1 text-xs text-muted-fg transition-all hover:border-card-border hover:text-fg cursor-pointer"
+              onClick={() => {
+                void send("closeSettingsTab" as any, {}).catch(() => {});
+                navigate("chat");
+              }}
             >
-              {tab === "general" ? t("cfg.tab.general") : tab === "opencode" ? t("cfg.tab.opencode") : t("cfg.tab.omo")}
+              {t("common.close")}
             </button>
-          ))}
+          </div>
         </div>
-
-        {/* Search Input for General or Scope Toggle for Config Tabs */}
-        {activeTab === "general" ? (
-          <div className="relative flex items-center max-w-[170px] w-full">
-            <span className="absolute left-2 text-muted-fg/60 text-[10px] pointer-events-none">🔍</span>
-            <input
-              type="text"
-              placeholder="搜尋設定..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-card-border/50 bg-card-bg/50 pl-5.5 pr-4 py-0.5 text-[11px] text-fg placeholder:text-muted-fg/40 focus:border-accent focus:outline-none transition-colors"
-            />
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-1.5 text-[10px] text-muted-fg hover:text-fg cursor-pointer"
-              >
-                ✕
-              </button>
-            ) : null}
-          </div>
-        ) : (
-          <div className="inline-flex items-center rounded-lg bg-card-bg/60 p-0.5 border border-card-border/50">
-            {(["global", "project"] as const).map((choice) => (
-              <button
-                key={choice}
-                type="button"
-                onClick={() => {
-                  setConfigScope(choice);
-                }}
-                className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-all cursor-pointer ${
-                  configScope === choice
-                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
-                    : "text-muted-fg hover:text-fg"
-                }`}
-              >
-                {t(choice === "global" ? "cfg.scope.global" : "cfg.scope.project")}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {view.saveFailed ? (

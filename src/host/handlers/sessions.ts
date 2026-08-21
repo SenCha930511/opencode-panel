@@ -43,6 +43,8 @@ import type {
   FromWebviewProtocol,
   FromWebviewResponse,
   SessionSummary,
+  SubagentProgress,
+  SubagentProgressPhase,
 } from "../../shared/protocol.js";
 
 // ---------------------------------------------------------------------------

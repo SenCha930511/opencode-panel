@@ -208,6 +208,13 @@ export interface FromWebviewResponse {
   readonly getSubagentLogs: {
     readonly steps: readonly string[];
     readonly isRunning: boolean;
+    /**
+     * Live snapshot of what the subagent is doing right now (absent when the
+     * host could not locate a child session). `thinking` carries the latest
+     * reasoning text (tail-capped), `toolName`/`toolSummary` describe the
+     * tool currently in flight when `phase === "tool"`.
+     */
+    readonly progress?: SubagentProgress;
   };
   readonly openSettingsTab: null;
   readonly closeSettingsTab: null;
@@ -220,6 +227,20 @@ export interface FromWebviewResponse {
 // ---------------------------------------------------------------------------
 
 export type ResponseStatus = "success" | "error";
+
+/** What the subagent did most recently, derived from its child session parts. */
+export type SubagentProgressPhase = "thinking" | "tool" | "writing" | "idle";
+
+/** Live subagent progress snapshot embedded in the getSubagentLogs reply. */
+export interface SubagentProgress {
+  readonly phase: SubagentProgressPhase;
+  /** Latest reasoning text, trimmed and tail-capped (empty when none seen). */
+  readonly thinking: string;
+  /** True when `thinking` was tail-capped to fit the wire. */
+  readonly thinkingTruncated: boolean;
+  readonly toolName?: string;
+  readonly toolSummary?: string;
+}
 
 /** Reply envelope payload; also covers the single-reply case (`done:true`). */
 export interface StreamChunkPayload {
