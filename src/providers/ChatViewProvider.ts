@@ -1,5 +1,5 @@
 /**
- * Provider for the todo-1 chat webview view (`opencodePanel.chatView`).
+ * Provider for the todo-1 chat webview view (`opencodeChatSidebar.chatView`).
  * All shell/messenger/handshake plumbing lives in BaseViewProvider; this
  * subclass adds the event surface host commands push into the chat route
  * (todo-14's composer consumes `command.newSession`).

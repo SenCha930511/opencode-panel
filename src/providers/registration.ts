@@ -21,8 +21,8 @@ import { SessionsViewProvider } from "./sessionsViewProvider.js";
 import { HandlerRegistry } from "./handlers.js";
 import { createInitPayloadBuilder } from "./initPayload.js";
 
-export const CHAT_VIEW_ID = "opencodePanel.chatView";
-export const SESSIONS_VIEW_ID = "opencodePanel.sessionsView";
+export const CHAT_VIEW_ID = "opencodeChatSidebar.chatView";
+export const SESSIONS_VIEW_ID = "opencodeChatSidebar.sessionsView";
 
 export interface PanelViewDeps {
   readonly config: PanelConfigAccessor;

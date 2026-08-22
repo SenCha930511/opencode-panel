@@ -153,12 +153,12 @@ describe("statusBarMenuItems", () => {
     const items = statusBarMenuItems((text) => text);
     // Then
     expect(items.map((item) => item.command)).toEqual([
-      "opencodePanel.startServer",
-      "opencodePanel.stopServer",
-      "opencodePanel.restartServer",
-      "opencodePanel.openSettings",
-      "opencodePanel.openTui",
-      "opencodePanel.openLogs",
+      "opencodeChatSidebar.startServer",
+      "opencodeChatSidebar.stopServer",
+      "opencodeChatSidebar.restartServer",
+      "opencodeChatSidebar.openSettings",
+      "opencodeChatSidebar.openTui",
+      "opencodeChatSidebar.openLogs",
     ]);
   });
 
@@ -194,14 +194,14 @@ describe("StatusBarController", () => {
     // Given: a menu scripted to pick the openLogs item
     const executor = new FakeExecutor();
     const target = statusBarMenuItems((text) => text).find(
-      (item) => item.command === "opencodePanel.openLogs",
+      (item) => item.command === "opencodeChatSidebar.openLogs",
     );
     if (target === undefined) throw new Error("openLogs menu entry missing");
     const { controller } = makeController(new FakeMenu(target), executor);
     // When
     await controller.showMenu();
     // Then
-    expect(executor.executed).toEqual(["opencodePanel.openLogs"]);
+    expect(executor.executed).toEqual(["opencodeChatSidebar.openLogs"]);
   });
 
   it("executes nothing when the quickpick is dismissed", async () => {

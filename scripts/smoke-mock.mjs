@@ -16,7 +16,7 @@ import path from "node:path";
 import { runErrorRevert, runLongStream, runOldServer, runOmoAgents } from "./smoke-mock-scenarios.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const outfile = path.join(root, "node_modules", ".cache", "opencode-chat-panel", "mock-server.mjs");
+const outfile = path.join(root, "node_modules", ".cache", "opencode-chat-sidebar", "mock-server.mjs");
 
 await build({
   entryPoints: [path.join(root, "src", "test", "mock-server", "index.ts")],

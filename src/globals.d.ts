@@ -22,4 +22,4 @@ declare const __DEV__: boolean;
  * test code must tolerate that (and sets it explicitly only when exercising
  * the sessions branch).
  */
-declare var __OPENCODE_PANEL_VIEW__: string | undefined;
+declare var __OPENCODE_CHAT_SIDEBAR_VIEW__: string | undefined;

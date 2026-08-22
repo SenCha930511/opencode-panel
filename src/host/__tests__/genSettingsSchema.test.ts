@@ -61,14 +61,14 @@ describe("gen-settings-schema --check", () => {
   });
 
   it("exits 1 on a manifest copy carrying an unclassified fake key", () => {
-    // Given: a manifest copy with one extra opencodePanel.* key
+    // Given: a manifest copy with one extra opencodeChatSidebar.* key
     const fake = manifestCopyWith((manifest) => {
       const properties = manifest.contributes?.configuration?.properties;
       if (properties === undefined) throw new Error("manifest fixture lacks configuration properties");
-      properties["opencodePanel.qaFakeKey"] = {
+      properties["opencodeChatSidebar.qaFakeKey"] = {
         type: "string",
         default: "x",
-        markdownDescription: "%opencodePanel.config.qaFakeKey.markdownDescription%",
+        markdownDescription: "%opencodeChatSidebar.config.qaFakeKey.markdownDescription%",
       };
     });
     // When
@@ -82,11 +82,11 @@ describe("gen-settings-schema --check", () => {
     // Given: a manifest copy whose chatFontSize default drifts from the committed schema
     const drifted = manifestCopyWith((manifest) => {
       const properties = manifest.contributes?.configuration?.properties;
-      const chatFontSize = properties?.["opencodePanel.chatFontSize"];
+      const chatFontSize = properties?.["opencodeChatSidebar.chatFontSize"];
       if (properties === undefined || chatFontSize === undefined) {
         throw new Error("manifest fixture lacks the chatFontSize key");
       }
-      properties["opencodePanel.chatFontSize"] = { ...chatFontSize, default: 1 };
+      properties["opencodeChatSidebar.chatFontSize"] = { ...chatFontSize, default: 1 };
     });
     // When
     const run = runCheck(drifted);

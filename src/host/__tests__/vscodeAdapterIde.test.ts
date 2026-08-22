@@ -69,7 +69,7 @@ describe("createVscodeStatusBarController", () => {
     });
     const item = vscodeStubRegistry.statusBarItems[0];
     expect(item?.creation).toEqual({
-      id: "opencodePanel.status",
+      id: "opencodeChatSidebar.status",
       alignment: 1,
       priority: 10,
     });

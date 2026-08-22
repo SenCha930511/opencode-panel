@@ -1,5 +1,5 @@
 {
-  "name": "opencode-chat-panel",
+  "name": "opencode-chat-sidebar",
   "displayName": "OpenCode Chat Sidebar",
   "description": "Sidebar chat panel for your locally installed opencode",
   "version": "1.0.1",
@@ -12,17 +12,17 @@
   "main": "./dist/extension.js",
   "l10n": "./l10n",
   "activationEvents": [
-    "onView:opencodePanel.chatView",
+    "onView:opencodeChatSidebar.chatView",
     "onStartupFinished"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/SenCha930511/opencode-chat-panel.git"
+    "url": "https://github.com/SenCha930511/opencode-chat-sidebar.git"
   },
   "bugs": {
-    "url": "https://github.com/SenCha930511/opencode-chat-panel/issues"
+    "url": "https://github.com/SenCha930511/opencode-chat-sidebar/issues"
   },
-  "homepage": "https://github.com/SenCha930511/opencode-chat-panel",
+  "homepage": "https://github.com/SenCha930511/opencode-chat-sidebar",
   "keywords": [
     "opencode",
     "ai",
@@ -40,16 +40,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "opencodePanel",
+          "id": "opencodeChatSidebar",
           "title": "OpenCode Chat Sidebar",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "opencodePanel": [
+      "opencodeChatSidebar": [
         {
-          "id": "opencodePanel.chatView",
+          "id": "opencodeChatSidebar.chatView",
           "name": "OpenCode Chat Sidebar",
           "type": "webview",
           "icon": "media/icon.svg"
@@ -58,67 +58,67 @@
     },
     "commands": [
       {
-        "command": "opencodePanel.toggleHistory",
+        "command": "opencodeChatSidebar.toggleHistory",
         "title": "歷程記錄",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(history)"
       },
       {
-        "command": "opencodePanel.newSession",
+        "command": "opencodeChatSidebar.newSession",
         "title": "新對話",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(add)"
       },
       {
-        "command": "opencodePanel.openSettings",
+        "command": "opencodeChatSidebar.openSettings",
         "title": "設定",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(gear)"
       },
       {
-        "command": "opencodePanel.startServer",
+        "command": "opencodeChatSidebar.startServer",
         "title": "啟動伺服器",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(play)"
       },
       {
-        "command": "opencodePanel.stopServer",
+        "command": "opencodeChatSidebar.stopServer",
         "title": "停止伺服器",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(debug-stop)"
       },
       {
-        "command": "opencodePanel.restartServer",
+        "command": "opencodeChatSidebar.restartServer",
         "title": "重啟伺服器",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(debug-restart)"
       },
       {
-        "command": "opencodePanel.openTui",
+        "command": "opencodeChatSidebar.openTui",
         "title": "開啟 TUI",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(terminal)"
       },
       {
-        "command": "opencodePanel.attachSelection",
+        "command": "opencodeChatSidebar.attachSelection",
         "title": "附加選取內容",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(selection)"
       },
       {
-        "command": "opencodePanel.attachFile",
+        "command": "opencodeChatSidebar.attachFile",
         "title": "附加檔案",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(file)"
       },
       {
-        "command": "opencodePanel.exportTranscript",
+        "command": "opencodeChatSidebar.exportTranscript",
         "title": "匯出對話紀錄",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(export)"
       },
       {
-        "command": "opencodePanel.openLogs",
+        "command": "opencodeChatSidebar.openLogs",
         "title": "開啟記錄",
         "category": "OpenCode Chat Sidebar",
         "icon": "$(output)"
@@ -127,120 +127,120 @@
     "menus": {
       "view/title": [
         {
-          "command": "opencodePanel.newSession",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.newSession",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "navigation@1"
         },
         {
-          "command": "opencodePanel.toggleHistory",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.toggleHistory",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "navigation@2"
         },
         {
-          "command": "opencodePanel.openSettings",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.openSettings",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "navigation@3"
         },
         {
-          "command": "opencodePanel.startServer",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.startServer",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "1_server@1"
         },
         {
-          "command": "opencodePanel.stopServer",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.stopServer",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "1_server@2"
         },
         {
-          "command": "opencodePanel.restartServer",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.restartServer",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "1_server@3"
         },
         {
-          "command": "opencodePanel.openTui",
-          "when": "view == opencodePanel.chatView",
+          "command": "opencodeChatSidebar.openTui",
+          "when": "view == opencodeChatSidebar.chatView",
           "group": "1_server@4"
         }
       ],
       "editor/context": [
         {
-          "command": "opencodePanel.attachSelection",
+          "command": "opencodeChatSidebar.attachSelection",
           "when": "editorHasSelection",
-          "group": "opencodePanel@1"
+          "group": "opencodeChatSidebar@1"
         },
         {
-          "command": "opencodePanel.attachFile",
-          "group": "opencodePanel@2"
+          "command": "opencodeChatSidebar.attachFile",
+          "group": "opencodeChatSidebar@2"
         }
       ]
     },
     "configuration": {
       "title": "OpenCode Chat Sidebar",
       "properties": {
-        "opencodePanel.serverUrl": {
+        "opencodeChatSidebar.serverUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "%opencodePanel.config.serverUrl.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.serverUrl.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.port": {
+        "opencodeChatSidebar.port": {
           "type": "number",
           "default": 4096,
-          "markdownDescription": "%opencodePanel.config.port.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.port.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.hostname": {
+        "opencodeChatSidebar.hostname": {
           "type": "string",
           "default": "127.0.0.1",
-          "markdownDescription": "%opencodePanel.config.hostname.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.hostname.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.binaryPath": {
+        "opencodeChatSidebar.binaryPath": {
           "type": "string",
           "default": "opencode",
-          "markdownDescription": "%opencodePanel.config.binaryPath.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.binaryPath.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.serverArgs": {
+        "opencodeChatSidebar.serverArgs": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "%opencodePanel.config.serverArgs.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.serverArgs.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.autoStartServer": {
+        "opencodeChatSidebar.autoStartServer": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "%opencodePanel.config.autoStartServer.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.autoStartServer.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.minimumServerVersion": {
+        "opencodeChatSidebar.minimumServerVersion": {
           "type": "string",
           "default": "0.0.0",
-          "markdownDescription": "%opencodePanel.config.minimumServerVersion.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.minimumServerVersion.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.debugLogs": {
+        "opencodeChatSidebar.debugLogs": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "%opencodePanel.config.debugLogs.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.debugLogs.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.chatFontFamily": {
+        "opencodeChatSidebar.chatFontFamily": {
           "type": "string",
           "default": "",
-          "markdownDescription": "%opencodePanel.config.chatFontFamily.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.chatFontFamily.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.chatFontSize": {
+        "opencodeChatSidebar.chatFontSize": {
           "type": "number",
           "default": 0,
-          "markdownDescription": "%opencodePanel.config.chatFontSize.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.chatFontSize.markdownDescription%",
           "scope": "resource"
         },
-        "opencodePanel.language": {
+        "opencodeChatSidebar.language": {
           "type": "string",
           "enum": [
             "auto",
@@ -248,7 +248,7 @@
             "zh-TW"
           ],
           "default": "auto",
-          "markdownDescription": "%opencodePanel.config.language.markdownDescription%",
+          "markdownDescription": "%opencodeChatSidebar.config.language.markdownDescription%",
           "scope": "resource"
         }
       }

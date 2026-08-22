@@ -155,7 +155,7 @@ describe("createConfigAccessor", () => {
     expect(accessor.read().port).toBe(9999);
   });
 
-  it("fires with a fresh snapshot when an opencodePanel key changes", () => {
+  it("fires with a fresh snapshot when an opencodeChatSidebar key changes", () => {
     // Given: a registered listener and an initial port
     const adapter = new FakeAdapter({ port: 4096 });
     const source = new FakeChangeSource();
@@ -164,13 +164,13 @@ describe("createConfigAccessor", () => {
     accessor.onDidChange((next) => seen.push(next));
     // When: the port changes and the section event fires
     adapter.values["port"] = 5000;
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     // Then: the listener got the fresh typed snapshot
     expect(seen).toHaveLength(1);
     expect(seen[0]?.port).toBe(5000);
   });
 
-  it("ignores changes outside the opencodePanel section", () => {
+  it("ignores changes outside the opencodeChatSidebar section", () => {
     // Given
     const adapter = new FakeAdapter();
     const source = new FakeChangeSource();
@@ -192,7 +192,7 @@ describe("createConfigAccessor", () => {
     const subscription = accessor.onDidChange((next) => seen.push(next));
     subscription.dispose();
     // When
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     // Then
     expect(seen).toHaveLength(0);
   });
@@ -216,9 +216,9 @@ describe("createConfigAccessor", () => {
     accessor.onDidChange((next) => seen.push(next));
     // When
     adapter.values["port"] = 5000;
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     adapter.values["port"] = 6000;
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     // Then: two events, one per source emission, in order
     expect(seen).toHaveLength(2);
     expect(seen[0]?.port).toBe(5000);
@@ -234,9 +234,9 @@ describe("createConfigAccessor", () => {
     accessor.onDidChange((next) => seen.push(next));
     // When: one key changes, then another
     adapter.values["port"] = 1111;
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     adapter.values["debugLogs"] = true;
-    source.emit(sectionEvent("opencodePanel.debugLogs"));
+    source.emit(sectionEvent("opencodeChatSidebar.debugLogs"));
     // Then: each snapshot carries the full state at its own emission
     expect(seen[0]).toMatchObject({ port: 1111, debugLogs: false });
     expect(seen[1]).toMatchObject({ port: 1111, debugLogs: true });
@@ -253,7 +253,7 @@ describe("createConfigAccessor", () => {
     accessor.onDidChange((next) => first.push(next));
     accessor.onDidChange((next) => second.push(next));
     // When
-    source.emit(sectionEvent("opencodePanel.port"));
+    source.emit(sectionEvent("opencodeChatSidebar.port"));
     // Then
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(1);
@@ -269,8 +269,8 @@ describe("createConfigAccessor", () => {
     const seen: PanelConfig[] = [];
     accessor.onDidChange((next) => seen.push(next));
     // When: a bulk section event, then a lookalike section
-    source.emit(sectionEvent("opencodePanel"));
-    source.emit(sectionEvent("opencodePanelExtras"));
+    source.emit(sectionEvent("opencodeChatSidebar"));
+    source.emit(sectionEvent("opencodeChatSidebarExtras"));
     // Then: only the real section landed
     expect(seen).toHaveLength(1);
   });

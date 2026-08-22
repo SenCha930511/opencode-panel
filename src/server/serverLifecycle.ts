@@ -48,7 +48,7 @@ function describeFailure(failure: ServerStartFailure): string {
     case "binary-not-found":
       return (
         `opencode binary '${failure.binaryPath}' could not be started (ENOENT); ` +
-        `install opencode or fix the opencodePanel.binaryPath setting`
+        `install opencode or fix the opencodeChatSidebar.binaryPath setting`
       );
     case "spawn-failed":
       return `failed to spawn the opencode server: ${failure.detail}`;
@@ -57,14 +57,14 @@ function describeFailure(failure: ServerStartFailure): string {
     case "port-in-use":
       return (
         `port ${failure.port} is already in use and no healthy opencode server answered ` +
-        `at ${failure.baseUrl}/global/health after re-probing; check the opencodePanel.port setting`
+        `at ${failure.baseUrl}/global/health after re-probing; check the opencodeChatSidebar.port setting`
       );
     case "health-timeout":
       return `opencode server did not become healthy within ${failure.timeoutMs}ms`;
     case "autostart-disabled":
       return (
         `no opencode server answered at ${failure.baseUrl}/global/health and ` +
-        `opencodePanel.autoStartServer is off; start a server manually or enable the setting`
+        `opencodeChatSidebar.autoStartServer is off; start a server manually or enable the setting`
       );
     case "cancelled":
       return `start cancelled (manager is stopping)`;

@@ -51,7 +51,7 @@ function isCompletedAssistantFor(message: HostMessage, sessionId: string): boole
 describe("todo-24 (b) chat round-trip", () => {
   it("ready → init, then sendPrompt streams deltas and lands in the final state", async () => {
     // Given the activated extension + mock, and a resolved chat view routed
-    // through the REAL `opencodePanel.chatView.focus` command
+    // through the REAL `opencodeChatSidebar.chatView.focus` command
     const harness = await startHarness();
     const { chatHooks, mock } = harness;
     assert.ok(mock !== undefined, "mock must be running for the round-trip");

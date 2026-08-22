@@ -262,8 +262,8 @@ describe("view-kind discriminator wiring (fix: duplicated stacked views)", () =>
     const sessionsView = new FakeWebviewView();
     sessions.resolveWebviewView(sessionsView, {}, {});
     // Then: each shell carries its own view-kind global before the bundle
-    expect(chatView.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="chat";');
-    expect(sessionsView.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="sessions";');
+    expect(chatView.webview.html).toContain('globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__="chat";');
+    expect(sessionsView.webview.html).toContain('globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__="sessions";');
   });
 
   it("carries the sessions stamp in the dev-mode shell too", () => {
@@ -272,7 +272,7 @@ describe("view-kind discriminator wiring (fix: duplicated stacked views)", () =>
     const view = new FakeWebviewView();
     sessions.resolveWebviewView(view, {}, {});
     // Then: the discriminator rides the relaxed shell as well
-    expect(view.webview.html).toContain('globalThis.__OPENCODE_PANEL_VIEW__="sessions";');
+    expect(view.webview.html).toContain('globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__="sessions";');
     expect(view.webview.html).toContain("http://localhost:5173/src/main.tsx");
   });
 });

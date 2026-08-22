@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-i18n.mjs — i18n guard suite. Exits 1 on any failure.
 //
-//  1. manifest <-> l10n bundle parity (todo 1): every `%opencodePanel...%`
+//  1. manifest <-> l10n bundle parity (todo 1): every `%opencodeChatSidebar...%`
 //     placeholder in package.json exists, non-empty, in BOTH
 //     l10n/bundle.l10n.json and l10n/bundle.l10n.zh-tw.json, with no drift
 //     between the bundles.
@@ -27,7 +27,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Check 1: manifest <-> l10n bundle parity.
 // ---------------------------------------------------------------------------
 
-const KEY_PATTERN = /%(opencodePanel(?:\.[A-Za-z0-9_-]+)+)%/g;
+const KEY_PATTERN = /%(opencodeChatSidebar(?:\.[A-Za-z0-9_-]+)+)%/g;
 
 export function collectManifestPlaceholders(manifest) {
   const referenced = new Set();
@@ -205,7 +205,7 @@ async function main() {
   const bundles = bundlePaths.map((rel) => [rel, JSON.parse(readFileSync(join(root, rel), "utf8"))]);
   const referenced = collectManifestPlaceholders(manifest);
   if (referenced.size === 0) {
-    console.error("check-i18n: FAIL — no %opencodePanel...% keys found in package.json");
+    console.error("check-i18n: FAIL — no %opencodeChatSidebar...% keys found in package.json");
     process.exit(1);
   }
   const manifestFailures = checkManifestBundles(referenced, bundles);

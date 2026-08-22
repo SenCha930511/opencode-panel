@@ -1,7 +1,7 @@
 // i18n-allow-literal — test fixtures/assertions carry literal wire data.
 /**
  * New-session command intake suite (FIX-E): the host forwards
- * `opencodePanel.newSession` as a `command.newSession` event; the webview
+ * `opencodeChatSidebar.newSession` as a `command.newSession` event; the webview
  * must create AND select a session through the real SessionsStore (never a
  * parallel path). Uses the todo-3 protocol loopback shape the sessions
  * suites established (real WebviewMessenger + scripted host replies).

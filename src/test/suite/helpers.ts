@@ -21,11 +21,11 @@ import { MODERN_VERSION, OLD_SERVER_VERSION } from "../mock-server/index.js";
 
 export { MODERN_VERSION, OLD_SERVER_VERSION };
 
-export const EXTENSION_ID = "SenCha930511.opencode-chat-panel";
+export const EXTENSION_ID = "SenCha930511.opencode-chat-sidebar";
 export const DEFAULT_PORT = "4099";
 
 export function testPort(): string {
-  return process.env.OPENCODE_PANEL_TEST_PORT ?? DEFAULT_PORT;
+  return process.env.OPENCODE_CHAT_SIDEBAR_TEST_PORT ?? DEFAULT_PORT;
 }
 
 export function mockBaseUrl(): string {
@@ -34,7 +34,7 @@ export function mockBaseUrl(): string {
 
 /** QA knob: skip starting the mock ⇒ the activation attach MUST fail (no hang). */
 export function skipMock(): boolean {
-  return (process.env.OPENCODE_PANEL_TEST_SKIP_MOCK ?? "") !== "";
+  return (process.env.OPENCODE_CHAT_SIDEBAR_TEST_SKIP_MOCK ?? "") !== "";
 }
 
 export interface Harness {
@@ -61,7 +61,7 @@ function requireTestApi(extension: vscode.Extension<unknown>): PanelActivationTe
       isRecord(api.chat) &&
       isRecord(api.sessions),
     "todo-24 seam inactive: activation returned no test API " +
-      "(OPENCODE_PANEL_TEST_PORT must be set in the extension host env)",
+      "(OPENCODE_CHAT_SIDEBAR_TEST_PORT must be set in the extension host env)",
   );
   return exportsValue as PanelActivationTestApi;
 }
@@ -106,7 +106,7 @@ export async function waitForAttached(
     if (state.kind === "error") {
       assert.fail(
         `manager attach failed before reaching attached: ${state.error.message} ` +
-          "(OPENCODE_PANEL_TEST_PORT must point at the suite's mock)",
+          "(OPENCODE_CHAT_SIDEBAR_TEST_PORT must point at the suite's mock)",
       );
     }
     await sleep(25);

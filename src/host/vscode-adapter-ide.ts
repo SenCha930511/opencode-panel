@@ -27,7 +27,7 @@ export function createVscodeStatusBarController(deps: {
   readonly t: (text: string) => string;
 }): StatusBarController {
   const item = vscode.window.createStatusBarItem(
-    "opencodePanel.status",
+    "opencodeChatSidebar.status",
     vscode.StatusBarAlignment.Left,
     10,
   );

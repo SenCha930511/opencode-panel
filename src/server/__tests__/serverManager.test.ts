@@ -2,7 +2,7 @@
  * ServerManager lifecycle state machine (plan todo 8 acceptance): fake spawn
  * + fake fetch over an instant clock. Covers attach-when-healthy (1 and 2
  * probes), spawn-when-down (healthy after N polls), ENOENT mentioning
- * `opencodePanel.binaryPath`, EADDRINUSE-then-healthy ⇒ attach (no error),
+ * `opencodeChatSidebar.binaryPath`, EADDRINUSE-then-healthy ⇒ attach (no error),
  * EADDRINUSE-then-unhealthy ⇒ error, only-owned-killed (attached disposal
  * sends no signals; managed SIGTERM then SIGKILL after grace), restart
  * round-trip, env passthrough of OPENCODE_SERVER_PASSWORD, stderr redaction,
@@ -281,7 +281,7 @@ describe("ServerManager lifecycle", () => {
     expect(h.states).toEqual(["probing", "managed"]);
   });
 
-  it("ENOENT spawn failure surfaces an error naming opencodePanel.binaryPath", async () => {
+  it("ENOENT spawn failure surfaces an error naming opencodeChatSidebar.binaryPath", async () => {
     // Given the binary cannot be spawned
     const h = makeHarness({
       downCount: Number.MAX_SAFE_INTEGER,
@@ -297,14 +297,14 @@ describe("ServerManager lifecycle", () => {
     if (result.ok) throw new Error("expected a failed start");
     expect(result.error.name).toBe("ServerStartError");
     expect(result.error.failure.kind).toBe("binary-not-found");
-    expect(result.error.message).toContain("opencodePanel.binaryPath");
+    expect(result.error.message).toContain("opencodeChatSidebar.binaryPath");
     const state = h.manager.state;
     expect(state.kind).toBe("error");
     if (state.kind === "error") {
-      expect(state.error.message).toContain("opencodePanel.binaryPath");
+      expect(state.error.message).toContain("opencodeChatSidebar.binaryPath");
     }
     // And the failure is surfaced on the log channel as an error line too
-    const errorLines = h.channel.lines.filter((line) => line.includes("opencodePanel.binaryPath"));
+    const errorLines = h.channel.lines.filter((line) => line.includes("opencodeChatSidebar.binaryPath"));
     expect(errorLines.some((line) => line.includes("[error]"))).toBe(true);
     expect(h.states).toEqual(["probing", "error"]);
   });
@@ -521,7 +521,7 @@ describe("ServerManager lifecycle", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected a failed start");
     expect(result.error.failure.kind).toBe("autostart-disabled");
-    expect(result.error.message).toContain("opencodePanel.autoStartServer");
+    expect(result.error.message).toContain("opencodeChatSidebar.autoStartServer");
     expect(h.spawn.calls).toHaveLength(0);
     expect(h.fetchCalls.calls).toEqual(["/global/health", "/global/health"]);
     expect(h.states).toEqual(["probing", "error"]);

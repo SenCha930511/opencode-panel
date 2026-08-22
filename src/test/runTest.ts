@@ -6,9 +6,9 @@
  * The launch args keep the run hermetic: no GPU/sandbox requirements, no
  * other extensions, and an isolated user-data/extensions dir under
  * `.vscode-test/sandbox/` so settings writes never touch the developer's
- * real VS Code profile. OPENCODE_PANEL_TEST_PORT travels into the extension
+ * real VS Code profile. OPENCODE_CHAT_SIDEBAR_TEST_PORT travels into the extension
  * host through `extensionTestsEnv` so the todo-24 activation seam and the
- * in-suite mock bind the same fixed port. OPENCODE_PANEL_TEST_HOME points
+ * in-suite mock bind the same fixed port. OPENCODE_CHAT_SIDEBAR_TEST_HOME points
  * the W1 config-file handlers at a fresh sandbox home under the same tree
  * (opencode.json / omo.jsonc edits never touch the developer's real
  * `~/.config/opencode` or `~/.omo`).
@@ -31,8 +31,8 @@ async function main(): Promise<void> {
     extensionTestsPath,
     extensionTestsEnv: {
       ...process.env,
-      OPENCODE_PANEL_TEST_PORT: process.env.OPENCODE_PANEL_TEST_PORT ?? DEFAULT_TEST_PORT,
-      OPENCODE_PANEL_TEST_HOME: testHome,
+      OPENCODE_CHAT_SIDEBAR_TEST_PORT: process.env.OPENCODE_CHAT_SIDEBAR_TEST_PORT ?? DEFAULT_TEST_PORT,
+      OPENCODE_CHAT_SIDEBAR_TEST_HOME: testHome,
     },
     launchArgs: [
       "--disable-gpu",

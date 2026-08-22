@@ -2,7 +2,7 @@
  * Todo-24 env-test seam (additive; the unset path is byte-for-byte the
  * production behavior), extracted from extension.ts so the activation root
  * stays within its size budget. When the @vscode/test-electron harness sets
- * OPENCODE_PANEL_TEST_PORT — only it ever does — the effective config pins
+ * OPENCODE_CHAT_SIDEBAR_TEST_PORT — only it ever does — the effective config pins
  * `serverUrl` at the suite's pre-started loopback mock and forces
  * `autoStartServer` off, so activation ATTACHES to that mock and never spawns
  * a real binary (password-less: the sandbox profile stores no credentials).

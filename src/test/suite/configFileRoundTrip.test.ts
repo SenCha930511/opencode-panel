@@ -4,7 +4,7 @@
  * per-view messenger (the same harness seam as the todo-24 (d) settings
  * round trip), end to end against real bytes on disk.
  *
- * Every file touch is confined to the sandboxed OPENCODE_PANEL_TEST_HOME
+ * Every file touch is confined to the sandboxed OPENCODE_CHAT_SIDEBAR_TEST_HOME
  * (created + exported by src/test/runTest.ts and honored by the W1
  * registration in src/extension.ts): fixtures seed
  * `<test-home>/.config/opencode/opencode.json` (with a comment + an unknown
@@ -41,10 +41,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * editable zone is asserted to live under `.vscode-test/` before any write.
  */
 function testHome(): string {
-  const home = process.env.OPENCODE_PANEL_TEST_HOME;
+  const home = process.env.OPENCODE_CHAT_SIDEBAR_TEST_HOME;
   assert.ok(
     home !== undefined && home.includes(".vscode-test"),
-    "OPENCODE_PANEL_TEST_HOME must point under .vscode-test/sandbox " +
+    "OPENCODE_CHAT_SIDEBAR_TEST_HOME must point under .vscode-test/sandbox " +
       "(src/test/runTest.ts exports it into the extension host)",
   );
   return home;

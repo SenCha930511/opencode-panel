@@ -186,13 +186,13 @@ describe("sessions view kind (fix: duplicated stacked blocks)", () => {
   // rest of the suite (which pins the default chat surface) stays honest.
   afterEach(() => {
     const globals = globalThis as Record<string, unknown>;
-    delete globals.__OPENCODE_PANEL_VIEW__;
+    delete globals.__OPENCODE_CHAT_SIDEBAR_VIEW__;
   });
 
   it("kind=sessions renders ONLY the standalone sessions surface", () => {
     // Given: the shell stamped this webview as the contributed sessions view
     const globals = globalThis as Record<string, unknown>;
-    globals.__OPENCODE_PANEL_VIEW__ = "sessions";
+    globals.__OPENCODE_CHAT_SIDEBAR_VIEW__ = "sessions";
     // When: the production slots tree renders
     const html = renderToStaticMarkup(createAppSlotsTree());
     // Then: the sessions surface is present — slot marker + the real
@@ -214,7 +214,7 @@ describe("sessions view kind (fix: duplicated stacked blocks)", () => {
   it("an unknown global value falls back to the full chat view", () => {
     // Given: a host stamp this build does not recognize
     const globals = globalThis as Record<string, unknown>;
-    globals.__OPENCODE_PANEL_VIEW__ = "some-future-kind";
+    globals.__OPENCODE_CHAT_SIDEBAR_VIEW__ = "some-future-kind";
     // When: the production slots tree renders
     const html = renderToStaticMarkup(createAppSlotsTree());
     // Then: the surface is the full chat app, exactly the absent-global

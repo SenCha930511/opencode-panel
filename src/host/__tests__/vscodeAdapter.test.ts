@@ -65,19 +65,19 @@ beforeEach(() => {
 });
 
 describe("createVscodeConfigAccessor", () => {
-  it("reads through workspace.getConfiguration of the opencodePanel section", () => {
+  it("reads through workspace.getConfiguration of the opencodeChatSidebar section", () => {
     const accessor = createVscodeConfigAccessor();
-    seedConfig("opencodePanel").values.set("port", 7777);
+    seedConfig("opencodeChatSidebar").values.set("port", 7777);
     expect(accessor.read().port).toBe(7777);
-    expect(vscodeStubRegistry.configSections).toContain("opencodePanel");
+    expect(vscodeStubRegistry.configSections).toContain("opencodeChatSidebar");
   });
 
   it("waves workspace change events through the section filter", () => {
     const accessor = createVscodeConfigAccessor();
     const seen: number[] = [];
     accessor.onDidChange((next) => seen.push(next.port));
-    seedConfig("opencodePanel").values.set("port", 5000);
-    emitConfigChange({ affectsConfiguration: (section) => section === "opencodePanel" });
+    seedConfig("opencodeChatSidebar").values.set("port", 5000);
+    emitConfigChange({ affectsConfiguration: (section) => section === "opencodeChatSidebar" });
     emitConfigChange({ affectsConfiguration: () => false });
     expect(seen).toEqual([5000]);
   });
@@ -94,7 +94,7 @@ describe("createVscodeSecrets", () => {
     expect(await secrets.getUsername(url)).toBe("bob");
     const keys = [...storage.entries.keys()];
     expect(keys).toHaveLength(2);
-    expect(keys.every((key) => key.startsWith("opencodePanel.auth."))).toBe(true);
+    expect(keys.every((key) => key.startsWith("opencodeChatSidebar.auth."))).toBe(true);
     await secrets.deletePassword(url);
     expect(await secrets.getPassword(url)).toBeUndefined();
     expect([...storage.entries.keys()]).toHaveLength(1);
@@ -105,7 +105,7 @@ describe("createVscodeSettingsSurface", () => {
   it("maps the user layer to ConfigurationTarget.Global", async () => {
     const surface = createVscodeSettingsSurface();
     await surface.update("port", 5000, "global");
-    const updates = configFor("opencodePanel").updates;
+    const updates = configFor("opencodeChatSidebar").updates;
     expect(updates).toHaveLength(1);
     expect(updates[0]).toMatchObject({ key: "port", value: 5000 });
     expect(updates[0]?.target).not.toBe(2);
@@ -114,7 +114,7 @@ describe("createVscodeSettingsSurface", () => {
   it("maps the workspace layer to ConfigurationTarget.Workspace", async () => {
     const surface = createVscodeSettingsSurface();
     await surface.update("chatFontSize", 14, "workspace");
-    expect(configFor("opencodePanel").updates[0]).toMatchObject({
+    expect(configFor("opencodeChatSidebar").updates[0]).toMatchObject({
       key: "chatFontSize",
       value: 14,
       target: 2,
@@ -123,7 +123,7 @@ describe("createVscodeSettingsSurface", () => {
 
   it("passes inspect through, reporting the recorded layers", () => {
     const surface = createVscodeSettingsSurface();
-    seedConfig("opencodePanel").layers.set("hostname", { globalValue: "127.0.0.1", workspaceValue: "0.0.0.0" });
+    seedConfig("opencodeChatSidebar").layers.set("hostname", { globalValue: "127.0.0.1", workspaceValue: "0.0.0.0" });
     expect(surface.inspect("hostname")).toEqual({ globalValue: "127.0.0.1", workspaceValue: "0.0.0.0" });
     expect(surface.inspect("unsetKey")).toBeUndefined();
   });

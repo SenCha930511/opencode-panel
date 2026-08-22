@@ -110,14 +110,14 @@ function comingLater(): void {
 }
 
 // Todo-24 env-test seam (additive; spec in ./host/testSeam.ts): the harness
-// pins OPENCODE_PANEL_TEST_PORT, activation attaches to the pre-started mock,
+// pins OPENCODE_CHAT_SIDEBAR_TEST_PORT, activation attaches to the pre-started mock,
 // and the test-API surface returns; production activation is unchanged.
 export function activate(
   context: vscode.ExtensionContext,
 ): PanelActivationTestApi | undefined {
   const config = applyTestServerOverride(
     createVscodeConfigAccessor(),
-    process.env.OPENCODE_PANEL_TEST_PORT ?? "",
+    process.env.OPENCODE_CHAT_SIDEBAR_TEST_PORT ?? "",
   );
   const { logger, channel } = createVscodeLogger(() => config.read().debugLogs);
   const secrets = createVscodeSecrets(context);
@@ -182,10 +182,10 @@ export function activate(
   });
   // Config-file editor backend (plan W1): configFileRead/configFileWrite over
   // the safe-write IO core. Dev/test-host runs redirect the home dir to the
-  // sandboxed OPENCODE_PANEL_TEST_HOME so they never touch real config trees.
+  // sandboxed OPENCODE_CHAT_SIDEBAR_TEST_HOME so they never touch real config trees.
   registerConfigFileHandlers(panel.registerHandler, {
     env: {
-      homeDir: (__DEV__ && process.env.OPENCODE_PANEL_TEST_HOME) || os.homedir(),
+      homeDir: (__DEV__ && process.env.OPENCODE_CHAT_SIDEBAR_TEST_HOME) || os.homedir(),
       workspaceFolder: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
     },
     fs: createNodeConfigFilesFs(),
@@ -206,7 +206,7 @@ export function activate(
     opener: dockSurface.opener,
     logger,
     notify: dockNotify,
-    // Resolved lazily so the opencodePanel.language override (and its
+    // Resolved lazily so the opencodeChatSidebar.language override (and its
     // hot-swap) reaches this host-side string too.
     emptyDiffText: () =>
       buildInitStrings(vscode.env.language, config.read().language).strings["dock.diffs.empty"],
@@ -324,7 +324,7 @@ export function activate(
     }
 
     settingsPanel = vscode.window.createWebviewPanel(
-      "opencodePanel.settings",
+      "opencodeChatSidebar.settings",
       "OpenCode Chat Sidebar Settings",
       vscode.ViewColumn.Active,
       {
@@ -383,7 +383,7 @@ export function activate(
   context.subscriptions.push(
     channel,
     tui,
-    vscode.commands.registerCommand("opencodePanel.openLogs", () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.openLogs", () => {
       channel.show();
     }),
     vscode.workspace.registerTextDocumentContentProvider(
@@ -404,7 +404,7 @@ export function activate(
         dockCapabilityReset.dispose();
       },
     },
-    // Language hot-swap (opencodePanel.language): a saved change re-posts
+    // Language hot-swap (opencodeChatSidebar.language): a saved change re-posts
     // the full init payload (locale + strings) to every live webview
     // surface; each re-renders under the new StringsProvider, no reload.
     (() => {
@@ -412,7 +412,7 @@ export function activate(
       return config.onDidChange((next) => {
         if (next.language === previousLanguage) return;
         previousLanguage = next.language;
-        logger.info(`opencodePanel.language now ${next.language}: re-posting init to webviews`);
+        logger.info(`opencodeChatSidebar.language now ${next.language}: re-posting init to webviews`);
         void panel.chat.refreshInit();
         void panel.sessions.refreshInit();
         void postSettingsInit();
@@ -420,27 +420,27 @@ export function activate(
     })(),
     { dispose: () => config.dispose() },
     { dispose: () => manager.dispose() },
-    vscode.commands.registerCommand("opencodePanel.toggleHistory", async () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.toggleHistory", async () => {
       // Focus first: guarantees the chat view is RESOLVED before the event
       // posts (an unresolved view drops it outright — the first click from a
       // cold window then does nothing).
       await vscode.commands.executeCommand(`${CHAT_VIEW_ID}.focus`);
       panel.chat.postEvent("command.toggleHistory", null);
     }),
-    vscode.commands.registerCommand("opencodePanel.newSession", async () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.newSession", async () => {
       await vscode.commands.executeCommand(`${CHAT_VIEW_ID}.focus`);
       panel.chat.postEvent("command.newSession", null);
     }),
-    vscode.commands.registerCommand("opencodePanel.openSettings", () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.openSettings", () => {
       void openSettingsTab();
     }),
-    vscode.commands.registerCommand("opencodePanel.startServer", async () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.startServer", async () => {
       const result = await manager.start();
       if (!result.ok) {
         showServerError(vscode.l10n.t("Failed to start the opencode server"), result.error);
       }
     }),
-    vscode.commands.registerCommand("opencodePanel.stopServer", async () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.stopServer", async () => {
       try {
         await manager.stop();
       } catch (error) {
@@ -449,14 +449,14 @@ export function activate(
         );
       }
     }),
-    vscode.commands.registerCommand("opencodePanel.restartServer", async () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.restartServer", async () => {
       const result = await manager.restart();
       if (!result.ok) {
         showServerError(vscode.l10n.t("Failed to restart the opencode server"), result.error);
       }
     }),
-    vscode.commands.registerCommand("opencodePanel.openTui", () => tui.open()),
-    vscode.commands.registerCommand("opencodePanel.attachSelection", () => {
+    vscode.commands.registerCommand("opencodeChatSidebar.openTui", () => tui.open()),
+    vscode.commands.registerCommand("opencodeChatSidebar.attachSelection", () => {
       const result = buildSelectionPush(editorAccess.selection());
       if (!result.ok) {
         void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
@@ -464,7 +464,7 @@ export function activate(
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
     }),
-    vscode.commands.registerCommand("opencodePanel.attachFile", (contextArg?: unknown) => {
+    vscode.commands.registerCommand("opencodeChatSidebar.attachFile", (contextArg?: unknown) => {
       const result = buildFilePush(editorAccess.filePath(contextArg));
       if (!result.ok) {
         void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
@@ -472,11 +472,11 @@ export function activate(
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
     }),
-    vscode.commands.registerCommand("opencodePanel.exportTranscript", (args?: unknown) =>
+    vscode.commands.registerCommand("opencodeChatSidebar.exportTranscript", (args?: unknown) =>
       exportCommand(args),
     ),
   );
-  logger.info("opencode-chat-panel activated");
+  logger.info("opencode-chat-sidebar activated");
 
   if (config.read().autoStartServer) {
     void manager.start().then((result) => {
@@ -488,7 +488,7 @@ export function activate(
     });
   }
 
-  return exposeTestAttach(process.env.OPENCODE_PANEL_TEST_PORT ?? "", manager, panel);
+  return exposeTestAttach(process.env.OPENCODE_CHAT_SIDEBAR_TEST_PORT ?? "", manager, panel);
 }
 
 export function deactivate(): void {}

@@ -8,7 +8,7 @@
  *
  * `debug`-class output (which is where bulk server chatter, HTTP traces,
  * and — at most — prompt/file content may go) is written only when the
- * `opencodePanel.debugLogs` setting is enabled. Prompt text and file
+ * `opencodeChatSidebar.debugLogs` setting is enabled. Prompt text and file
  * contents must NEVER be logged at info level or above.
  */
 

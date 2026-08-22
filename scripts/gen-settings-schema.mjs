@@ -3,7 +3,7 @@
 // (plan todo 21). Generates src/shared/settingsSchema.ts FROM
 // package.json `contributes.configuration.properties` (keys, types, defaults,
 // description refs) + the sibling l10n bundles (localized description text
-// resolved from each key's "%opencodePanel.config.*.markdownDescription%").
+// resolved from each key's "%opencodeChatSidebar.config.*.markdownDescription%").
 //
 //   node scripts/gen-settings-schema.mjs           # regenerate (default)
 //   node scripts/gen-settings-schema.mjs --check   # exit 1 on drift (CI/QA)
@@ -67,14 +67,14 @@ function fieldType(shortKey, entry) {
   const mapped = TYPE_MAP[entry.type];
   if (mapped !== undefined) return mapped;
   if (entry.type === "array" && entry.items?.type === "string") return "string-array";
-  return fail(`unsupported type for opencodePanel.${shortKey}: ${JSON.stringify(entry.type)}`);
+  return fail(`unsupported type for opencodeChatSidebar.${shortKey}: ${JSON.stringify(entry.type)}`);
 }
 
 function descriptionText(shortKey, entry, bundles) {
   const ref = entry.markdownDescription;
-  const match = /^%(opencodePanel\.config\..+\.markdownDescription)%$/.exec(typeof ref === "string" ? ref : "");
+  const match = /^%(opencodeChatSidebar\.config\..+\.markdownDescription)%$/.exec(typeof ref === "string" ? ref : "");
   if (match === null) {
-    fail(`opencodePanel.${shortKey}: markdownDescription must be a %opencodePanel.config.*% ref`);
+    fail(`opencodeChatSidebar.${shortKey}: markdownDescription must be a %opencodeChatSidebar.config.*% ref`);
   }
   const key = match[1];
   const text = {};
@@ -97,31 +97,31 @@ function collectFields(manifestPath) {
   const manifestKeys = Object.keys(properties);
   const uiKeys = Object.keys(FIELD_UI);
   for (const key of manifestKeys) {
-    const shortKey = key.replace(/^opencodePanel\./, "");
+    const shortKey = key.replace(/^opencodeChatSidebar\./, "");
     if (!(shortKey in FIELD_UI)) {
       fail(`manifest key "${key}" is not classified in FIELD_UI — add its section/bounds to scripts/gen-settings-schema.mjs`);
     }
   }
   for (const key of uiKeys) {
-    if (`opencodePanel.${key}` in properties === false) {
-      fail(`FIELD_UI entry "${key}" has no matching opencodePanel.${key} key in the manifest — remove it or restore the setting`);
+    if (`opencodeChatSidebar.${key}` in properties === false) {
+      fail(`FIELD_UI entry "${key}" has no matching opencodeChatSidebar.${key} key in the manifest — remove it or restore the setting`);
     }
   }
   return manifestKeys.map((key) => {
-    const shortKey = key.replace(/^opencodePanel\./, "");
+    const shortKey = key.replace(/^opencodeChatSidebar\./, "");
     const entry = properties[key];
     const ui = FIELD_UI[shortKey];
-    if ("default" in entry === false) fail(`opencodePanel.${shortKey}: manifest key has no default`);
+    if ("default" in entry === false) fail(`opencodeChatSidebar.${shortKey}: manifest key has no default`);
     let enumValues;
     if (ui.enum !== undefined) {
       if (!Array.isArray(entry.enum) || entry.enum.some((value) => typeof value !== "string")) {
-        fail(`opencodePanel.${shortKey}: FIELD_UI declares an enum but the manifest key has no string enum`);
+        fail(`opencodeChatSidebar.${shortKey}: FIELD_UI declares an enum but the manifest key has no string enum`);
       }
       if (JSON.stringify(entry.enum) !== JSON.stringify(ui.enum)) {
-        fail(`opencodePanel.${shortKey}: manifest enum ${JSON.stringify(entry.enum)} != FIELD_UI enum ${JSON.stringify(ui.enum)} — keep both in sync`);
+        fail(`opencodeChatSidebar.${shortKey}: manifest enum ${JSON.stringify(entry.enum)} != FIELD_UI enum ${JSON.stringify(ui.enum)} — keep both in sync`);
       }
       if (!ui.enum.includes(entry.default)) {
-        fail(`opencodePanel.${shortKey}: manifest default ${JSON.stringify(entry.default)} is not in the enum`);
+        fail(`opencodeChatSidebar.${shortKey}: manifest default ${JSON.stringify(entry.default)} is not in the enum`);
       }
       enumValues = ui.enum;
     }

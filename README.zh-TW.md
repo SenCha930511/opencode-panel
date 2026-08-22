@@ -2,10 +2,10 @@
 
 [English](README.md) · 繁體中文
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-panel/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-panel)](https://github.com/SenCha930511/opencode-chat-panel/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
-[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-panel?style=social)](https://github.com/SenCha930511/opencode-chat-panel/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-sidebar/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-sidebar)](https://github.com/SenCha930511/opencode-chat-sidebar/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-sidebar?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-sidebar?style=social)](https://github.com/SenCha930511/opencode-chat-sidebar/stargazers)
 
 一個 VS Code 側邊欄聊天擴充套件，透過官方 headless 伺服器驅動你**本機安裝的
 [opencode](https://opencode.ai)**——不用離開編輯器，就有 Codex/Cursor 等級的
@@ -39,7 +39,7 @@ GUI 聊天面板。
 - **能力偵測**——自動探測連接的伺服器，不支援的功能會隱藏並提示一次。
   無論有沒有裝 oh-my-opencode 都能正常運作。
 - **雙語介面**（English / 繁體中文）——預設跟隨 VS Code 顯示語言，亦可用
-  `opencodePanel.language` 明確指定語系，所有已開啟面板即時熱切換、不必重開。
+  `opencodeChatSidebar.language` 明確指定語系，所有已開啟面板即時熱切換、不必重開。
 
 ### oh-my-opencode（OMO）補充說明
 
@@ -55,29 +55,29 @@ OMO 為**選配**。有安裝時：
 ## 安裝方式
 
 從
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar)
 安裝 **OpenCode Chat Sidebar**；或在「擴充功能」檢視（`Ctrl+Shift+X` /
 `Cmd+Shift+X`）搜尋「OpenCode Chat Sidebar」，安裝後依提示重新載入，活動列
 就會出現面板圖示。
 
 如需改裝打包好的 `.vsix`（例如尚未發佈的建置）：
 
-1. 從 [Releases](https://github.com/SenCha930511/opencode-chat-panel/releases)
-   取得最新的 `opencode-chat-panel-x.y.z.vsix`，或依下節說明自行建置。
+1. 從 [Releases](https://github.com/SenCha930511/opencode-chat-sidebar/releases)
+   取得最新的 `opencode-chat-sidebar-x.y.z.vsix`，或依下節說明自行建置。
 2. 在「擴充功能」檢視中，從 `...` 選單選擇**「從 VSIX 安裝...」**並選取該
    檔案；或在終端機執行
-   `code --install-extension opencode-chat-panel-x.y.z.vsix`（使用你編輯器
+   `code --install-extension opencode-chat-sidebar-x.y.z.vsix`（使用你編輯器
    內建的 CLI）。
 3. 依提示重新載入視窗，活動列就會出現面板圖示。
 
 ### 從原始碼建置
 
 ```bash
-git clone https://github.com/SenCha930511/opencode-chat-panel.git
-cd opencode-chat-panel
+git clone https://github.com/SenCha930511/opencode-chat-sidebar.git
+cd opencode-chat-sidebar
 npm install
 npm run build && npm run build:webview
-npx vsce package   # 產生 opencode-chat-panel-<version>.vsix
+npx vsce package   # 產生 opencode-chat-sidebar-<version>.vsix
 ```
 
 開發流程：執行 `npm run watch`（extension host）搭配
@@ -86,7 +86,7 @@ Development Host。
 
 ## 需求
 
-- 已安裝 **opencode** 且在 `PATH` 中（或設定 `opencodePanel.binaryPath`）。
+- 已安裝 **opencode** 且在 `PATH` 中（或設定 `opencodeChatSidebar.binaryPath`）。
   安裝方式請以 [opencode 官方文件](https://opencode.ai/docs)為準，例如
   `curl -fsSL https://opencode.ai/install | bash`、
   `brew install anomalyco/tap/opencode` 或 `npm install -g opencode-ai`。
@@ -97,23 +97,23 @@ Development Host。
 
 ## 設定
 
-所有設定皆位於 `opencodePanel.*` 命名空間——可在 VS Code 設定頁，或擴充
+所有設定皆位於 `opencodeChatSidebar.*` 命名空間——可在 VS Code 設定頁，或擴充
 套件內建設定頁（聊天視窗右上齒輪）編輯。密碼只存放在 VS Code
 SecretStorage。
 
 | 設定 | 型別 | 預設值 | 說明 |
 | --- | --- | --- | --- |
-| `opencodePanel.serverUrl` | string | `""` | 已啟動之 opencode 伺服器的完整 URL。設定後（且健康檢查通過）會直接 attach，不再自行 spawn。 |
-| `opencodePanel.port` | number | `4096` | 受管理 `opencode serve` 使用的連接埠。 |
-| `opencodePanel.hostname` | string | `"127.0.0.1"` | 受管理伺服器的 hostname。 |
-| `opencodePanel.binaryPath` | string | `"opencode"` | 用來 spawn 與開啟 TUI 的 opencode 執行檔路徑或名稱。 |
-| `opencodePanel.serverArgs` | string[] | `[]` | 傳給 `opencode serve` 的額外參數。 |
-| `opencodePanel.autoStartServer` | boolean | `true` | 啟動時自動 spawn/attach 伺服器。 |
-| `opencodePanel.minimumServerVersion` | string | `"0.0.0"` | 伺服器版本低於此門檻時警告（僅警告，不阻擋使用）。 |
-| `opencodePanel.debugLogs` | boolean | `false` | 在 *OpenCode Chat Sidebar* 輸出頻道輸出詳細記錄（憑證一律去識別化）。 |
-| `opencodePanel.chatFontFamily` | string | `""` | 覆寫聊天字體（空白 = 沿用 VS Code 預設）。 |
-| `opencodePanel.chatFontSize` | number | `0` | 覆寫聊天字體大小 px（0 = 沿用 VS Code 預設）。 |
-| `opencodePanel.language` | enum | `"auto"` | 面板介面語言：`auto` 跟隨 VS Code 顯示語言；`en` / `zh-TW` 明確指定語系，即時套用到所有已開啟的面板。 |
+| `opencodeChatSidebar.serverUrl` | string | `""` | 已啟動之 opencode 伺服器的完整 URL。設定後（且健康檢查通過）會直接 attach，不再自行 spawn。 |
+| `opencodeChatSidebar.port` | number | `4096` | 受管理 `opencode serve` 使用的連接埠。 |
+| `opencodeChatSidebar.hostname` | string | `"127.0.0.1"` | 受管理伺服器的 hostname。 |
+| `opencodeChatSidebar.binaryPath` | string | `"opencode"` | 用來 spawn 與開啟 TUI 的 opencode 執行檔路徑或名稱。 |
+| `opencodeChatSidebar.serverArgs` | string[] | `[]` | 傳給 `opencode serve` 的額外參數。 |
+| `opencodeChatSidebar.autoStartServer` | boolean | `true` | 啟動時自動 spawn/attach 伺服器。 |
+| `opencodeChatSidebar.minimumServerVersion` | string | `"0.0.0"` | 伺服器版本低於此門檻時警告（僅警告，不阻擋使用）。 |
+| `opencodeChatSidebar.debugLogs` | boolean | `false` | 在 *OpenCode Chat Sidebar* 輸出頻道輸出詳細記錄（憑證一律去識別化）。 |
+| `opencodeChatSidebar.chatFontFamily` | string | `""` | 覆寫聊天字體（空白 = 沿用 VS Code 預設）。 |
+| `opencodeChatSidebar.chatFontSize` | number | `0` | 覆寫聊天字體大小 px（0 = 沿用 VS Code 預設）。 |
+| `opencodeChatSidebar.language` | enum | `"auto"` | 面板介面語言：`auto` 跟隨 VS Code 顯示語言；`en` / `zh-TW` 明確指定語系，即時套用到所有已開啟的面板。 |
 
 ## TUI 出口
 
@@ -159,7 +159,7 @@ SecretStorage。
 ## 貢獻
 
 歡迎到
-[SenCha930511/opencode-chat-panel](https://github.com/SenCha930511/opencode-chat-panel)
+[SenCha930511/opencode-chat-sidebar](https://github.com/SenCha930511/opencode-chat-sidebar)
 開 issue 或送 PR。送出前請確認品質關卡全數通過：`npm run build`、
 `node scripts/check-i18n.mjs`、`node scripts/check-coverage.mjs` 與
 `npm run test:unit`。

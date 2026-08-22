@@ -93,5 +93,5 @@ Incremental fixes and polish.
 - Chat-first layout: conversation owns the sidebar; session list becomes a
   left drawer.
 
-[1.0.0]: https://github.com/SenCha930511/opencode-chat-panel/releases
-[0.8.15]: https://github.com/SenCha930511/opencode-chat-panel/releases
+[1.0.0]: https://github.com/SenCha930511/opencode-chat-sidebar/releases
+[0.8.15]: https://github.com/SenCha930511/opencode-chat-sidebar/releases

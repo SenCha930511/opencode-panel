@@ -205,7 +205,7 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
   /**
    * Two-view topology seam (fix: duplicated stacked blocks): which of the
    * contributed views this provider serves — stamped into the resolved
-   * shell's `globalThis.__OPENCODE_PANEL_VIEW__` so the shared webview
+   * shell's `globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__` so the shared webview
    * bundle renders the full chat app or the slim sessions panel. The chat
    * provider keeps this default; SessionsViewProvider overrides it.
    */
@@ -258,7 +258,7 @@ export abstract class BaseViewProvider implements vscode.WebviewViewProvider {
 
   /**
    * Public refresh seam: callers that mutate any init slice (e.g. the
-   * opencodePanel.language override on config change) re-post the full
+   * opencodeChatSidebar.language override on config change) re-post the full
    * payload through the exact path the visibility/manager transitions use.
    */
   async refreshInit(): Promise<void> {

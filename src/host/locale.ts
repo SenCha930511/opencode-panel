@@ -40,7 +40,7 @@ import {
  * resolves to "zh-TW" per plan decision (single Chinese table, Traditional);
  * everything else resolves to "en".
  *
- * `languageOverride` is the `opencodePanel.language` setting: a pinned
+ * `languageOverride` is the `opencodeChatSidebar.language` setting: a pinned
  * locale short-circuits env detection; `"auto"` or any hand-edited unknown
  * value keeps the env mapping above.
  */
@@ -71,7 +71,7 @@ export interface InitLocaleBundle {
 
 /**
  * Builds the init-payload locale bundle from an injected env language and
- * the optional `opencodePanel.language` override. `strings` is structurally
+ * the optional `opencodeChatSidebar.language` override. `strings` is structurally
  * `Record<string,string>` on the wire — see the StringId -> wire contract
  * above.
  */

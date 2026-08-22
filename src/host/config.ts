@@ -1,5 +1,5 @@
 /**
- * Typed accessors over the "opencodePanel" configuration section.
+ * Typed accessors over the "opencodeChatSidebar" configuration section.
  *
  * Pure of the `vscode` module: a small {@link ConfigAdapter} +
  * {@link ConfigChangeSource} seam (mirroring `WorkspaceConfiguration` and
@@ -30,7 +30,7 @@ export interface ConfigChangeSource {
   onChange(listener: Listener<ConfigChangeEvent>): Disposable;
 }
 
-export const CONFIG_SECTION = "opencodePanel";
+export const CONFIG_SECTION = "opencodeChatSidebar";
 
 /**
  * Typed view of every key contributed under
@@ -151,7 +151,7 @@ export interface PanelConfigAccessor {
   /** Read a fresh typed snapshot. */
   read(): PanelConfig;
   /**
-   * Fires with a fresh snapshot when any `opencodePanel.*` key changes.
+   * Fires with a fresh snapshot when any `opencodeChatSidebar.*` key changes.
    * Waves the raw workspace event through the section filter so consumers
    * never see unrelated edits.
    */

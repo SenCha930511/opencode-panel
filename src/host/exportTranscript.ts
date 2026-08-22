@@ -1,7 +1,7 @@
 /**
  * Export transcript (plan todo 19): host-side markdown export of one session.
  * No todo-3 wire type fits (the protocol is frozen — domain requests are all
- * server-bound), so the surface is the additive `opencodePanel.exportTranscript`
+ * server-bound), so the surface is the additive `opencodeChatSidebar.exportTranscript`
  * command registered by extension.ts; NO new protocol key is invented.
  *
  * FLOW (all data from `client.session.*`, never fabricated):

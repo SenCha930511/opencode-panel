@@ -1,5 +1,5 @@
 /**
- * Shared bilingual string tables (en + zh-TW) for the opencode-chat-panel UI.
+ * Shared bilingual string tables (en + zh-TW) for the opencode-chat-sidebar UI.
  *
  * `STRING_IDS` enumerates every user-facing string id the webview (and any
  * host-side surface consuming the same tables) may render. `en` and `zhTW`

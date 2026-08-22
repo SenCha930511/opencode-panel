@@ -32,19 +32,19 @@ export interface SettingField {
 /** One row per manifest key, in manifest order (single source of truth). */
 export const SETTING_FIELDS: readonly SettingField[] = [
   {
-    key: "opencodePanel.serverUrl",
+    key: "opencodeChatSidebar.serverUrl",
     shortKey: "serverUrl",
     type: "string",
     defaultValue: "",
     section: "server",
     format: "endpoint",
     description: {
-      en: "Full URL of an already-running opencode server (e.g. `http://127.0.0.1:4096`). When empty, the extension derives the endpoint from `opencodePanel.hostname` and `opencodePanel.port` and may spawn its own managed server.",
-      zhTW: "已在執行中的 opencode 伺服器完整網址（例如 `http://127.0.0.1:4096`）。留空時，擴充套件會以 `opencodePanel.hostname` 與 `opencodePanel.port` 組成端點，並可視需要自行啟動受管理的伺服器。",
+      en: "Full URL of an already-running opencode server (e.g. `http://127.0.0.1:4096`). When empty, the extension derives the endpoint from `opencodeChatSidebar.hostname` and `opencodeChatSidebar.port` and may spawn its own managed server.",
+      zhTW: "已在執行中的 opencode 伺服器完整網址（例如 `http://127.0.0.1:4096`）。留空時，擴充套件會以 `opencodeChatSidebar.hostname` 與 `opencodeChatSidebar.port` 組成端點，並可視需要自行啟動受管理的伺服器。",
     },
   },
   {
-    key: "opencodePanel.port",
+    key: "opencodeChatSidebar.port",
     shortKey: "port",
     type: "number",
     defaultValue: 4096,
@@ -53,24 +53,24 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     max: 65535,
     integer: true,
     description: {
-      en: "Port for the opencode server the extension connects to (and spawns, when `opencodePanel.autoStartServer` is enabled). Ignored when `opencodePanel.serverUrl` is set.",
-      zhTW: "擴充套件連線（以及啟動時，`opencodePanel.autoStartServer` 開啟時）opencode 伺服器使用的連接埠。設定 `opencodePanel.serverUrl` 時忽略此項。",
+      en: "Port for the opencode server the extension connects to (and spawns, when `opencodeChatSidebar.autoStartServer` is enabled). Ignored when `opencodeChatSidebar.serverUrl` is set.",
+      zhTW: "擴充套件連線（以及啟動時，`opencodeChatSidebar.autoStartServer` 開啟時）opencode 伺服器使用的連接埠。設定 `opencodeChatSidebar.serverUrl` 時忽略此項。",
     },
   },
   {
-    key: "opencodePanel.hostname",
+    key: "opencodeChatSidebar.hostname",
     shortKey: "hostname",
     type: "string",
     defaultValue: "127.0.0.1",
     section: "server",
     format: "hostname",
     description: {
-      en: "Hostname for the opencode server the extension connects to (and spawns). Keep `127.0.0.1` unless you know the server binds elsewhere. Ignored when `opencodePanel.serverUrl` is set.",
-      zhTW: "擴充套件連線（以及啟動）opencode 伺服器使用的主機名稱。除非確定伺服器綁定在其他位址，否則請保留 `127.0.0.1`。設定 `opencodePanel.serverUrl` 時忽略此項。",
+      en: "Hostname for the opencode server the extension connects to (and spawns). Keep `127.0.0.1` unless you know the server binds elsewhere. Ignored when `opencodeChatSidebar.serverUrl` is set.",
+      zhTW: "擴充套件連線（以及啟動）opencode 伺服器使用的主機名稱。除非確定伺服器綁定在其他位址，否則請保留 `127.0.0.1`。設定 `opencodeChatSidebar.serverUrl` 時忽略此項。",
     },
   },
   {
-    key: "opencodePanel.binaryPath",
+    key: "opencodeChatSidebar.binaryPath",
     shortKey: "binaryPath",
     type: "string",
     defaultValue: "opencode",
@@ -82,7 +82,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.serverArgs",
+    key: "opencodeChatSidebar.serverArgs",
     shortKey: "serverArgs",
     type: "string-array",
     defaultValue: [],
@@ -93,7 +93,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.autoStartServer",
+    key: "opencodeChatSidebar.autoStartServer",
     shortKey: "autoStartServer",
     type: "boolean",
     defaultValue: true,
@@ -104,7 +104,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.minimumServerVersion",
+    key: "opencodeChatSidebar.minimumServerVersion",
     shortKey: "minimumServerVersion",
     type: "string",
     defaultValue: "0.0.0",
@@ -116,7 +116,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.debugLogs",
+    key: "opencodeChatSidebar.debugLogs",
     shortKey: "debugLogs",
     type: "boolean",
     defaultValue: false,
@@ -127,7 +127,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.chatFontFamily",
+    key: "opencodeChatSidebar.chatFontFamily",
     shortKey: "chatFontFamily",
     type: "string",
     defaultValue: "",
@@ -138,7 +138,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.chatFontSize",
+    key: "opencodeChatSidebar.chatFontSize",
     shortKey: "chatFontSize",
     type: "number",
     defaultValue: 0,
@@ -152,7 +152,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     },
   },
   {
-    key: "opencodePanel.language",
+    key: "opencodeChatSidebar.language",
     shortKey: "language",
     type: "string",
     defaultValue: "auto",

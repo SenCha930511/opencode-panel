@@ -15,7 +15,7 @@ import { SettingsPage } from "./settings/settingsPage.js";
  *
  * TWO-VIEW TOPOLOGY (todo-1; fix: duplicated stacked blocks): the extension
  * contributes TWO webview views to one viewsContainer, and both load this
- * same bundle — the host shell's injected `__OPENCODE_PANEL_VIEW__` (read
+ * same bundle — the host shell's injected `__OPENCODE_CHAT_SIDEBAR_VIEW__` (read
  * via app/viewKind.ts) picks the surface:
  *  - chat view (kind "chat", the default): the full app below — Header,
  *    chat route, settings route, keep-alive history drawer, toasts.

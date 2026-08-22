@@ -65,7 +65,7 @@ const nodeFs: DetectorFs = { exists: (path) => existsSync(path) };
 
 export interface CapabilityDetectorOptions {
   readonly logger: PanelLogger;
-  /** From todo-6 config `opencodePanel.minimumServerVersion` ("0.0.0" = warn-only). */
+  /** From todo-6 config `opencodeChatSidebar.minimumServerVersion` ("0.0.0" = warn-only). */
   readonly minimumServerVersion: string;
   /**
    * Fetch for the raw /global/health and /doc probes. Pass the panel

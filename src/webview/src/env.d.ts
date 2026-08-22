@@ -8,4 +8,4 @@ declare const __DEV__: boolean;
 // View-kind stamp injected by the host shell before the bundle runs (see
 // src/providers/html.ts; mirrored in src/globals.d.ts for the host project).
 // Read defensively via app/viewKind.ts — unknown values fall back to chat.
-declare var __OPENCODE_PANEL_VIEW__: string | undefined;
+declare var __OPENCODE_CHAT_SIDEBAR_VIEW__: string | undefined;

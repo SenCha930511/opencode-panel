@@ -25,7 +25,7 @@ describe("resolveLocale edge cases", () => {
   }
 });
 
-describe("resolveLocale with the opencodePanel.language override", () => {
+describe("resolveLocale with the opencodeChatSidebar.language override", () => {
   it("pins a locale regardless of the display language", () => {
     expect(resolveLocale("en-US", "zh-TW")).toBe("zh-TW");
     expect(resolveLocale("zh-tw", "en")).toBe("en");

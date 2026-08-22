@@ -35,7 +35,7 @@ import {
 } from "../server/serverManager.js";
 
 /**
- * Typed config accessor backed by `workspace.getConfiguration("opencodePanel")`
+ * Typed config accessor backed by `workspace.getConfiguration("opencodeChatSidebar")`
  * and `workspace.onDidChangeConfiguration` (pre-filtered to our section).
  */
 export function createVscodeConfigAccessor(): PanelConfigAccessor {

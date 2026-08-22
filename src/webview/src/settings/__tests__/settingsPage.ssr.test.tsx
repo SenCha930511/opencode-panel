@@ -98,7 +98,7 @@ describe("SettingsPage SSR — schema-driven form", () => {
     expect(html).toContain('inputMode="numeric"');
     expect(html).toContain("<textarea");
     // And: schema description copy lands verbatim (en locale)
-    expect(html).toContain("Ignored when `opencodePanel.serverUrl` is set.");
+    expect(html).toContain("Ignored when `opencodeChatSidebar.serverUrl` is set.");
   });
 
   it("renders the language row as an enum select with the provisioned options", () => {

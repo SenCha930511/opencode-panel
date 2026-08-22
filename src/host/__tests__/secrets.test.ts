@@ -5,9 +5,9 @@ const URL_A = "http://127.0.0.1:4096";
 const URL_B = "https://opencode.internal:8443";
 // Independent expectations: base64url encodings produced by an external
 // node invocation, pinned here so the key format cannot silently drift.
-const KEY_A_PASSWORD = "opencodePanel.auth.aHR0cDovLzEyNy4wLjAuMTo0MDk2.password";
-const KEY_A_USERNAME = "opencodePanel.auth.aHR0cDovLzEyNy4wLjAuMTo0MDk2.username";
-const KEY_B_PASSWORD = "opencodePanel.auth.aHR0cHM6Ly9vcGVuY29kZS5pbnRlcm5hbDo4NDQz.password";
+const KEY_A_PASSWORD = "opencodeChatSidebar.auth.aHR0cDovLzEyNy4wLjAuMTo0MDk2.password";
+const KEY_A_USERNAME = "opencodeChatSidebar.auth.aHR0cDovLzEyNy4wLjAuMTo0MDk2.username";
+const KEY_B_PASSWORD = "opencodeChatSidebar.auth.aHR0cHM6Ly9vcGVuY29kZS5pbnRlcm5hbDo4NDQz.password";
 
 /** Test double implementing ONLY SecretStorage — no Memento, per spec. */
 class FakeSecretStorage implements SecretStorage {
@@ -41,7 +41,7 @@ describe("secretKey", () => {
     const key = secretKey("http://192.168.1.10:8080", "password");
     // When/Then: the middle segment is pure base64url
     expect(key).not.toMatch(/[+/=]/);
-    expect(key).toMatch(/^opencodePanel\.auth\..*\.password$/);
+    expect(key).toMatch(/^opencodeChatSidebar\.auth\..*\.password$/);
   });
 
   it("rejects a blank serverUrl", () => {

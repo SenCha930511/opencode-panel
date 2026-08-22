@@ -22,7 +22,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-const SECTION = "opencodePanel";
+const SECTION = "opencodeChatSidebar";
 const FIELD = "chatFontSize";
 
 describe("todo-24 (d) settings round-trip", () => {

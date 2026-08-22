@@ -22,9 +22,9 @@
  *   calls `detector.invalidate(baseUrl)` on `server.connected`, then re-detects.
  * - Errors: start()/onboardClient() never throw for lifecycle failures — they
  *   return `{ ok: false, error: ServerStartError }` whose `failure` union names
- *   the cause: `binary-not-found` (message names the `opencodePanel.binaryPath`
+ *   the cause: `binary-not-found` (message names the `opencodeChatSidebar.binaryPath`
  *   setting), `port-in-use` (port + baseUrl), `autostart-disabled` (names
- *   `opencodePanel.autoStartServer`), `health-timeout`, `process-exited`,
+ *   `opencodeChatSidebar.autoStartServer`), `health-timeout`, `process-exited`,
  *   `spawn-failed`, `cancelled`.
  *
  * OWNERSHIP RULES (plan §Adopted Defaults, first-window-owns):

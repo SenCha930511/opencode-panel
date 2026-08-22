@@ -29,7 +29,7 @@ import { SessionList } from "./sessionList.js";
  * next explicit set re-pins).
  *
  * NEW-SESSION COMMAND INTAKE (FIX-E): the host forwards
- * `opencodePanel.newSession` as a `command.newSession` event; this panel —
+ * `opencodeChatSidebar.newSession` as a `command.newSession` event; this panel —
  * the owner of the only SessionsStore — consumes it through
  * ./newSessionCommand so the command creates AND selects a session through
  * the real store.

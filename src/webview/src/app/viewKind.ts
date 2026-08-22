@@ -1,7 +1,7 @@
 /**
  * View-kind discriminator (fix: duplicated stacked blocks). Both contributed
  * sidebar views (chat + sessions) load this same bundle; the host shell
- * stamps `globalThis.__OPENCODE_PANEL_VIEW__` before the bundle runs (see
+ * stamps `globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__` before the bundle runs (see
  * src/providers/html.ts) so the app knows which surface to mount.
  *
  * Defensive by contract: only the exact host-stamped values select a
@@ -14,7 +14,7 @@
 export type PanelViewKind = "chat" | "sessions" | "settings";
 
 export function currentViewKind(): PanelViewKind {
-  if (globalThis.__OPENCODE_PANEL_VIEW__ === "sessions") return "sessions";
-  if (globalThis.__OPENCODE_PANEL_VIEW__ === "settings") return "settings";
+  if (globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__ === "sessions") return "sessions";
+  if (globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__ === "settings") return "settings";
   return "chat";
 }

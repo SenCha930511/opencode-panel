@@ -84,7 +84,7 @@ describe("production shell CSP", () => {
 });
 
 describe("view-kind discriminator (fix: duplicated stacked views)", () => {
-  const STAMP = `globalThis.__OPENCODE_PANEL_VIEW__=`;
+  const STAMP = `globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__=`;
 
   it("stamps the production sessions shell with a nonce'd inline script before the bundle", () => {
     const nonce = generateNonce();

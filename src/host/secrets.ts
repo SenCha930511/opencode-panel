@@ -8,8 +8,8 @@
  * basic-auth username can be overridden via OPENCODE_SERVER_USERNAME) are
  * keyed by server URL so credentials for multiple servers coexist:
  *
- *   opencodePanel.auth.<base64url(serverUrl)>.password
- *   opencodePanel.auth.<base64url(serverUrl)>.username
+ *   opencodeChatSidebar.auth.<base64url(serverUrl)>.password
+ *   opencodeChatSidebar.auth.<base64url(serverUrl)>.username
  */
 
 /**
@@ -49,7 +49,7 @@ export function secretKey(serverUrl: string, kind: SecretKind): string {
     throw new PanelSecretsError("empty-server-url", kind);
   }
   const encoded = Buffer.from(serverUrl, "utf8").toString("base64url");
-  return `opencodePanel.auth.${encoded}.${kind}`;
+  return `opencodeChatSidebar.auth.${encoded}.${kind}`;
 }
 
 /**

@@ -28,11 +28,11 @@ containers.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `OPENCODE_PANEL_TEST_PORT` | `4099` | Fixed loopback port. The suite's in-band mock and the extension's activation seam both read it. |
-| `OPENCODE_PANEL_TEST_SKIP_MOCK` | unset | When set (any value), the suite does NOT start the mock — the QA failure case (dead port ⇒ clean attach failure, no hang). |
+| `OPENCODE_CHAT_SIDEBAR_TEST_PORT` | `4099` | Fixed loopback port. The suite's in-band mock and the extension's activation seam both read it. |
+| `OPENCODE_CHAT_SIDEBAR_TEST_SKIP_MOCK` | unset | When set (any value), the suite does NOT start the mock — the QA failure case (dead port ⇒ clean attach failure, no hang). |
 
 The activation seam (`src/extension.ts`, env-gated): when
-`OPENCODE_PANEL_TEST_PORT` is set, the effective config pins
+`OPENCODE_CHAT_SIDEBAR_TEST_PORT` is set, the effective config pins
 `serverUrl=http://127.0.0.1:<port>` and `autoStartServer=false`, and
 activation fires `manager.start()` so the ServerManager ATTACHES to the
 pre-started mock (password-less: no credentials are ever stored in the

@@ -2,10 +2,10 @@
 
 English · [繁體中文](README.zh-TW.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-panel/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-panel)](https://github.com/SenCha930511/opencode-chat-panel/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-panel?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel)
-[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-panel?style=social)](https://github.com/SenCha930511/opencode-chat-panel/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-sidebar/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-sidebar)](https://github.com/SenCha930511/opencode-chat-sidebar/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-sidebar?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-sidebar?style=social)](https://github.com/SenCha930511/opencode-chat-sidebar/stargazers)
 
 A sidebar chat extension for VS Code that drives your **locally installed
 [opencode](https://opencode.ai)** through its official headless server —
@@ -17,7 +17,7 @@ a Codex/Cursor-grade GUI chat panel without leaving your editor.
 - `@`-mention file attachments, image paste, editor-selection attach
 - Todos and session diffs dock with native `vscode.diff` previews
 - Bilingual UI (English / 繁體中文) that follows VS Code's display language,
-  with an in-app override (`opencodePanel.language`) that hot-swaps every
+  with an in-app override (`opencodeChatSidebar.language`) that hot-swaps every
   open panel without a reload
 
 The extension talks to opencode's own server (HTTP + SSE) through the official
@@ -75,19 +75,19 @@ Without OMO everything behaves identically, minus the note.
 ## Installation
 
 Install **OpenCode Chat Sidebar** from the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-panel) —
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar) —
 or search "OpenCode Chat Sidebar" in the Extensions view
 (`Ctrl+Shift+X` / `Cmd+Shift+X`), then reload when prompted. The panel icon
 appears in the Activity Bar.
 
 To install a packaged `.vsix` instead (e.g. an unreleased build):
 
-1. Get `opencode-chat-panel-x.y.z.vsix` from
-   [Releases](https://github.com/SenCha930511/opencode-chat-panel/releases), or
+1. Get `opencode-chat-sidebar-x.y.z.vsix` from
+   [Releases](https://github.com/SenCha930511/opencode-chat-sidebar/releases), or
    build it yourself (see below).
 2. In the **Extensions** view, open the `...` menu → **Install from VSIX...**
    and pick the file. Or from a terminal:
-   `code --install-extension opencode-chat-panel-x.y.z.vsix` (use your editor's
+   `code --install-extension opencode-chat-sidebar-x.y.z.vsix` (use your editor's
    bundled CLI).
 3. Reload the window when prompted — the panel icon appears in the Activity
    Bar.
@@ -95,11 +95,11 @@ To install a packaged `.vsix` instead (e.g. an unreleased build):
 ### Build from source
 
 ```bash
-git clone https://github.com/SenCha930511/opencode-chat-panel.git
-cd opencode-chat-panel
+git clone https://github.com/SenCha930511/opencode-chat-sidebar.git
+cd opencode-chat-sidebar
 npm install
 npm run build && npm run build:webview
-npx vsce package   # produces opencode-chat-panel-<version>.vsix
+npx vsce package   # produces opencode-chat-sidebar-<version>.vsix
 ```
 
 Development loop: run `npm run watch` (extension host) plus
@@ -109,7 +109,7 @@ Development Host.
 ## Requirements
 
 - **opencode** installed and on your `PATH` (or configure
-  `opencodePanel.binaryPath`). Install per the [opencode docs](https://opencode.ai/docs),
+  `opencodeChatSidebar.binaryPath`). Install per the [opencode docs](https://opencode.ai/docs),
   e.g. `curl -fsSL https://opencode.ai/install | bash`,
   `brew install anomalyco/tap/opencode`, or `npm install -g opencode-ai`.
 - At least one LLM provider configured in opencode (opencode owns all provider
@@ -119,24 +119,24 @@ Development Host.
 
 ## Settings
 
-All settings live under the `opencodePanel.*` namespace — editable in VS
+All settings live under the `opencodeChatSidebar.*` namespace — editable in VS
 Code's Settings UI or in the extension's own settings page (gear icon in the
 chat view header). Secrets (server password) are stored only in VS Code
 SecretStorage.
 
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
-| `opencodePanel.serverUrl` | string | `""` | Full URL of an already-running opencode server. When set (and healthy), the extension attaches to it instead of spawning one. |
-| `opencodePanel.port` | number | `4096` | Port for the managed `opencode serve` instance. |
-| `opencodePanel.hostname` | string | `"127.0.0.1"` | Hostname for the managed server. |
-| `opencodePanel.binaryPath` | string | `"opencode"` | Path/name of the opencode binary used to spawn and open the TUI. |
-| `opencodePanel.serverArgs` | string[] | `[]` | Extra arguments passed to `opencode serve`. |
-| `opencodePanel.autoStartServer` | boolean | `true` | Automatically spawn/attach the server on activation. |
-| `opencodePanel.minimumServerVersion` | string | `"0.0.0"` | Warn when the connected server reports a version below this floor (warn-only; never blocks). |
-| `opencodePanel.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Chat Sidebar* output channel (credentials are always redacted). |
-| `opencodePanel.chatFontFamily` | string | `""` | Override the chat font family (empty = VS Code default). |
-| `opencodePanel.chatFontSize` | number | `0` | Override the chat font size in px (0 = VS Code default). |
-| `opencodePanel.language` | enum | `"auto"` | Panel interface language: `auto` follows VS Code's display language; `en` / `zh-TW` pin a locale and apply instantly to every open panel. |
+| `opencodeChatSidebar.serverUrl` | string | `""` | Full URL of an already-running opencode server. When set (and healthy), the extension attaches to it instead of spawning one. |
+| `opencodeChatSidebar.port` | number | `4096` | Port for the managed `opencode serve` instance. |
+| `opencodeChatSidebar.hostname` | string | `"127.0.0.1"` | Hostname for the managed server. |
+| `opencodeChatSidebar.binaryPath` | string | `"opencode"` | Path/name of the opencode binary used to spawn and open the TUI. |
+| `opencodeChatSidebar.serverArgs` | string[] | `[]` | Extra arguments passed to `opencode serve`. |
+| `opencodeChatSidebar.autoStartServer` | boolean | `true` | Automatically spawn/attach the server on activation. |
+| `opencodeChatSidebar.minimumServerVersion` | string | `"0.0.0"` | Warn when the connected server reports a version below this floor (warn-only; never blocks). |
+| `opencodeChatSidebar.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Chat Sidebar* output channel (credentials are always redacted). |
+| `opencodeChatSidebar.chatFontFamily` | string | `""` | Override the chat font family (empty = VS Code default). |
+| `opencodeChatSidebar.chatFontSize` | number | `0` | Override the chat font size in px (0 = VS Code default). |
+| `opencodeChatSidebar.language` | enum | `"auto"` | Panel interface language: `auto` follows VS Code's display language; `en` / `zh-TW` pin a locale and apply instantly to every open panel. |
 
 ## TUI escape hatch
 
@@ -187,7 +187,7 @@ The extension's own settings page (gear icon in the chat view header):
 ## Contributing
 
 Issues and pull requests are welcome at
-[SenCha930511/opencode-chat-panel](https://github.com/SenCha930511/opencode-chat-panel).
+[SenCha930511/opencode-chat-sidebar](https://github.com/SenCha930511/opencode-chat-sidebar).
 Before sending a PR, keep the quality gates green: `npm run build`,
 `node scripts/check-i18n.mjs`, `node scripts/check-coverage.mjs`, and
 `npm run test:unit`.

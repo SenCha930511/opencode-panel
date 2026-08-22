@@ -1,5 +1,5 @@
 /**
- * Provider for the todo-1 sessions webview view (`opencodePanel.sessionsView`).
+ * Provider for the todo-1 sessions webview view (`opencodeChatSidebar.sessionsView`).
  * Shell/messenger/handshake plumbing lives in BaseViewProvider; todo 12 wires
  * the sessions domain handlers and `sessionList` sync on top of this shell.
  */

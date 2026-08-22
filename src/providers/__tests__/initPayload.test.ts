@@ -84,7 +84,7 @@ describe("createInitPayloadBuilder — disconnected manager", () => {
     expect(payload.strings).toBe(zhTW);
   });
 
-  it("honors the opencodePanel.language override over the display language", async () => {
+  it("honors the opencodeChatSidebar.language override over the display language", async () => {
     const pinned = await createInitPayloadBuilder({
       envLanguage: "en-US",
       config: realConfigAccessor({ ...DEFAULT_PANEL_CONFIG, language: "zh-TW" }),

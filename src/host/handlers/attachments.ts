@@ -6,7 +6,7 @@
  * flag list, and the image size/format gate.
  *
  * WIRE PUSH CONTRACT (chosen push — mirrors the todo-12 SESSIONS_LIST_EVENT
- * pattern): the editor context-menu commands (`opencodePanel.attachSelection`
+ * pattern): the editor context-menu commands (`opencodeChatSidebar.attachSelection`
  * / `attachFile` in extension.ts) compose an attachment and push it to the
  * chat composer over the todo-3 `event` channel as
  * {@link ATTACHMENTS_ADD_EVENT} (`"attachments.add"`) carrying

@@ -3,7 +3,7 @@
  * ServerManager ATTACHES to the suite's pre-started mock on the fixed port,
  * and the status-bar projection renders `attached`.
  *
- * QA failure mode: with OPENCODE_PANEL_TEST_SKIP_MOCK set (dead port),
+ * QA failure mode: with OPENCODE_CHAT_SIDEBAR_TEST_SKIP_MOCK set (dead port),
  * startHarness/waitForAttached short-circuits on the manager's error state —
  * a clean, immediate attach failure, never a >30s hang.
  */
@@ -34,8 +34,8 @@ describe("todo-24 (a) activation & attach", () => {
     // ... and the extension is live in the host with its commands routable.
     const commands = await vscode.commands.getCommands(true);
     assert.ok(
-      commands.includes("opencodePanel.startServer"),
-      "manifest command opencodePanel.startServer not registered",
+      commands.includes("opencodeChatSidebar.startServer"),
+      "manifest command opencodeChatSidebar.startServer not registered",
     );
   }).timeout(30_000);
 });

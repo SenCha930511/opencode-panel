@@ -30,7 +30,7 @@ import type { ServerManagerState } from "../server/serverLifecycle.js";
  * prefix keeps it out of the command palette by convention; the adapter
  * registers the handler that opens this controller's quickpick.
  */
-export const STATUS_BAR_MENU_COMMAND_ID = "_opencodePanel.statusBarMenu";
+export const STATUS_BAR_MENU_COMMAND_ID = "_opencodeChatSidebar.statusBarMenu";
 
 /** Theme color identifiers, resolved to `vscode.ThemeColor` by the adapter. */
 export type StatusColorToken =
@@ -115,12 +115,12 @@ export function statusBarMenuItems(
   t: (text: string) => string,
 ): readonly StatusBarMenuItem[] {
   return [
-    { command: "opencodePanel.startServer", label: t("Start Server") },
-    { command: "opencodePanel.stopServer", label: t("Stop Server") },
-    { command: "opencodePanel.restartServer", label: t("Restart Server") },
-    { command: "opencodePanel.openSettings", label: t("Open Settings") },
-    { command: "opencodePanel.openTui", label: t("Open opencode TUI") },
-    { command: "opencodePanel.openLogs", label: t("Open Logs") },
+    { command: "opencodeChatSidebar.startServer", label: t("Start Server") },
+    { command: "opencodeChatSidebar.stopServer", label: t("Stop Server") },
+    { command: "opencodeChatSidebar.restartServer", label: t("Restart Server") },
+    { command: "opencodeChatSidebar.openSettings", label: t("Open Settings") },
+    { command: "opencodeChatSidebar.openTui", label: t("Open opencode TUI") },
+    { command: "opencodeChatSidebar.openLogs", label: t("Open Logs") },
   ];
 }
 

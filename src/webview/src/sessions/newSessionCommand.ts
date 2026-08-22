@@ -1,7 +1,7 @@
 // i18n-allow-literal — wire literals + doc comments carry no display copy.
 /**
  * New-session command intake (FIX-E): the host forwards
- * `opencodePanel.newSession` into the chat webview as a `command.newSession`
+ * `opencodeChatSidebar.newSession` into the chat webview as a `command.newSession`
  * event (src/extension.ts -> ChatViewProvider.postEvent); until now nothing
  * webview-side consumed it. This seam is the consumer: it routes the event
  * through the REAL sessions store — `store.select(null)` drops chat back

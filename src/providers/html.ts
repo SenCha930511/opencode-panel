@@ -17,7 +17,7 @@
  * VIEW-KIND INJECTION CONTRACT (fix: duplicated stacked blocks): both
  * contributed views load the same bundle, so the shell stamps WHICH view it
  * hosts — one tiny inline script BEFORE the bundle:
- *   `globalThis.__OPENCODE_PANEL_VIEW__ = "<kind>"` ("chat" | "sessions").
+ *   `globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__ = "<kind>"` ("chat" | "sessions").
  * The webview reads it via src/webview/src/app/viewKind.ts: the chat view
  * renders the full app, the sessions view renders ONLY the sessions panel.
  * The production CSP admits the inline script through the SAME per-load
@@ -47,7 +47,7 @@ export interface WebviewShellInput {
   /** True ONLY behind the host `__DEV__` gate. */
   readonly dev?: boolean;
   /**
-   * View kind stamped into `globalThis.__OPENCODE_PANEL_VIEW__` (see the
+   * View kind stamped into `globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__` (see the
    * module-header injection contract). Defaults to "chat".
    */
   readonly viewKind?: PanelViewKind;
@@ -96,7 +96,7 @@ export function buildWebviewHtml(input: WebviewShellInput): string {
     input.styleUri === undefined ? "" : `<link href="${input.styleUri}" rel="stylesheet" />`;
   // View-kind stamp (see module header): nonce'd in production so the strict
   // CSP admits it; dev CSP is 'unsafe-inline' anyway. MUST precede the bundle.
-  const viewKindScript = `<script nonce="${nonce}">globalThis.__OPENCODE_PANEL_VIEW__="${viewKind}";</script>`;
+  const viewKindScript = `<script nonce="${nonce}">globalThis.__OPENCODE_CHAT_SIDEBAR_VIEW__="${viewKind}";</script>`;
   const scriptTag = dev
     ? `${viewKindScript}\n<script type="module" src="${DEV_SERVER_ORIGIN}/@vite/client"></script>\n<script type="module" src="${input.scriptUri}"></script>`
     : `${viewKindScript}\n<script nonce="${nonce}" src="${input.scriptUri}"></script>`;

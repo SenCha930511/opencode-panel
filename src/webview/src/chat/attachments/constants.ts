@@ -5,7 +5,7 @@
  * CAPABILITIES_REFRESH_EVENT mirror pattern.
  *
  * `ATTACHMENTS_ADD_EVENT` mirrors src/host/handlers/attachments.ts: the host
- * editor commands (`opencodePanel.attachSelection` / `attachFile`) push one
+ * editor commands (`opencodeChatSidebar.attachSelection` / `attachFile`) push one
  * composed attachment over the todo-3 `event` channel under this type, and
  * this module is the parse-don't-validate boundary for it. The two copies
  * are pinned by tests on both sides; host and webview bundles never import
