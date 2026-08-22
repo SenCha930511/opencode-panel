@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/chat-sidebar-for-opencode/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/SenCha930511/chat-sidebar-for-opencode)](https://github.com/SenCha930511/chat-sidebar-for-opencode/releases)
-[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/SenCha930511.chat-sidebar-for-opencode.svg)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode)
+[![Visual Studio Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-%E5%AE%89%E8%A3%9D-0078d4.svg)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode)
 [![GitHub stars](https://img.shields.io/github/stars/SenCha930511/chat-sidebar-for-opencode?style=social)](https://github.com/SenCha930511/chat-sidebar-for-opencode/stargazers)
 
 一個 VS Code 側邊欄聊天擴充套件，透過官方 headless 伺服器驅動你**本機安裝的

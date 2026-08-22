@@ -3,6 +3,18 @@
 All notable changes to **Chat Sidebar for OpenCode** are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.2] — 2026-08-22
+
+### Fixed
+
+- Fixed message list bottom alignment issue where short chat conversations stayed anchored to the bottom and newly submitted user messages failed to scroll to the top.
+
+## [1.0.1] — 2026-08-22
+
+### Changed
+
+- Renamed extension to "Chat Sidebar for OpenCode" throughout the codebase and documentation.
+
 ## [1.0.0] — 2026-08-22
 
 ### Changed

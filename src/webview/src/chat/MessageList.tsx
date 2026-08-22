@@ -260,9 +260,7 @@ export function MessageList(props: MessageListProps) {
         ref={virtuosoRef}
         data={state.messages}
         className="h-full"
-        // Mount directly anchored at the bottom: opening view immediately displays the bottom
         initialTopMostItemIndex={state.messages.length > 0 ? state.messages.length - 1 : 0}
-        alignToBottom={true}
         atBottomThreshold={120}
         increaseViewportBy={{ top: 200, bottom: 200 }}
         followOutput={(isAtBottom: boolean) => {
