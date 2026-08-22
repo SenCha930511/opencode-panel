@@ -1,8 +1,8 @@
 {
   "name": "chat-sidebar-for-opencode",
   "displayName": "Chat Sidebar for OpenCode",
-  "description": "Sidebar chat panel for your locally installed opencode",
-  "version": "1.0.2",
+  "description": "OpenCode chat sidebar GUI for VS Code — multi-session streaming, approvals, slash commands, @-mentions and native diffs.",
+  "version": "1.0.3",
   "publisher": "SenCha930511",
   "license": "MIT",
   "icon": "icon.png",
@@ -25,12 +25,20 @@
   "homepage": "https://github.com/SenCha930511/chat-sidebar-for-opencode",
   "keywords": [
     "opencode",
+    "oh-my-opencode",
     "ai",
-    "llm",
+    "ai-coding",
     "chat",
+    "coding-agent",
+    "llm",
     "agent",
-    "coding-agent"
+    "vscode-extension",
+    "chat-sidebar"
   ],
+  "galleryBanner": {
+    "color": "#142236",
+    "theme": "dark"
+  },
   "categories": [
     "Chat",
     "Other"

@@ -3,6 +3,14 @@
 All notable changes to **Chat Sidebar for OpenCode** are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.3] — 2026-08-22
+
+### Changed
+
+- Improved Visual Studio Marketplace listing metadata (keyword-led description,
+  expanded tags, gallery banner) and GitHub repository discoverability
+  (topics, description, social preview). No functional changes.
+
 ## [1.0.2] — 2026-08-22
 
 ### Fixed
