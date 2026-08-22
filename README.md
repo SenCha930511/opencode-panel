@@ -4,7 +4,7 @@ English · [繁體中文](README.zh-TW.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/chat-sidebar-for-opencode/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/SenCha930511/chat-sidebar-for-opencode)](https://github.com/SenCha930511/chat-sidebar-for-opencode/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.chat-sidebar-for-opencode?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode)
+[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/SenCha930511.chat-sidebar-for-opencode.svg)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode)
 [![GitHub stars](https://img.shields.io/github/stars/SenCha930511/chat-sidebar-for-opencode?style=social)](https://github.com/SenCha930511/chat-sidebar-for-opencode/stargazers)
 
 A sidebar chat extension for VS Code that drives your **locally installed
