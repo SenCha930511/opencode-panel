@@ -270,7 +270,7 @@ describe("createExportTranscriptCommand", () => {
     expect(seenArgs[0]).toEqual({ sessionId: "ses_1" });
     expect(calls[0]).toEqual({
       level: "info",
-      message: "OpenCode Chat Sidebar: session transcript exported to /ws/out.md",
+      message: "Chat Sidebar for OpenCode: session transcript exported to /ws/out.md",
     });
 
     await command(); // no-session -> honest info

@@ -73,7 +73,7 @@ describe("createVscodeStatusBarController", () => {
       alignment: 1,
       priority: 10,
     });
-    expect(item?.name).toBe("OpenCode Chat Sidebar");
+    expect(item?.name).toBe("Chat Sidebar for OpenCode");
     expect(item?.command).toBe(STATUS_BAR_MENU_COMMAND_ID);
     expect(item?.shown).toBe(true);
     expect(typeof item?.text).toBe("string");

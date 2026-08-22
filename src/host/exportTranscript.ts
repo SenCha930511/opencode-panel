@@ -209,12 +209,12 @@ export function createExportTranscriptCommand(
       const outcome = await deps.run(toExportArgs(rawArgs));
       switch (outcome.kind) {
         case "exported":
-          deps.info(`OpenCode Chat Sidebar: session transcript exported to ${outcome.path}`);
+          deps.info(`Chat Sidebar for OpenCode: session transcript exported to ${outcome.path}`);
           return;
         case "cancelled":
           return;
         case "no-session":
-          deps.info("OpenCode Chat Sidebar: no session to export");
+          deps.info("Chat Sidebar for OpenCode: no session to export");
           return;
         default: {
           const exhaustive: never = outcome;

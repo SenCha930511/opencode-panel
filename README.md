@@ -1,11 +1,11 @@
-# OpenCode Chat Sidebar
+# Chat Sidebar for OpenCode
 
 English · [繁體中文](README.zh-TW.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/opencode-chat-sidebar/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/SenCha930511/opencode-chat-sidebar)](https://github.com/SenCha930511/opencode-chat-sidebar/releases)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.opencode-chat-sidebar?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar)
-[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/opencode-chat-sidebar?style=social)](https://github.com/SenCha930511/opencode-chat-sidebar/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SenCha930511/chat-sidebar-for-opencode/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/SenCha930511/chat-sidebar-for-opencode)](https://github.com/SenCha930511/chat-sidebar-for-opencode/releases)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/SenCha930511.chat-sidebar-for-opencode?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode)
+[![GitHub stars](https://img.shields.io/github/stars/SenCha930511/chat-sidebar-for-opencode?style=social)](https://github.com/SenCha930511/chat-sidebar-for-opencode/stargazers)
 
 A sidebar chat extension for VS Code that drives your **locally installed
 [opencode](https://opencode.ai)** through its official headless server —
@@ -74,20 +74,20 @@ Without OMO everything behaves identically, minus the note.
 
 ## Installation
 
-Install **OpenCode Chat Sidebar** from the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.opencode-chat-sidebar) —
-or search "OpenCode Chat Sidebar" in the Extensions view
+Install **Chat Sidebar for OpenCode** from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=SenCha930511.chat-sidebar-for-opencode) —
+or search "Chat Sidebar for OpenCode" in the Extensions view
 (`Ctrl+Shift+X` / `Cmd+Shift+X`), then reload when prompted. The panel icon
 appears in the Activity Bar.
 
 To install a packaged `.vsix` instead (e.g. an unreleased build):
 
-1. Get `opencode-chat-sidebar-x.y.z.vsix` from
-   [Releases](https://github.com/SenCha930511/opencode-chat-sidebar/releases), or
+1. Get `chat-sidebar-for-opencode-x.y.z.vsix` from
+   [Releases](https://github.com/SenCha930511/chat-sidebar-for-opencode/releases), or
    build it yourself (see below).
 2. In the **Extensions** view, open the `...` menu → **Install from VSIX...**
    and pick the file. Or from a terminal:
-   `code --install-extension opencode-chat-sidebar-x.y.z.vsix` (use your editor's
+   `code --install-extension chat-sidebar-for-opencode-x.y.z.vsix` (use your editor's
    bundled CLI).
 3. Reload the window when prompted — the panel icon appears in the Activity
    Bar.
@@ -95,11 +95,11 @@ To install a packaged `.vsix` instead (e.g. an unreleased build):
 ### Build from source
 
 ```bash
-git clone https://github.com/SenCha930511/opencode-chat-sidebar.git
-cd opencode-chat-sidebar
+git clone https://github.com/SenCha930511/chat-sidebar-for-opencode.git
+cd chat-sidebar-for-opencode
 npm install
 npm run build && npm run build:webview
-npx vsce package   # produces opencode-chat-sidebar-<version>.vsix
+npx vsce package   # produces chat-sidebar-for-opencode-<version>.vsix
 ```
 
 Development loop: run `npm run watch` (extension host) plus
@@ -133,7 +133,7 @@ SecretStorage.
 | `opencodeChatSidebar.serverArgs` | string[] | `[]` | Extra arguments passed to `opencode serve`. |
 | `opencodeChatSidebar.autoStartServer` | boolean | `true` | Automatically spawn/attach the server on activation. |
 | `opencodeChatSidebar.minimumServerVersion` | string | `"0.0.0"` | Warn when the connected server reports a version below this floor (warn-only; never blocks). |
-| `opencodeChatSidebar.debugLogs` | boolean | `false` | Verbose logging to the *OpenCode Chat Sidebar* output channel (credentials are always redacted). |
+| `opencodeChatSidebar.debugLogs` | boolean | `false` | Verbose logging to the *Chat Sidebar for OpenCode* output channel (credentials are always redacted). |
 | `opencodeChatSidebar.chatFontFamily` | string | `""` | Override the chat font family (empty = VS Code default). |
 | `opencodeChatSidebar.chatFontSize` | number | `0` | Override the chat font size in px (0 = VS Code default). |
 | `opencodeChatSidebar.language` | enum | `"auto"` | Panel interface language: `auto` follows VS Code's display language; `en` / `zh-TW` pin a locale and apply instantly to every open panel. |
@@ -187,7 +187,7 @@ The extension's own settings page (gear icon in the chat view header):
 ## Contributing
 
 Issues and pull requests are welcome at
-[SenCha930511/opencode-chat-sidebar](https://github.com/SenCha930511/opencode-chat-sidebar).
+[SenCha930511/chat-sidebar-for-opencode](https://github.com/SenCha930511/chat-sidebar-for-opencode).
 Before sending a PR, keep the quality gates green: `npm run build`,
 `node scripts/check-i18n.mjs`, `node scripts/check-coverage.mjs`, and
 `npm run test:unit`.

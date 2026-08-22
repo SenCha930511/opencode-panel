@@ -19,6 +19,7 @@ vitest.config.mts
 .gitignore
 .vscodeignore
 .gitattributes
+RELEASE_NOTES.md
 *.vsix
 *.log
 **/.DS_Store

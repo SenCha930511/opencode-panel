@@ -107,7 +107,7 @@ export function buildWebviewHtml(input: WebviewShellInput): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Content-Security-Policy" content="${csp}" />
 ${styleLink}
-<title>OpenCode Chat Sidebar</title>
+<title>Chat Sidebar for OpenCode</title>
 </head>
 <body>
 <div id="root"></div>

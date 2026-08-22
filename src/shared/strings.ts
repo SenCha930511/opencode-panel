@@ -1,5 +1,5 @@
 /**
- * Shared bilingual string tables (en + zh-TW) for the opencode-chat-sidebar UI.
+ * Shared bilingual string tables (en + zh-TW) for the chat-sidebar-for-opencode UI.
  *
  * `STRING_IDS` enumerates every user-facing string id the webview (and any
  * host-side surface consuming the same tables) may render. `en` and `zhTW`
@@ -690,7 +690,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const en: Record<StringId, string> = {
   "app.loading": "Loading…",
-  "app.name": "OpenCode Chat Sidebar",
+  "app.name": "Chat Sidebar for OpenCode",
   "commands.empty": "No matching commands",
   "commands.title": "Commands",
   "composer.abort": "Stop generating",
@@ -1338,7 +1338,7 @@ export const en: Record<StringId, string> = {
  */
 export const zhTW: Record<StringId, string> = {
   "app.loading": "載入中…",
-  "app.name": "OpenCode Chat Sidebar",
+  "app.name": "Chat Sidebar for OpenCode",
   "commands.empty": "沒有符合的指令",
   "commands.title": "指令",
   "composer.abort": "停止產生",

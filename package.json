@@ -1,6 +1,6 @@
 {
-  "name": "opencode-chat-sidebar",
-  "displayName": "OpenCode Chat Sidebar",
+  "name": "chat-sidebar-for-opencode",
+  "displayName": "Chat Sidebar for OpenCode",
   "description": "Sidebar chat panel for your locally installed opencode",
   "version": "1.0.1",
   "publisher": "SenCha930511",
@@ -17,12 +17,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/SenCha930511/opencode-chat-sidebar.git"
+    "url": "https://github.com/SenCha930511/chat-sidebar-for-opencode.git"
   },
   "bugs": {
-    "url": "https://github.com/SenCha930511/opencode-chat-sidebar/issues"
+    "url": "https://github.com/SenCha930511/chat-sidebar-for-opencode/issues"
   },
-  "homepage": "https://github.com/SenCha930511/opencode-chat-sidebar",
+  "homepage": "https://github.com/SenCha930511/chat-sidebar-for-opencode",
   "keywords": [
     "opencode",
     "ai",
@@ -41,7 +41,7 @@
       "activitybar": [
         {
           "id": "opencodeChatSidebar",
-          "title": "OpenCode Chat Sidebar",
+          "title": "Chat Sidebar for OpenCode",
           "icon": "media/icon.svg"
         }
       ]
@@ -50,7 +50,7 @@
       "opencodeChatSidebar": [
         {
           "id": "opencodeChatSidebar.chatView",
-          "name": "OpenCode Chat Sidebar",
+          "name": "Chat Sidebar for OpenCode",
           "type": "webview",
           "icon": "media/icon.svg"
         }
@@ -60,67 +60,67 @@
       {
         "command": "opencodeChatSidebar.toggleHistory",
         "title": "歷程記錄",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(history)"
       },
       {
         "command": "opencodeChatSidebar.newSession",
         "title": "新對話",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(add)"
       },
       {
         "command": "opencodeChatSidebar.openSettings",
         "title": "設定",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(gear)"
       },
       {
         "command": "opencodeChatSidebar.startServer",
         "title": "啟動伺服器",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(play)"
       },
       {
         "command": "opencodeChatSidebar.stopServer",
         "title": "停止伺服器",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(debug-stop)"
       },
       {
         "command": "opencodeChatSidebar.restartServer",
         "title": "重啟伺服器",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(debug-restart)"
       },
       {
         "command": "opencodeChatSidebar.openTui",
         "title": "開啟 TUI",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(terminal)"
       },
       {
         "command": "opencodeChatSidebar.attachSelection",
         "title": "附加選取內容",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(selection)"
       },
       {
         "command": "opencodeChatSidebar.attachFile",
         "title": "附加檔案",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(file)"
       },
       {
         "command": "opencodeChatSidebar.exportTranscript",
         "title": "匯出對話紀錄",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(export)"
       },
       {
         "command": "opencodeChatSidebar.openLogs",
         "title": "開啟記錄",
-        "category": "OpenCode Chat Sidebar",
+        "category": "Chat Sidebar for OpenCode",
         "icon": "$(output)"
       }
     ],
@@ -175,7 +175,7 @@
       ]
     },
     "configuration": {
-      "title": "OpenCode Chat Sidebar",
+      "title": "Chat Sidebar for OpenCode",
       "properties": {
         "opencodeChatSidebar.serverUrl": {
           "type": "string",

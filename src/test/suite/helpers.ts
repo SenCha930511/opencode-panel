@@ -21,7 +21,7 @@ import { MODERN_VERSION, OLD_SERVER_VERSION } from "../mock-server/index.js";
 
 export { MODERN_VERSION, OLD_SERVER_VERSION };
 
-export const EXTENSION_ID = "SenCha930511.opencode-chat-sidebar";
+export const EXTENSION_ID = "SenCha930511.chat-sidebar-for-opencode";
 export const DEFAULT_PORT = "4099";
 
 export function testPort(): string {

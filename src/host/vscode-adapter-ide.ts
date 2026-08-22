@@ -31,7 +31,7 @@ export function createVscodeStatusBarController(deps: {
     vscode.StatusBarAlignment.Left,
     10,
   );
-  item.name = "OpenCode Chat Sidebar";
+  item.name = "Chat Sidebar for OpenCode";
   item.command = STATUS_BAR_MENU_COMMAND_ID;
   const itemLike: StatusBarItemLike = {
     apply: (model) => {
@@ -51,7 +51,7 @@ export function createVscodeStatusBarController(deps: {
     pick: async (items) => {
       const picked = await vscode.window.showQuickPick(
         items.map((entry) => ({ label: entry.label, entry })),
-        { title: "OpenCode Chat Sidebar" },
+        { title: "Chat Sidebar for OpenCode" },
       );
       return picked?.entry;
     },

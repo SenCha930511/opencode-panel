@@ -1,7 +1,7 @@
 {
-  "opencodeChatSidebar.category": "OpenCode Chat Sidebar",
-  "opencodeChatSidebar.viewsContainer.opencodeChatSidebar": "OpenCode Chat Sidebar",
-  "opencodeChatSidebar.views.chatView": "OpenCode Chat Sidebar",
+  "opencodeChatSidebar.category": "Chat Sidebar for OpenCode",
+  "opencodeChatSidebar.viewsContainer.opencodeChatSidebar": "Chat Sidebar for OpenCode",
+  "opencodeChatSidebar.views.chatView": "Chat Sidebar for OpenCode",
   "opencodeChatSidebar.views.sessionsView": "Sessions",
   "opencodeChatSidebar.commands.newSession": "New Session",
   "opencodeChatSidebar.commands.openSettings": "Open Settings",
@@ -13,7 +13,7 @@
   "opencodeChatSidebar.commands.attachFile": "Attach File to Chat",
   "opencodeChatSidebar.commands.exportTranscript": "Export Session Transcript",
   "opencodeChatSidebar.commands.openLogs": "Open Logs",
-  "opencodeChatSidebar.configuration.title": "OpenCode Chat Sidebar",
+  "opencodeChatSidebar.configuration.title": "Chat Sidebar for OpenCode",
   "opencodeChatSidebar.config.serverUrl.markdownDescription": "Full URL of an already-running opencode server (e.g. `http://127.0.0.1:4096`). When empty, the extension derives the endpoint from `opencodeChatSidebar.hostname` and `opencodeChatSidebar.port` and may spawn its own managed server.",
   "opencodeChatSidebar.config.port.markdownDescription": "Port for the opencode server the extension connects to (and spawns, when `opencodeChatSidebar.autoStartServer` is enabled). Ignored when `opencodeChatSidebar.serverUrl` is set.",
   "opencodeChatSidebar.config.hostname.markdownDescription": "Hostname for the opencode server the extension connects to (and spawns). Keep `127.0.0.1` unless you know the server binds elsewhere. Ignored when `opencodeChatSidebar.serverUrl` is set.",
@@ -21,7 +21,7 @@
   "opencodeChatSidebar.config.serverArgs.markdownDescription": "Extra arguments appended to `opencode serve --port <port> --hostname <hostname>` when the extension spawns a managed server.",
   "opencodeChatSidebar.config.autoStartServer.markdownDescription": "When enabled, the extension spawns a managed `opencode serve` process if no healthy server is found on the configured endpoint. Foreign (user-started) servers are only ever attached to, never killed.",
   "opencodeChatSidebar.config.minimumServerVersion.markdownDescription": "Minimum accepted opencode server version. Servers below this version still run, but the extension shows a warning and hides features the server does not expose. `0.0.0` disables the floor (warn-only).",
-  "opencodeChatSidebar.config.debugLogs.markdownDescription": "Write verbose debug output (with secret redaction) to the \"OpenCode Chat Sidebar\" output channel.",
+  "opencodeChatSidebar.config.debugLogs.markdownDescription": "Write verbose debug output (with secret redaction) to the \"Chat Sidebar for OpenCode\" output channel.",
   "opencodeChatSidebar.config.language.markdownDescription": "Interface language of the panel: `auto` follows VS Code's display language, or pin a locale explicitly. Applies instantly to every open panel.",
   "opencodeChatSidebar.config.chatFontFamily.markdownDescription": "Font family for chat message rendering in the panel. Empty inherits the VS Code editor font.",
   "opencodeChatSidebar.config.chatFontSize.markdownDescription": "Font size (px) for chat message rendering in the panel. `0` inherits the VS Code default."

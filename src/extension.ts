@@ -105,7 +105,7 @@ function errorText(error: unknown): string {
 /** Later-milestone features: visible info toast, nothing faked. */
 function comingLater(): void {
   void vscode.window.showInformationMessage(
-    vscode.l10n.t("OpenCode Chat Sidebar: this feature is coming in a later milestone."),
+    vscode.l10n.t("Chat Sidebar for OpenCode: this feature is coming in a later milestone."),
   );
 }
 
@@ -325,7 +325,7 @@ export function activate(
 
     settingsPanel = vscode.window.createWebviewPanel(
       "opencodeChatSidebar.settings",
-      "OpenCode Chat Sidebar Settings",
+      "Chat Sidebar for OpenCode Settings",
       vscode.ViewColumn.Active,
       {
         enableScripts: true,
@@ -459,7 +459,7 @@ export function activate(
     vscode.commands.registerCommand("opencodeChatSidebar.attachSelection", () => {
       const result = buildSelectionPush(editorAccess.selection());
       if (!result.ok) {
-        void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
+        void vscode.window.showInformationMessage(`Chat Sidebar for OpenCode: ${result.message}`);
         return;
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
@@ -467,7 +467,7 @@ export function activate(
     vscode.commands.registerCommand("opencodeChatSidebar.attachFile", (contextArg?: unknown) => {
       const result = buildFilePush(editorAccess.filePath(contextArg));
       if (!result.ok) {
-        void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
+        void vscode.window.showInformationMessage(`Chat Sidebar for OpenCode: ${result.message}`);
         return;
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
@@ -476,7 +476,7 @@ export function activate(
       exportCommand(args),
     ),
   );
-  logger.info("opencode-chat-sidebar activated");
+  logger.info("chat-sidebar-for-opencode activated");
 
   if (config.read().autoStartServer) {
     void manager.start().then((result) => {

@@ -130,10 +130,10 @@ describe("createVscodeSettingsSurface", () => {
 });
 
 describe("createVscodeLogger", () => {
-  it("writes redacted lines to the OpenCode Chat Sidebar output channel", () => {
+  it("writes redacted lines to the Chat Sidebar for OpenCode output channel", () => {
     const { logger, channel } = createVscodeLogger(() => false);
     logger.info("listening password=hunter2 on 4096");
-    expect(channel.name).toBe("OpenCode Chat Sidebar");
+    expect(channel.name).toBe("Chat Sidebar for OpenCode");
     expect(vscodeStubRegistry.outputChannels).toContain(channel);
     // The returned channel mirrors the recorded fake (typed as vscode.OutputChannel).
     const recorded = vscodeStubRegistry.outputChannels[0];

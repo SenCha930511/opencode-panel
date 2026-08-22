@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **OpenCode Chat Sidebar** are documented here. The format is
+All notable changes to **Chat Sidebar for OpenCode** are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.0.0] — 2026-08-22
@@ -93,5 +93,5 @@ Incremental fixes and polish.
 - Chat-first layout: conversation owns the sidebar; session list becomes a
   left drawer.
 
-[1.0.0]: https://github.com/SenCha930511/opencode-chat-sidebar/releases
-[0.8.15]: https://github.com/SenCha930511/opencode-chat-sidebar/releases
+[1.0.0]: https://github.com/SenCha930511/chat-sidebar-for-opencode/releases
+[0.8.15]: https://github.com/SenCha930511/chat-sidebar-for-opencode/releases
