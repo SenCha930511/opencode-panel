@@ -17,7 +17,7 @@
 
 import { isRecord } from "../../../shared/protocol.js";
 import type { StringId } from "../../../shared/strings.js";
-import type { SpecSection } from "./ConfigFormRenderer.js";
+import type { SpecSection } from "./configFormRenderer.js";
 import {
   AgentsRecords,
   BackgroundTaskFields,

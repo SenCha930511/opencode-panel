@@ -20,7 +20,7 @@ import {
   type CapabilityDetector,
   type CapabilityDetectorOptions,
   type DetectorFs,
-} from "../CapabilityDetector.js";
+} from "../capabilityDetector.js";
 import { guard, toWire, CORE_AGENT_NAMES } from "../capabilities.js";
 import { PanelSecrets, type SecretStorage } from "../../host/secrets.js";
 import {

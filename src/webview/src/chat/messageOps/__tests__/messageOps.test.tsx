@@ -52,7 +52,7 @@ import { MCP_STATUS_EVENT } from "../../../mcp/constants.js";
 import {
   MessageActionsMenuView,
   type ConfirmDialogViewProps,
-} from "../MessageActionsMenu.js";
+} from "../messageActionsMenu.js";
 import { SessionMenuItems, sessionMenuModel } from "../sessionMenuRows.js";
 import { WebviewMessenger, type WebviewPort } from "../../../../lib/messenger.js";
 

@@ -4,7 +4,7 @@ import type { InitPayload } from "../../../shared/protocol.js";
 import { en } from "../../../shared/strings.js";
 import { StringsProvider } from "../../lib/i18n.js";
 import { WebviewMessenger } from "../../lib/messenger.js";
-import { App } from "../App";
+import { App } from "../app";
 import { AppProvider, deriveServerStatus, isServerLostEvent } from "../app/context";
 
 /**

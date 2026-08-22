@@ -1,7 +1,7 @@
 // allow: SIZE_OK — one acceptance narrative per todo-18 requirement (parsers,
 // fetchers vs the todo-5 mock, DockSync routing/guards, the QA old-server
 // latch, diff documents, openDiff titles, the opener, the registry) — the
-// prompt.test.ts / Composer.test.tsx sanction.
+// prompt.test.ts / composer.test.tsx sanction.
 /**
  * Dock host suite (plan todo 18):
  * - wire literals both bundles mirror + boundary parsers (todos/diffs);
@@ -24,7 +24,7 @@ import { PanelLogger, type OutputChannelLike } from "../../logger.js";
 import { PanelSecrets, type SecretStorage } from "../../secrets.js";
 import type { Capabilities } from "../../../server/capabilities.js";
 import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
-import type { ServerConnection } from "../../../server/ServerManager.js";
+import type { ServerConnection } from "../../../server/serverManager.js";
 import { startMockServer, type MockServer } from "../../../test/mock-server/index.js";
 import type { HandlerContext } from "../../messenger.js";
 import { staticSessionSource } from "../sessions.js";

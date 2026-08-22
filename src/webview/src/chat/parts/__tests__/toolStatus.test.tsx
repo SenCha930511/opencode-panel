@@ -14,7 +14,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 
 import type { PartVM, ToolStatus } from "../../types.js";
-import { GenericToolCard, readFileDiffStat } from "../ToolPartView.js";
+import { GenericToolCard, readFileDiffStat } from "../toolPartView.js";
 
 type ToolPart = Extract<PartVM, { kind: "tool" }>;
 

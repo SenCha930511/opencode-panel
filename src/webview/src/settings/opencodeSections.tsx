@@ -22,7 +22,7 @@ import { isSecretPath, parseJsonc } from "../../../shared/configJsonc.js";
 import type { StringId } from "../../../shared/strings.js";
 import { useStrings } from "../../lib/i18n.js";
 import { useCapabilitySnapshot } from "../chat/pickers/capabilityStore.js";
-import type { SpecComponentContext } from "./ConfigFormRenderer.js";
+import type { SpecComponentContext } from "./configFormRenderer.js";
 import { SpecFieldControl, valueAt, type SpecField } from "./configSpecDispatch.js";
 import { FieldRow, INPUT_CLASS, MaskedInput, NumberInput, Select, TextInput, Toggle } from "./configFields.js";
 import {

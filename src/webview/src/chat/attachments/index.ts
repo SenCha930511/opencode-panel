@@ -65,7 +65,7 @@ export {
   urlFromServerPath,
   type MentionQuery,
 } from "./logic.js";
-export { MentionPalette } from "./MentionPalette.js";
+export { MentionPalette } from "./mentionPalette.js";
 export { createMentionSearch, MENTION_DEBOUNCE_MS } from "./search.js";
-export { AttachmentsExtras } from "./AttachmentsExtras.js";
+export { AttachmentsExtras } from "./attachmentsExtras.js";
 export { useAttachments } from "./useAttachments.js";

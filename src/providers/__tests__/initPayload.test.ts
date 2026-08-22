@@ -14,7 +14,7 @@ import {
 import { PanelLogger, type OutputChannelLike } from "../../host/logger.js";
 import { PanelSecrets, type SecretStorage } from "../../host/secrets.js";
 import { en, zhTW } from "../../shared/strings";
-import { ServerManager, type ChildSpawner } from "../../server/ServerManager.js";
+import { ServerManager, type ChildSpawner } from "../../server/serverManager.js";
 import {
   MODERN_VERSION,
   startMockServer,

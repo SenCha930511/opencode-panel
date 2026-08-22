@@ -21,7 +21,7 @@ import { parseJsonc } from "../../../shared/configJsonc.js";
 import { isRecord } from "../../../shared/protocol.js";
 import type { StringId } from "../../../shared/strings.js";
 import { useStrings } from "../../lib/i18n.js";
-import type { SpecComponentContext } from "./ConfigFormRenderer.js";
+import type { SpecComponentContext } from "./configFormRenderer.js";
 import type { SpecField } from "./configSpecDispatch.js";
 import { SpecFieldControl, valueAt } from "./configSpecDispatch.js";
 import { FieldRow, INPUT_CLASS, NumberInput, TextInput, Toggle } from "./configFields.js";

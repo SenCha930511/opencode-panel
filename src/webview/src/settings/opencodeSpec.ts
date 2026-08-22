@@ -8,7 +8,7 @@
  * Tier-1 sections render open; tier-2 behind the Advanced disclosure.
  */
 
-import type { SpecSection } from "./ConfigFormRenderer.js";
+import type { SpecSection } from "./configFormRenderer.js";
 import type { SpecField } from "./configSpecDispatch.js";
 import {
   AgentsRecords,

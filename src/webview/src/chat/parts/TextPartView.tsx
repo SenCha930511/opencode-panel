@@ -1,6 +1,6 @@
 import type { PartVM } from "../types.js";
 import { useStrings } from "../../../lib/i18n.js";
-import { Markdown } from "./Markdown.js";
+import { Markdown } from "./markdown.js";
 import { isSystemReminderText, cleanSystemReminderText } from "../visibility.js";
 
 export function TextPartView(props: { readonly part: Extract<PartVM, { kind: "text" }> }) {

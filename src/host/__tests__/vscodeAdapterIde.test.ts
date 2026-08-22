@@ -10,8 +10,8 @@ import {
   createVscodeTuiTerminalFactory,
 } from "../vscode-adapter-ide.js";
 import { STATUS_BAR_MENU_COMMAND_ID } from "../statusBar.js";
-import { ServerStartError } from "../../server/ServerManager.js";
-import type { ServerManagerState } from "../../server/ServerManager.js";
+import { ServerStartError } from "../../server/serverManager.js";
+import type { ServerManagerState } from "../../server/serverManager.js";
 import type { Event, Listener } from "../config.js";
 import {
   FakeShellIntegration,
@@ -73,7 +73,7 @@ describe("createVscodeStatusBarController", () => {
       alignment: 1,
       priority: 10,
     });
-    expect(item?.name).toBe("OpenCode Panel");
+    expect(item?.name).toBe("OpenCode Chat Sidebar");
     expect(item?.command).toBe(STATUS_BAR_MENU_COMMAND_ID);
     expect(item?.shown).toBe(true);
     expect(typeof item?.text).toBe("string");

@@ -9,7 +9,7 @@
  * verbatim, and the domain (parsers, fetchers, DockSync, diff documents,
  * renderer, opener, service, registry) is one indivisible ownership unit per
  * the plan; the contract must sit beside every literal it governs (same
- * sanction as todo-9's eventBridge.ts / todo-8's ServerManager.ts).
+ * sanction as todo-9's eventBridge.ts / todo-8's serverManager.ts).
  *
  * WIRE CONTRACT (webview consumes; ForwardedEvent over ToWebview `event`,
  * same carrier precedent as todo-12 `sessions.list` / todo-13 `messages.sync`):
@@ -70,7 +70,7 @@
 
 import type { PanelLogger } from "../logger.js";
 import type { InvalidateSink } from "../../server/eventBridge.js";
-import type { ServerConnection } from "../../server/ServerManager.js";
+import type { ServerConnection } from "../../server/serverManager.js";
 import type { Capabilities } from "../../server/capabilities.js";
 import { probeDoc } from "../../server/docProbe.js";
 import { isRecord, type FromWebviewResponse, type ToastLevel } from "../../shared/protocol.js";

@@ -70,9 +70,9 @@ import {
 import { createWebviewDraftStore, type DraftStore } from "./draftStore.js";
 import type { ChatEventSource } from "./events.js";
 import { MessageStore } from "./messageStore.js";
-import { MessageList, useChatStore } from "./MessageList.js";
+import { MessageList, useChatStore } from "./messageList.js";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { SlashCommandPalette, type SlashKeyHandler } from "./pickers/CommandPalette.js";
+import { SlashCommandPalette, type SlashKeyHandler } from "./pickers/commandPalette.js";
 import {
   useModelEffort,
   setModelEffort,
@@ -85,7 +85,7 @@ import { queryAndSyncSessionAuto, requestSessionAuto } from "./sessionArming.js"
 import { useCapabilitySnapshot } from "./pickers/capabilityStore.js";
 import { usePickerSelection } from "./composerState.js";
 import { resolveInitialModel } from "./pickers/logic.js";
-import { extractSessionAgentAndModel } from "./pickers/ChatPickers.js";
+import { extractSessionAgentAndModel } from "./pickers/chatPickers.js";
 
 const HOME_DRAFT_KEY = "__home__";
 

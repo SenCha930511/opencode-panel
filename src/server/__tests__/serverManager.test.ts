@@ -28,7 +28,7 @@ import {
   type SpawnError,
   type SpawnOptions,
   type SpawnedProcess,
-} from "../ServerManager.js";
+} from "../serverManager.js";
 import {
   startMockServer,
   MODERN_VERSION,

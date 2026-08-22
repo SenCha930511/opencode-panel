@@ -26,6 +26,6 @@ export {
   useMcpSnapshot,
 } from "./mcpStore.js";
 export type { McpSnapshot } from "./mcpStore.js";
-export { McpPanel } from "./McpPanel.js";
-export { McpPopover } from "./McpPopover.js";
-export { OldServerBanner } from "./OldServerBanner.js";
+export { McpPanel } from "./mcpPanel.js";
+export { McpPopover } from "./mcpPopover.js";
+export { OldServerBanner } from "./oldServerBanner.js";

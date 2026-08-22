@@ -3,10 +3,10 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_PANEL_CONFIG, type PanelConfigAccessor } from "../config";
-import type { ServerManager } from "../../server/ServerManager";
+import type { ServerManager } from "../../server/serverManager.js";
 import type { PanelViewComposite } from "../../providers/registration";
-import type { ChatViewProvider } from "../../providers/ChatViewProvider";
-import type { SessionsViewProvider } from "../../providers/SessionsViewProvider";
+import type { ChatViewProvider } from "../../providers/chatViewProvider";
+import type { SessionsViewProvider } from "../../providers/sessionsViewProvider";
 import { applyTestServerOverride, exposeTestAttach } from "../testSeam";
 
 function makeAccessor(): { accessor: PanelConfigAccessor; disposed: () => number; listeners: () => number } {

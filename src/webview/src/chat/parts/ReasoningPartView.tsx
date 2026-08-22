@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PartVM } from "../types.js";
 import { useStrings } from "../../../lib/i18n.js";
-import { Markdown } from "./Markdown.js";
+import { Markdown } from "./markdown.js";
 
 const SNIPPET_LENGTH = 96;
 

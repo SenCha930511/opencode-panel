@@ -19,7 +19,7 @@ import type {
   ConfigFileReadPayload,
   ConfigFileWritePayload,
 } from "../../shared/protocol.js";
-import type { DevProviderTestHooks } from "../../providers/BaseViewProvider.js";
+import type { DevProviderTestHooks } from "../../providers/baseViewProvider.js";
 import {
   focusChatView,
   isTerminalChunkFor,

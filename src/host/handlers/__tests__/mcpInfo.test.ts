@@ -22,13 +22,13 @@ import { PanelSecrets, type SecretStorage } from "../../secrets.js";
 import {
   createCapabilityDetector,
   type CapabilityDetector,
-} from "../../../server/CapabilityDetector.js";
+} from "../../../server/capabilityDetector.js";
 import type { Capabilities } from "../../../server/capabilities.js";
 import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
 import type {
   ServerConnection,
   ServerManagerState,
-} from "../../../server/ServerManager.js";
+} from "../../../server/serverManager.js";
 import { startMockServer, type MockServer } from "../../../test/mock-server/index.js";
 import { staticSessionSource, type SessionClientSource } from "../sessions.js";
 import {

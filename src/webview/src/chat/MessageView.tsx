@@ -1,12 +1,12 @@
-import { UserCheckpointButton } from "./messageOps/MessageActionsMenu.js";
+import { UserCheckpointButton } from "./messageOps/messageActionsMenu.js";
 import type { MessageStore } from "./messageStore.js";
 import type { MessageVM, PartVM } from "./types.js";
-import { TextPartView } from "./parts/TextPartView.js";
-import { ReasoningPartView } from "./parts/ReasoningPartView.js";
-import { GenericToolCard } from "./parts/ToolPartView.js";
-import { FilePartView } from "./parts/FilePartView.js";
-import { PatchPartView } from "./parts/PatchPartView.js";
-import { JsonPartView } from "./parts/JsonPartView.js";
+import { TextPartView } from "./parts/textPartView.js";
+import { ReasoningPartView } from "./parts/reasoningPartView.js";
+import { GenericToolCard } from "./parts/toolPartView.js";
+import { FilePartView } from "./parts/filePartView.js";
+import { PatchPartView } from "./parts/patchPartView.js";
+import { JsonPartView } from "./parts/jsonPartView.js";
 
 /** Part-type dispatch: one renderer per kind, exhaustive by construction. */
 export function PartView(props: { readonly part: PartVM }) {

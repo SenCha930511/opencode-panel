@@ -68,7 +68,7 @@ import {
 import {
   createCapabilityDetector,
   type CapabilityDetector,
-} from "./CapabilityDetector.js";
+} from "./capabilityDetector.js";
 import {
   createSystemClock,
   DEFAULT_SERVER_TIMING,

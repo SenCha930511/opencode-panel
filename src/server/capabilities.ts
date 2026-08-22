@@ -4,7 +4,7 @@
  * Pure data: the {@link Capabilities} record, the deterministic
  * {@link guard} visibility map consumed by UI todos 18-20, and the
  * {@link toWire} mapping into the todo-3 wire shape. Detection itself lives
- * in `CapabilityDetector.ts`; the ONLY hardcoded enumeration permitted by
+ * in `capabilityDetector.ts`; the ONLY hardcoded enumeration permitted by
  * the plan (first-party agent names) lives here with its citation.
  */
 

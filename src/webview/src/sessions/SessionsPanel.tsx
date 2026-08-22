@@ -5,7 +5,7 @@ import { clearActiveSession, setActiveSession } from "../chat/activeSession.js";
 import { attachNewSessionCommand } from "./newSessionCommand.js";
 import { createWebviewPersistence } from "./persistence.js";
 import { setSharedSessionsStore, SessionsStore } from "./sessionsStore.js";
-import { SessionList } from "./SessionList.js";
+import { SessionList } from "./sessionList.js";
 
 /**
  * INTEGRATION STUB (todo-11 slot contract): the self-wired sessions panel.

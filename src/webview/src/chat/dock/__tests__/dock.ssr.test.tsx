@@ -20,8 +20,8 @@ import type { ReactElement } from "react";
 import { resetActiveSessionForTest, setActiveSession } from "../../activeSession.js";
 import type { ChatEventSource, Unsubscribe } from "../../events.js";
 import type { WebviewStateLike } from "../../draftStore.js";
-import { DiffFileRow, DiffsPanel, SessionDock, TodosPanel, type DockActions } from "../SessionDock.js";
-import { TodoPinnedList } from "../TodoPinnedList.js";
+import { DiffFileRow, DiffsPanel, SessionDock, TodosPanel, type DockActions } from "../sessionDock.js";
+import { TodoPinnedList } from "../todoPinnedList.js";
 import { DockStateStore, DockStore } from "../dockStore.js";
 import { parseSessionDiffPayload, type DockDiffFileVM, type DockTodoVM } from "../dockTypes.js";
 

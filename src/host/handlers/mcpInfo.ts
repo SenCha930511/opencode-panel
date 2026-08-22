@@ -46,9 +46,9 @@
 import type { PanelLogger } from "../logger.js";
 import type { Capabilities } from "../../server/capabilities.js";
 import { guard } from "../../server/capabilities.js";
-import type { CapabilityDetector } from "../../server/CapabilityDetector.js";
+import type { CapabilityDetector } from "../../server/capabilityDetector.js";
 import type { ProbeFetch } from "../../server/clientFactory.js";
-import type { ServerManagerState } from "../../server/ServerManager.js";
+import type { ServerManagerState } from "../../server/serverManager.js";
 import type { Disposable } from "../config.js";
 import type { SessionClientSource } from "./sessions.js";
 import type { ViewEventSink } from "./sync.js";

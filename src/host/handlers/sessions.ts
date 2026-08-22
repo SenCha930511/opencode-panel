@@ -38,7 +38,7 @@ import type { OpencodeClient, Session } from "@opencode-ai/sdk";
 import { isRecord } from "../../shared/protocol.js";
 import type { PanelLogger } from "../logger.js";
 import type { Handler } from "../messenger.js";
-import type { ServerConnection } from "../../server/ServerManager.js";
+import type { ServerConnection } from "../../server/serverManager.js";
 import type {
   FromWebviewProtocol,
   FromWebviewResponse,
@@ -197,7 +197,94 @@ export interface SessionService {
     readonly sessionId: string;
     readonly taskId?: string;
     readonly hint?: string;
-  }): Promise<{ readonly steps: readonly string[]; readonly isRunning: boolean }>;
+  }): Promise<FromWebviewResponse["getSubagentLogs"]>;
+}
+
+function stringField(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/** Same input-summary chain the step list uses, shared for the progress tool line. */
+function summarizeToolInput(input: unknown): string {
+  if (!isRecord(input)) return "";
+  for (const key of ["path", "filePath", "command", "CommandLine", "query", "description"] as const) {
+    const value = input[key];
+    if (typeof value === "string" && value.length > 0) return value;
+  }
+  const prompt = input.prompt;
+  if (typeof prompt === "string") return prompt.slice(0, 50);
+  return "";
+}
+
+const THINKING_WIRE_CAP = 1200;
+
+/**
+ * Derives the subagent's live progress snapshot from a child session's raw
+ * message envelopes: the phase of the most recent meaningful part (tool call
+ * in flight, reasoning streaming, or assistant writing), the latest reasoning
+ * text (tail-capped to THINKING_WIRE_CAP chars), and whether work is still in
+ * flight (a running tool part, or the last assistant message never completed).
+ */
+export function extractSubagentProgress(
+  envelopes: readonly unknown[],
+): { readonly progress: SubagentProgress; readonly isRunning: boolean } {
+  let latestThinking = "";
+  let phase: SubagentProgressPhase = "idle";
+  let toolName: string | undefined;
+  let toolSummary: string | undefined;
+  let anyToolRunning = false;
+  let lastAssistantOpen = false;
+
+  for (const envelope of envelopes) {
+    if (!isRecord(envelope)) continue;
+    const info = isRecord(envelope.info) ? envelope.info : undefined;
+    const role = info?.role;
+    if (role === "assistant" && info !== undefined) {
+      const time = isRecord(info.time) ? info.time : undefined;
+      lastAssistantOpen = !(time !== undefined && typeof time.completed === "number");
+    }
+    const parts = Array.isArray(envelope.parts) ? envelope.parts : [];
+    for (const rawPart of parts) {
+      if (!isRecord(rawPart)) continue;
+      const toolState = isRecord(rawPart.state) ? rawPart.state : rawPart;
+      const partType = stringField(rawPart.type) ?? stringField(rawPart.kind) ?? "";
+
+      if (partType === "tool") {
+        const name =
+          stringField(rawPart.tool) ?? stringField(rawPart.name) ?? stringField(toolState.tool) ?? "tool";
+        const status = stringField(toolState.status) ?? stringField(rawPart.status);
+        if (status === "running") anyToolRunning = true;
+        phase = "tool";
+        toolName = name;
+        toolSummary = summarizeToolInput(
+          isRecord(toolState.input) ? toolState.input : rawPart.input,
+        );
+      } else if (partType === "reasoning") {
+        const text = (stringField(rawPart.text) ?? stringField(toolState.text) ?? "").trim();
+        if (text) {
+          latestThinking = text;
+          phase = "thinking";
+        }
+      } else if (partType === "text" && role === "assistant") {
+        const text = (stringField(rawPart.text) ?? stringField(toolState.text) ?? "").trim();
+        if (text && !text.startsWith("<system-reminder>") && !text.startsWith("<!--")) {
+          phase = "writing";
+        }
+      }
+    }
+  }
+
+  return {
+    progress: {
+      phase,
+      thinking:
+        latestThinking.length > THINKING_WIRE_CAP ? latestThinking.slice(-THINKING_WIRE_CAP) : latestThinking,
+      thinkingTruncated: latestThinking.length > THINKING_WIRE_CAP,
+      ...(phase === "tool" && toolName !== undefined ? { toolName } : {}),
+      ...(phase === "tool" && toolSummary !== undefined && toolSummary.length > 0 ? { toolSummary } : {}),
+    },
+    isRunning: anyToolRunning || lastAssistantOpen,
+  };
 }
 
 export function isSessionAutoArmed(sessionData: unknown): boolean {
@@ -482,7 +569,8 @@ export function createSessionService(deps: SessionServiceDeps): SessionService {
           }
         }
 
-        return { steps, isRunning: false };
+        const { progress, isRunning } = extractSubagentProgress(msgResult.data);
+        return { steps, isRunning, progress };
       } catch {
         return { steps: [], isRunning: false };
       }

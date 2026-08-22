@@ -13,7 +13,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useStrings } from "../../lib/i18n.js";
 import { useApp } from "../app/context.js";
 import { attachMcpStores } from "./attach.js";
-import { McpPanel } from "./McpPanel.js";
+import { McpPanel } from "./mcpPanel.js";
 
 function PlugIcon(): ReactNode {
   return (

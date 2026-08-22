@@ -29,13 +29,13 @@ import {
   setModelSelection,
   usePickerSelection,
 } from "../composerState.js";
-import { useChatStore } from "../MessageList.js";
+import { useChatStore } from "../messageList.js";
 import type { MessageStore } from "../messageStore.js";
 import type { MessageVM } from "../types.js";
 import type { AgentEntry, ProviderEntry } from "./constants.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
 import { agentRows, isCustomAgent, resolveInitialModel } from "./logic.js";
-import { PickerDropdown, type PickerGroup, type PickerRow } from "./PickerDropdown.js";
+import { PickerDropdown, type PickerGroup, type PickerRow } from "./pickerDropdown.js";
 
 export function extractSessionAgentAndModel(
   messages: readonly MessageVM[] | undefined,

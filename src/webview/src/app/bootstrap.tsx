@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { InitPayload } from "../../../shared/protocol.js";
 import { useStrings, StringsProvider } from "../../lib/i18n.js";
 import { getWebviewMessenger, type WebviewMessenger } from "../../lib/messenger.js";
-import { App } from "../App";
+import { App } from "../app";
 import { createAppSlots } from "./chatSlot.js";
 import { AppProvider } from "./context";
-import { ErrorBoundary } from "./ErrorBoundary";
+import { ErrorBoundary } from "./errorBoundary";
 
 /**
  * Webview root: owns the messenger handshake (plan todo 10/11).

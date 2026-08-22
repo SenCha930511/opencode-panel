@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   override componentDidCatch(error: Error): void {
     // Webview runtime failures surface in the devtools console (dev English,
     // per plan logging rules); the host output channel is for host events.
-    console.error("opencode-panel webview render crash", error);
+    console.error("opencode-chat-panel webview render crash", error);
   }
 
   private readonly reset = (): void => {

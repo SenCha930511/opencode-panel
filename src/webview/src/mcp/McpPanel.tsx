@@ -9,7 +9,7 @@
  * context, no effects — so todo 21's settings capabilities section embeds
  * it unedited next to its own `attachMcpStores` call (./index.ts), and the
  * SSR suites render it straight to static markup. The chat-header chrome
- * lives in ./McpPopover.tsx.
+ * lives in ./mcpPopover.tsx.
  *
  * HONESTY RULES (binding): the list is the NATIVELY-CONFIGURED inventory
  * only — under oh-my-opencode the `mcp.omoNote` block renders and the UI

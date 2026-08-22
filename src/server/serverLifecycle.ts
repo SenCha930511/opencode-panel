@@ -3,7 +3,7 @@
  * union, typed start failures, start/onboard results, the injectable seams
  * (spawner / clock / timing / deps) and their production defaults.
  *
- * Behavior (the state machine itself) lives in `ServerManager.ts`, which
+ * Behavior (the state machine itself) lives in `serverManager.ts`, which
  * re-exports everything here so consumers have one public import path.
  */
 

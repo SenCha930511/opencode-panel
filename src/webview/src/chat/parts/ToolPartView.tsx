@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStrings } from "../../../lib/i18n.js";
 import { getWebviewMessenger } from "../../../lib/messenger.js";
 import type { StringId } from "../../../../shared/strings.js";
-import { isRecord, type PermissionResponse } from "../../../../shared/protocol.js";
+import { isRecord, type PermissionResponse, type SubagentProgress } from "../../../../shared/protocol.js";
 import type { PartVM, ToolStatus } from "../types.js";
 import { getActiveSession } from "../activeSession.js";
-import { QuestionCard } from "../cards/QuestionCard.js";
-import { PermissionCard } from "../cards/PermissionCard.js";
+import { QuestionCard } from "../cards/questionCard.js";
+import { PermissionCard } from "../cards/permissionCard.js";
 import { parseQuestionPrompt, parsePermissionCard } from "../cards/cardParsers.js";
 import type { QuestionPromptVM, PermissionCardVM } from "../cards/cardTypes.js";
 import { ToolIcon, toolIconKind } from "./toolIcon.js";
@@ -708,6 +708,26 @@ function extractSubagentInfo(part: ToolPart, t: (id: StringId) => string): {
   };
 }
 
+/** One-line live activity summary rendered under the card header while running. */
+export function subagentProgressLine(
+  progress: SubagentProgress | undefined,
+  t: (id: StringId) => string,
+): { readonly icon: string; readonly text: string } | undefined {
+  if (progress === undefined) return undefined;
+  if (progress.phase === "tool") {
+    return { icon: "⚡", text: progress.toolSummary ?? progress.toolName ?? "" };
+  }
+  if (progress.phase === "thinking") {
+    const firstLine =
+      progress.thinking.split("\n").map((l) => l.trim()).find((l) => l.length > 0) ?? "";
+    return { icon: "🧠", text: firstLine };
+  }
+  if (progress.phase === "writing") {
+    return { icon: "💬", text: t("subagent.writingReply") };
+  }
+  return undefined;
+}
+
 function SubagentToolCard(props: { readonly part: ToolPart }) {
   const { t } = useStrings();
   const { part } = props;
@@ -716,17 +736,24 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
   const subagentInfo = useMemo(() => extractSubagentInfo(part, t), [part, t]);
   const [isOpen, setIsOpen] = useState(false);
   const [liveSteps, setLiveSteps] = useState<readonly string[]>([]);
+  const [liveProgress, setLiveProgress] = useState<SubagentProgress | undefined>(undefined);
+  const [childRunning, setChildRunning] = useState(false);
   const logBoxRef = useRef<HTMLDivElement>(null);
+  const progressBoxRef = useRef<HTMLDivElement>(null);
+  const live = isRunning || childRunning;
 
   // Auto-scroll the log container to the bottom on new steps/thoughts
   useEffect(() => {
     if (logBoxRef.current && isOpen) {
       logBoxRef.current.scrollTop = logBoxRef.current.scrollHeight;
     }
-  }, [liveSteps, isOpen, isRunning]);
+    if (progressBoxRef.current && isOpen) {
+      progressBoxRef.current.scrollTop = progressBoxRef.current.scrollHeight;
+    }
+  }, [liveSteps, liveProgress, isOpen, live]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !isRunning) return;
 
     let cancelled = false;
     const fetchLogs = async () => {
@@ -738,8 +765,13 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
           ...(subagentInfo.taskId !== undefined ? { taskId: subagentInfo.taskId } : {}),
           ...(subagentInfo.hint !== undefined ? { hint: subagentInfo.hint } : {}),
         });
-        if (!cancelled && res && Array.isArray(res.steps) && res.steps.length > 0) {
+        if (cancelled || !res) return;
+        if (Array.isArray(res.steps) && res.steps.length > 0) {
           setLiveSteps(res.steps);
+        }
+        setLiveProgress(res.progress);
+        if (typeof res.isRunning === "boolean") {
+          setChildRunning(res.isRunning);
         }
       } catch {
         // Safe fallback
@@ -763,6 +795,8 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
     };
   }, [isOpen, isRunning, subagentInfo.taskId, subagentInfo.hint, part.raw]);
 
+  const progressLine = useMemo(() => subagentProgressLine(liveProgress, t), [liveProgress, t]);
+
   return (
     <details
       className="group m-0 overflow-hidden rounded-xl border border-accent/40 bg-accent/5 text-xs transition-all my-3 scroll-mb-24 scroll-mt-12"
@@ -774,33 +808,45 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
         }
       }}
     >
-      <summary className="flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-fg hover:bg-accent/10 transition-colors font-medium">
-        <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
-          ▶
-        </span>
-        <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded bg-accent/20 text-accent">
-          <ToolIcon kind="subagent" />
-        </span>
-        <span className="font-semibold text-xs text-accent truncate shrink-0">
-          {subagentInfo.agentName ? `[${subagentInfo.agentName}]` : "Subagent"}
-        </span>
-        <span className="font-normal text-muted-fg/70 shrink-0">
-          {isRunning ? t("subagent.statusRunning") : t("subagent.statusFinished")}
-        </span>
-        <span className="font-medium text-fg/90 truncate min-w-0 flex-1">
-          {subagentInfo.title}
-        </span>
-        {isRunning ? (
-          <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0 ml-1" />
-        ) : (
-          <span
-            aria-label={t(STATUS_LABEL[part.status])}
-            title={t(STATUS_LABEL[part.status])}
-            className={`shrink-0 ml-1 text-[11px] font-semibold leading-none ${STATUS_CLASS[part.status]}`}
-          >
-            {STATUS_GLYPH[part.status] ?? t(STATUS_LABEL[part.status])}
+      <summary className="cursor-pointer select-none px-2 py-1.5 text-fg hover:bg-accent/10 transition-colors font-medium">
+        <span className="flex items-center gap-1.5">
+          <span className="text-[10px] text-muted-fg/60 transition-transform group-open:rotate-90 shrink-0">
+            ▶
           </span>
-        )}
+          <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded bg-accent/20 text-accent">
+            <ToolIcon kind="subagent" />
+          </span>
+          <span className="font-semibold text-xs text-accent truncate shrink-0">
+            {subagentInfo.agentName ? `[${subagentInfo.agentName}]` : "Subagent"}
+          </span>
+          <span className="font-normal text-muted-fg/70 shrink-0">
+            {isRunning ? t("subagent.statusRunning") : t("subagent.statusFinished")}
+          </span>
+          <span className="font-medium text-fg/90 truncate min-w-0 flex-1">
+            {subagentInfo.title}
+          </span>
+          {isRunning ? (
+            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0 ml-1" />
+          ) : (
+            <span
+              aria-label={t(STATUS_LABEL[part.status])}
+              title={t(STATUS_LABEL[part.status])}
+              className={`shrink-0 ml-1 text-[11px] font-semibold leading-none ${STATUS_CLASS[part.status]}`}
+            >
+              {STATUS_GLYPH[part.status] ?? t(STATUS_LABEL[part.status])}
+            </span>
+          )}
+        </span>
+        {live && progressLine && progressLine.text ? (
+          <span className="mt-1 flex items-center gap-1.5 pl-6 font-mono text-[11px] text-muted-fg font-normal">
+            <span className="shrink-0">{progressLine.icon}</span>
+            <span className="truncate min-w-0 flex-1">
+              {liveProgress?.thinkingTruncated && liveProgress.phase === "thinking" ? "…" : ""}
+              {progressLine.text}
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse shrink-0" />
+          </span>
+        ) : null}
       </summary>
       <div className="border-t border-card-border/40 p-2.5 space-y-2 bg-black/10">
         {subagentInfo.description && subagentInfo.description !== subagentInfo.title ? (
@@ -810,10 +856,53 @@ function SubagentToolCard(props: { readonly part: ToolPart }) {
           </div>
         ) : null}
 
+        {liveProgress !== undefined && (live || liveProgress.phase !== "idle") ? (
+          <div className="rounded-lg bg-card-bg/70 border border-accent/30 p-2 text-[11px]">
+            <div className="flex items-center justify-between text-[10px] font-semibold text-muted-fg/70 uppercase mb-1 gap-2">
+              <span className="truncate">{t("subagent.currentProgress")}</span>
+              {live ? (
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium whitespace-nowrap shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                  {t("subagent.liveIndicator")}
+                </span>
+              ) : null}
+            </div>
+            {liveProgress.phase === "tool" && liveProgress.toolName ? (
+              <div className="flex items-center gap-1.5 text-fg/90 break-all">
+                <span className="shrink-0">⚡</span>
+                <span className="font-mono">
+                  {t("subagent.usingTool").replace("{tool}", liveProgress.toolName)}
+                  {liveProgress.toolSummary ? ` — ${liveProgress.toolSummary}` : ""}
+                </span>
+              </div>
+            ) : null}
+            {liveProgress.phase === "writing" ? (
+              <div className="flex items-center gap-1.5 text-fg/90">
+                <span>💬</span>
+                <span>{t("subagent.writingReply")}</span>
+              </div>
+            ) : null}
+            {liveProgress.thinking.length > 0 ? (
+              <div className="mt-1">
+                <div className="text-[10px] font-semibold text-muted-fg/70 normal-case mb-0.5">
+                  🧠 {t("subagent.thinkingLabel")}
+                </div>
+                <div
+                  ref={progressBoxRef}
+                  className="max-h-24 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10.5px] text-fg/75 italic leading-relaxed"
+                >
+                  {liveProgress.thinkingTruncated ? "…" : ""}
+                  {liveProgress.thinking}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="rounded-lg bg-black/40 border border-card-border/60 p-2.5 text-xs">
           <div className="flex items-center justify-between text-[11px] text-muted-fg/85 mb-1.5 gap-2">
             <span className="font-medium truncate">{t("subagent.logStepsLabel")}</span>
-            {isRunning ? (
+            {live ? (
               <span className="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium whitespace-nowrap shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                 {t("subagent.liveIndicator")}

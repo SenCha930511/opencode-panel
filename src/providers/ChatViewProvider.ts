@@ -6,7 +6,7 @@
  */
 
 import type { EventPayload, ToastLevel, ToastPayload } from "../shared/protocol.js";
-import { BaseViewProvider, type ViewProviderDeps } from "./BaseViewProvider.js";
+import { BaseViewProvider, type ViewProviderDeps } from "./baseViewProvider.js";
 
 export class ChatViewProvider extends BaseViewProvider {
   constructor(deps: ViewProviderDeps) {

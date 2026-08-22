@@ -1,5 +1,5 @@
 /**
- * Shared bilingual string tables (en + zh-TW) for the opencode-panel UI.
+ * Shared bilingual string tables (en + zh-TW) for the opencode-chat-panel UI.
  *
  * `STRING_IDS` enumerates every user-facing string id the webview (and any
  * host-side surface consuming the same tables) may render. `en` and `zhTW`
@@ -192,6 +192,7 @@ export const STRING_IDS = [
   "tool.backgroundTask",
   "tool.omittedLinesSuffix",
   "subagent.completedNote",
+  "subagent.currentProgress",
   "subagent.fallbackTaskLabel",
   "subagent.liveIndicator",
   "subagent.logStepsLabel",
@@ -199,6 +200,9 @@ export const STRING_IDS = [
   "subagent.statusFinished",
   "subagent.statusRunning",
   "subagent.taskDescriptionLabel",
+  "subagent.thinkingLabel",
+  "subagent.usingTool",
+  "subagent.writingReply",
   "tool.status.pending",
   "tool.status.running",
   "welcome.explain",
@@ -686,7 +690,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const en: Record<StringId, string> = {
   "app.loading": "Loading…",
-  "app.name": "OpenCode Panel",
+  "app.name": "OpenCode Chat Sidebar",
   "commands.empty": "No matching commands",
   "commands.title": "Commands",
   "composer.abort": "Stop generating",
@@ -839,6 +843,7 @@ export const en: Record<StringId, string> = {
   "tool.backgroundTask": "Background task ({taskId})",
   "tool.omittedLinesSuffix": "... (+{count} lines omitted)",
   "subagent.completedNote": "✓ Subagent finished the task.",
+  "subagent.currentProgress": "Current progress",
   "subagent.fallbackTaskLabel": "Task: {title}",
   "subagent.liveIndicator": "Live",
   "subagent.logStepsLabel": "Steps (Subagent Logs)",
@@ -846,6 +851,9 @@ export const en: Record<StringId, string> = {
   "subagent.statusFinished": "Call finished",
   "subagent.statusRunning": "Running...",
   "subagent.taskDescriptionLabel": "Task description",
+  "subagent.thinkingLabel": "Thinking",
+  "subagent.usingTool": "Using tool: {tool}",
+  "subagent.writingReply": "Writing reply…",
   "tool.status.completed": "Completed",
   "tool.status.failed": "Failed",
   "tool.output.collapse": "Show less",
@@ -1330,7 +1338,7 @@ export const en: Record<StringId, string> = {
  */
 export const zhTW: Record<StringId, string> = {
   "app.loading": "載入中…",
-  "app.name": "OpenCode Panel",
+  "app.name": "OpenCode Chat Sidebar",
   "commands.empty": "沒有符合的指令",
   "commands.title": "指令",
   "composer.abort": "停止產生",
@@ -1483,6 +1491,7 @@ export const zhTW: Record<StringId, string> = {
   "tool.backgroundTask": "背景任務 ({taskId})",
   "tool.omittedLinesSuffix": "... (+{count} 行省略）",
   "subagent.completedNote": "✓ 子智慧體已完成任務。",
+  "subagent.currentProgress": "目前進度",
   "subagent.fallbackTaskLabel": "任務： {title}",
   "subagent.liveIndicator": "即時執行中",
   "subagent.logStepsLabel": "執行步驟 (Subagent Logs)",
@@ -1490,6 +1499,9 @@ export const zhTW: Record<StringId, string> = {
   "subagent.statusFinished": "調用完成",
   "subagent.statusRunning": "執行中...",
   "subagent.taskDescriptionLabel": "任務說明",
+  "subagent.thinkingLabel": "思考中",
+  "subagent.usingTool": "使用工具： {tool}",
+  "subagent.writingReply": "撰寫回覆中…",
   "tool.status.completed": "已完成",
   "tool.status.failed": "失敗",
   "tool.output.collapse": "收起日誌",

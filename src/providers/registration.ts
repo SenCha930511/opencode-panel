@@ -13,11 +13,11 @@ import * as vscode from "vscode";
 import type { PanelConfigAccessor } from "../host/config.js";
 import type { PanelLogger } from "../host/logger.js";
 import type { Handler } from "../host/messenger.js";
-import type { ServerManager } from "../server/ServerManager.js";
+import type { ServerManager } from "../server/serverManager.js";
 import type { FromWebviewProtocol } from "../shared/protocol.js";
-import type { ViewProviderDeps } from "./BaseViewProvider.js";
-import { ChatViewProvider } from "./ChatViewProvider.js";
-import { SessionsViewProvider } from "./SessionsViewProvider.js";
+import type { ViewProviderDeps } from "./baseViewProvider.js";
+import { ChatViewProvider } from "./chatViewProvider.js";
+import { SessionsViewProvider } from "./sessionsViewProvider.js";
 import { HandlerRegistry } from "./handlers.js";
 import { createInitPayloadBuilder } from "./initPayload.js";
 

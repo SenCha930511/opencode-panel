@@ -24,7 +24,7 @@ import { parseJsonc, topLevelKeys } from "../../../shared/configJsonc.js";
 import { useStrings } from "../../lib/i18n.js";
 import { useApp } from "../app/context.js";
 import { ConfigFilesStore, slotKeyOf } from "./configFilesStore.js";
-import { ConfigFormRenderer } from "./ConfigFormRenderer.js";
+import { ConfigFormRenderer } from "./configFormRenderer.js";
 import { redactPreviewText } from "./configPreview.js";
 import {
   OPENCODE_DEPRECATED_TOP_LEVEL,

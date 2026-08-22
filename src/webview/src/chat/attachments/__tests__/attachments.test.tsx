@@ -61,8 +61,8 @@ import {
 } from "../images.js";
 import { imageFilesFrom } from "../domGlue.js";
 import { createMentionSearch } from "../search.js";
-import { MentionPalette } from "../MentionPalette.js";
-import { AttachmentsExtras } from "../AttachmentsExtras.js";
+import { MentionPalette } from "../mentionPalette.js";
+import { AttachmentsExtras } from "../attachmentsExtras.js";
 
 // ---------------------------------------------------------------------------
 // Seams.
@@ -188,10 +188,10 @@ describe("extractMentionQuery", () => {
 
   it("recordMentionPath and expandMentionPaths expands @filename to @fullpath on send", () => {
     recordMentionPath("sessions.ts", "src/host/handlers/sessions.ts");
-    recordMentionPath("app.tsx", "src/webview/src/App.tsx");
+    recordMentionPath("app.tsx", "src/webview/src/app.tsx");
     const text = "Please inspect @sessions.ts and @app.tsx now";
     expect(expandMentionPaths(text)).toBe(
-      "Please inspect @src/host/handlers/sessions.ts and @src/webview/src/App.tsx now",
+      "Please inspect @src/host/handlers/sessions.ts and @src/webview/src/app.tsx now",
     );
   });
 });

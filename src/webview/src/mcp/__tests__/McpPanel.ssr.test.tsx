@@ -19,7 +19,7 @@ import { attachMcpStores } from "../attach.js";
 import { resetCapabilityFlagsForTest } from "../capabilityFlags.js";
 import { MCP_STATUS_EVENT, type McpGuards } from "../constants.js";
 import { resetMcpStoreForTest } from "../mcpStore.js";
-import { McpPanel } from "../McpPanel.js";
+import { McpPanel } from "../mcpPanel.js";
 
 interface FakeMessenger {
   readonly messenger: WebviewMessenger;

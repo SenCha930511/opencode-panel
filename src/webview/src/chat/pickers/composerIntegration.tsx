@@ -26,18 +26,18 @@
  * textarea with `text={text}`, `onAccepted` clearing the consumed command
  * text, and the composer's keydown routed through the palette while it is
  * open (Enter accepts, arrows move, Escape dismisses). The component lives
- * in ./CommandPalette.tsx; the CANONICAL trigger flow is: type "/" ->
+ * in ./commandPalette.tsx; the CANONICAL trigger flow is: type "/" ->
  * palette lists commands -> click/Enter -> runCommand.
  */
 
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "../../app/context.js";
 import { useActiveSession } from "../activeSession.js";
-import { ChatDock, type ChatDockProps } from "../Composer.js";
+import { ChatDock, type ChatDockProps } from "../composer.js";
 import { buildPromptExtras, usePickerSelection } from "../composerState.js";
 import type { MessageStore } from "../messageStore.js";
 import { attachCapabilityStore, useCapabilitySnapshot } from "./capabilityStore.js";
-import { ChatPickers } from "./ChatPickers.js";
+import { ChatPickers } from "./chatPickers.js";
 
 /** The exact `composer` prop slice ChatDock forwards into `<Composer/>`. */
 export interface ComposerPickerProps {

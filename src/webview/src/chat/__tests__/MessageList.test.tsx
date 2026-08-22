@@ -23,7 +23,7 @@ import { AutoScrollPark } from "../autoScroll.js";
 import { resetActiveSessionForTest, setActiveSession } from "../activeSession.js";
 import { routeChatEvent } from "../events.js";
 import { MessageStore } from "../messageStore.js";
-import { MessageListBody } from "../MessageList.js";
+import { MessageListBody } from "../messageList.js";
 import type { MessageVM } from "../types.js";
 
 function render(element: ReactElement): string {

@@ -8,7 +8,7 @@ import type * as vscode from "vscode";
 import { DEFAULT_PANEL_CONFIG } from "../../host/config.js";
 import type { Event, Listener } from "../../host/config.js";
 import { buildInitStrings } from "../../host/locale.js";
-import type { ServerManagerState } from "../../server/ServerManager.js";
+import type { ServerManagerState } from "../../server/serverManager.js";
 import type { InitPayload } from "../../shared/protocol.js";
 import type {
   PanelWebview,

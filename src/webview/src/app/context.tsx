@@ -76,7 +76,7 @@ export interface ToastItem {
 /**
  * Mount slots owned by the parallel workers: T12 renders its SessionList
  * into `slots.sessions`, T13 renders MessageList/Composer into `slots.chat`.
- * See the SLOT CONTRACT comment in App.tsx. Defaults render honest empty
+ * See the SLOT CONTRACT comment in app.tsx. Defaults render honest empty
  * states until those todos land.
  */
 export interface AppSlots {

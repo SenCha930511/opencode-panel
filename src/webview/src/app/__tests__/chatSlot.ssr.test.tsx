@@ -39,10 +39,10 @@ import type { InitPayload } from "../../../../shared/protocol.js";
 import { en } from "../../../../shared/strings.js";
 import { StringsProvider } from "../../../lib/i18n.js";
 import { getWebviewMessenger } from "../../../lib/messenger.js";
-import { MessageListBody } from "../../chat/MessageList.js";
+import { MessageListBody } from "../../chat/messageList.js";
 import { MessageStore } from "../../chat/messageStore.js";
 import { AppProvider } from "../context.js";
-import { App } from "../../App.js";
+import { App } from "../../app.js";
 import { ChatSlot, createAppSlots } from "../chatSlot.js";
 
 const SENTINELS = {

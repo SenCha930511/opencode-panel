@@ -6,7 +6,7 @@ import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
 import { AppProvider } from "../../app/context.js";
 import type { ConfigFileReadReply, InitPayload } from "../../../../shared/protocol.js";
 import { en } from "../../../../shared/strings.js";
-import { OpenCodeConfigTab } from "../OpenCodeConfigTab.js";
+import { OpenCodeConfigTab } from "../openCodeConfigTab.js";
 import { ConfigFilesStore, type ConfigRequester } from "../configFilesStore.js";
 
 /**

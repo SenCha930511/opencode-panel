@@ -18,7 +18,7 @@ import { PanelLogger, type OutputChannelLike } from "../../logger.js";
 import { HostMessenger, type HostPort } from "../../messenger.js";
 import { PanelSecrets, type SecretStorage } from "../../secrets.js";
 import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
-import type { ServerConnection } from "../../../server/ServerManager.js";
+import type { ServerConnection } from "../../../server/serverManager.js";
 import type { Capabilities } from "../../../server/capabilities.js";
 import {
   isRecord,
@@ -30,6 +30,7 @@ import {
 import { startMockServer, type MockServer } from "../../../test/mock-server/index.js";
 import {
   createSessionService,
+  extractSubagentProgress,
   isSessionAutoArmed,
   registerSessionHandlers,
   staticSessionSource,
@@ -575,6 +576,172 @@ describe("getSessionAuto service", () => {
     const service = scriptedService(fetchImpl);
     const result = await service.getSessionAuto("ses_missing");
     expect(result).toBe(false);
+  });
+});
+
+// i18n-allow-literal — fixtures below hand-shape wire envelopes and emoji
+// step strings; they are payloads under test, not display copy.
+function assistantFixture(parts: readonly unknown[], completed: boolean): Record<string, unknown> {
+  return {
+    info: {
+      role: "assistant",
+      time: completed ? { created: 1, completed: 2 } : { created: 1 },
+    },
+    parts,
+  };
+}
+
+describe("extractSubagentProgress", () => {
+  const reasoning = (text: string): Record<string, unknown> => ({ type: "reasoning", text });
+  const tool = (name: string, status: string, input: Record<string, unknown>): Record<string, unknown> => ({
+    type: "tool",
+    tool: name,
+    state: { status, input },
+  });
+
+  it("empty message stream is idle, not running, and carries no tool", () => {
+    const { progress, isRunning } = extractSubagentProgress([]);
+    expect(progress).toEqual({ phase: "idle", thinking: "", thinkingTruncated: false });
+    expect(isRunning).toBe(false);
+  });
+
+  it("a reasoning-only live run surfaces thinking text and phase thinking", () => {
+    const { progress, isRunning } = extractSubagentProgress([
+      assistantFixture([reasoning("let me consider the failing test\n because it flakes")], false),
+    ]);
+    expect(progress.phase).toBe("thinking");
+    expect(progress.thinking).toBe("let me consider the failing test\n because it flakes");
+    expect(progress.thinkingTruncated).toBe(false);
+    expect(isRunning).toBe(true);
+  });
+
+  it("a running tool after reasoning wins the phase yet keeps the thinking", () => {
+    const { progress, isRunning } = extractSubagentProgress([
+      assistantFixture(
+        [reasoning("I should run the compiler"), tool("bash", "running", { command: "npm test" })],
+        false,
+      ),
+    ]);
+    expect(progress).toEqual({
+      phase: "tool",
+      thinking: "I should run the compiler",
+      thinkingTruncated: false,
+      toolName: "bash",
+      toolSummary: "npm test",
+    });
+    expect(isRunning).toBe(true);
+  });
+
+  it("completed assistant with a done tool reports not running", () => {
+    const { progress, isRunning } = extractSubagentProgress([
+      assistantFixture([tool("read", "completed", { path: "src/a.ts" }), reasoning("all read")], true),
+    ]);
+    expect(progress.phase).toBe("thinking");
+    expect(progress.thinking).toBe("all read");
+    expect(isRunning).toBe(false);
+  });
+
+  it("thinking text is tail-capped at 1200 chars with the truncated flag", () => {
+    const long = "x".repeat(1500);
+    const { progress } = extractSubagentProgress([assistantFixture([reasoning(long)], false)]);
+    expect(progress.thinkingTruncated).toBe(true);
+    expect(progress.thinking.length).toBe(1200);
+    expect(progress.thinking).toBe(long.slice(-1200));
+  });
+
+  it("an assistant text part last means the subagent is writing", () => {
+    const { progress } = extractSubagentProgress([
+      assistantFixture([reasoning("plan"), { type: "text", text: "Here is my analysis." }], false),
+    ]);
+    expect(progress.phase).toBe("writing");
+    expect(progress.thinking).toBe("plan");
+  });
+
+  it("system-reminder text does not flip the phase to writing", () => {
+    const { progress } = extractSubagentProgress([
+      assistantFixture([reasoning("still thinking"), { type: "text", text: "<system-reminder>note</system-reminder>" }], false),
+    ]);
+    expect(progress.phase).toBe("thinking");
+  });
+
+  it("malformed envelopes and parts are skipped without throwing", () => {
+    const { progress, isRunning } = extractSubagentProgress([
+      "garbage",
+      { parts: null },
+      { info: { role: "assistant" }, parts: ["x", null, 7] },
+    ]);
+    expect(progress.phase).toBe("idle");
+    expect(isRunning).toBe(true);
+  });
+});
+
+describe("getSubagentLogs progress over the wire", () => {
+  function subagentServer(childParts: readonly unknown[]): ProbeFetch {
+    const ok = (body: unknown) =>
+      Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    return (request) => {
+      const url = new URL(request.url);
+      if (request.method === "GET" && url.pathname === "/session") {
+        return ok([
+          { id: "ses_parent", title: "parent chat", time: { created: 1, updated: 1 } },
+          { id: "ses_child", parentID: "ses_parent", title: "subagent: investigate", time: { created: 2, updated: 2 } },
+        ]);
+      }
+      if (request.method === "GET" && url.pathname === "/session/ses_child/message") {
+        return ok([
+          {
+            info: { role: "assistant", time: { created: 1 } },
+            parts: [
+              { type: "reasoning", text: "the export boundary is the suspect" },
+              { type: "tool", tool: "grep", state: { status: "running", input: { query: "extractSubagentProgress" } } },
+            ],
+          },
+        ]);
+      }
+      return ok([]);
+    };
+  }
+
+  it("steps, live progress, and a real isRunning reach the reply", async () => {
+    const service = scriptedService(subagentServer([]));
+    const result = await service.getSubagentLogs({ sessionId: "ses_parent" });
+    expect(result.steps.length).toBeGreaterThan(0);
+    expect(result.isRunning).toBe(true);
+    expect(result.progress).toEqual({
+      phase: "tool",
+      thinking: "the export boundary is the suspect",
+      thinkingTruncated: false,
+      toolName: "grep",
+      toolSummary: "extractSubagentProgress",
+    });
+  });
+
+  it("no child session degrades to an empty result without progress", async () => {
+    const service = scriptedService((request) => {
+      const url = new URL(request.url);
+      const ok = (body: unknown) =>
+        Promise.resolve(
+          new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      if (request.method === "GET" && url.pathname === "/session") {
+        return ok([{ id: "ses_parent", title: "parent chat", time: { created: 1, updated: 1 } }]);
+      }
+      if (request.method === "GET" && url.pathname === "/session/ses_parent/message") {
+        return ok([]);
+      }
+      return ok([]);
+    });
+    const result = await service.getSubagentLogs({ sessionId: "ses_parent" });
+    expect(result).toEqual({ steps: [], isRunning: false });
+    expect(result.progress).toBeUndefined();
   });
 });
 

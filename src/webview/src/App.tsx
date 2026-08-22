@@ -1,11 +1,11 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useStrings } from "../lib/i18n.js";
-import { ToastViewport } from "./app/ErrorBoundary";
+import { ToastViewport } from "./app/errorBoundary";
 import { useApp, type Route } from "./app/context";
-import { Header } from "./app/Header";
+import { Header } from "./app/header";
 import { currentViewKind } from "./app/viewKind.js";
 import { useActiveSession } from "./chat/activeSession.js";
-import { SettingsPage } from "./settings/SettingsPage.js";
+import { SettingsPage } from "./settings/settingsPage.js";
 
 /**
  * App shell (plan todo 11): header + state-driven routes + toast viewport.

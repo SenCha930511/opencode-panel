@@ -14,7 +14,7 @@ import {
   createVscodeTuiTerminalFactory,
 } from "./host/vscode-adapter-ide.js";
 import { TuiLauncher } from "./host/tui.js";
-import type { ServerStartError } from "./server/ServerManager.js";
+import type { ServerStartError } from "./server/serverManager.js";
 import { CHAT_VIEW_ID, registerPanelViews } from "./providers/registration.js";
 import {
   applyTestServerOverride,
@@ -105,7 +105,7 @@ function errorText(error: unknown): string {
 /** Later-milestone features: visible info toast, nothing faked. */
 function comingLater(): void {
   void vscode.window.showInformationMessage(
-    vscode.l10n.t("OpenCode Panel: this feature is coming in a later milestone."),
+    vscode.l10n.t("OpenCode Chat Sidebar: this feature is coming in a later milestone."),
   );
 }
 
@@ -325,7 +325,7 @@ export function activate(
 
     settingsPanel = vscode.window.createWebviewPanel(
       "opencodePanel.settings",
-      "OpenCode Panel Settings",
+      "OpenCode Chat Sidebar Settings",
       vscode.ViewColumn.Active,
       {
         enableScripts: true,
@@ -459,7 +459,7 @@ export function activate(
     vscode.commands.registerCommand("opencodePanel.attachSelection", () => {
       const result = buildSelectionPush(editorAccess.selection());
       if (!result.ok) {
-        void vscode.window.showInformationMessage(`OpenCode Panel: ${result.message}`);
+        void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
         return;
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
@@ -467,7 +467,7 @@ export function activate(
     vscode.commands.registerCommand("opencodePanel.attachFile", (contextArg?: unknown) => {
       const result = buildFilePush(editorAccess.filePath(contextArg));
       if (!result.ok) {
-        void vscode.window.showInformationMessage(`OpenCode Panel: ${result.message}`);
+        void vscode.window.showInformationMessage(`OpenCode Chat Sidebar: ${result.message}`);
         return;
       }
       panel.chat.postEvent(ATTACHMENTS_ADD_EVENT, result.payload);
@@ -476,7 +476,7 @@ export function activate(
       exportCommand(args),
     ),
   );
-  logger.info("opencode-panel activated");
+  logger.info("opencode-chat-panel activated");
 
   if (config.read().autoStartServer) {
     void manager.start().then((result) => {

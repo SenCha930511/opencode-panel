@@ -30,7 +30,7 @@ import { SettingFieldRow } from "./fields.js";
 import { ConfigFilesStore, slotKeyOf } from "./configFilesStore.js";
 import { SettingsFormStore } from "./settingsStore.js";
 import { parseSettingsSnapshotWire } from "./settingsWire.js";
-import { SettingsSecretsPanel } from "./SettingsSecrets.js";
+import { SettingsSecretsPanel } from "./settingsSecrets.js";
 
 const SECTION_ORDER: readonly SettingSectionId[] = ["server", "appearance", "diagnostics"];
 
@@ -105,8 +105,8 @@ function ZapIcon(): ReactNode {
   );
 }
 
-import { OpenCodeConfigTab } from "./OpenCodeConfigTab.js";
-import { OmoConfigTab } from "./OmoConfigTab.js";
+import { OpenCodeConfigTab } from "./openCodeConfigTab.js";
+import { OmoConfigTab } from "./omoConfigTab.js";
 
 type SettingsTab = "general" | "opencode" | "omo";
 

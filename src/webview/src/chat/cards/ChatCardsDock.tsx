@@ -34,13 +34,13 @@ import { getWebviewMessenger } from "../../../lib/messenger.js";
 import { getActiveSession, subscribeActiveSession } from "../activeSession.js";
 import { createMessengerEventSource, type ChatEventSource } from "../events.js";
 import { createDockController, type DockNotice, type ReplyActions } from "./controller.js";
-import { PermissionCard } from "./PermissionCard.js";
+import { PermissionCard } from "./permissionCard.js";
 import {
   cardsForSession,
   PendingRequestsStore,
   pendingCountOtherSessions,
 } from "./pendingRequests.js";
-import { QuestionCard } from "./QuestionCard.js";
+import { QuestionCard } from "./questionCard.js";
 import { useSessionAutoMode } from "../composerOptions.js";
 import { ensureAutoArmed } from "../sessionArming.js";
 

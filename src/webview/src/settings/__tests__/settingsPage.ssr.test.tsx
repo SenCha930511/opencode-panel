@@ -7,7 +7,7 @@ import { en } from "../../../../shared/strings.js";
 import { StringsProvider } from "../../../lib/i18n.js";
 import { WebviewMessenger } from "../../../lib/messenger.js";
 import { AppProvider } from "../../app/context.js";
-import { SettingsPage } from "../SettingsPage.js";
+import { SettingsPage } from "../settingsPage.js";
 import { SettingsFormStore } from "../settingsStore.js";
 import type { SettingsSnapshotWire } from "../settingsWire.js";
 

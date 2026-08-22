@@ -4,7 +4,7 @@
  * the sessions domain handlers and `sessionList` sync on top of this shell.
  */
 
-import { BaseViewProvider, type ViewProviderDeps } from "./BaseViewProvider.js";
+import { BaseViewProvider, type ViewProviderDeps } from "./baseViewProvider.js";
 import type { PanelViewKind } from "./html.js";
 
 export class SessionsViewProvider extends BaseViewProvider {

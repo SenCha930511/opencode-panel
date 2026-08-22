@@ -62,7 +62,7 @@ import {
   type ServerLostNotice,
   type SyncKind,
 } from "../../server/eventBridge.js";
-import type { ServerManager } from "../../server/ServerManager.js";
+import type { ServerManager } from "../../server/serverManager.js";
 import type { SessionListPayload } from "../../shared/protocol.js";
 import {
   createSessionService,

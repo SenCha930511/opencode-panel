@@ -6,7 +6,7 @@
  * focus clears into an editing lane; commits carry only the typed value).
  *
  * All display copy arrives through useStrings or as pre-translated props —
- * no display literals. Styling mirrors fields.tsx / SettingsPage.tsx;
+ * no display literals. Styling mirrors fields.tsx / settingsPage.tsx;
  * INPUT_CLASS is a local re-declaration by contract (fields.tsx untouched).
  */
 

@@ -25,7 +25,7 @@
 import type { PanelConfigAccessor } from "../host/config.js";
 import { buildInitStrings } from "../host/locale.js";
 import type { Capabilities } from "../server/capabilities.js";
-import type { ServerManager, ServerManagerState } from "../server/ServerManager.js";
+import type { ServerManager, ServerManagerState } from "../server/serverManager.js";
 import type {
   InitPayload,
   ServerCapabilities,

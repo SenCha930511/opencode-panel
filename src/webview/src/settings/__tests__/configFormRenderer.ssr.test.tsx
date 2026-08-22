@@ -5,7 +5,7 @@ import { StringsProvider } from "../../../lib/i18n.js";
 import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
 import type { ConfigFileReadReply } from "../../../../shared/protocol.js";
 import { en } from "../../../../shared/strings.js";
-import { ConfigFormRenderer, type SpecSection } from "../ConfigFormRenderer.js";
+import { ConfigFormRenderer, type SpecSection } from "../configFormRenderer.js";
 import { ConfigFilesStore, type ConfigRequester } from "../configFilesStore.js";
 
 /**

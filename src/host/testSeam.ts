@@ -9,10 +9,10 @@
  */
 
 import type { PanelConfig, PanelConfigAccessor } from "./config.js";
-import type { ServerManager } from "../server/ServerManager.js";
+import type { ServerManager } from "../server/serverManager.js";
 import type { PanelViewComposite } from "../providers/registration.js";
-import type { ChatViewProvider } from "../providers/ChatViewProvider.js";
-import type { SessionsViewProvider } from "../providers/SessionsViewProvider.js";
+import type { ChatViewProvider } from "../providers/chatViewProvider.js";
+import type { SessionsViewProvider } from "../providers/sessionsViewProvider.js";
 
 /** Env-gated activation surface consumed by the todo-24 integration suite. */
 export interface PanelActivationTestApi {

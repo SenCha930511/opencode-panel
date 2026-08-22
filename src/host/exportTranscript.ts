@@ -29,7 +29,7 @@
 import { dirname, join } from "node:path";
 import type { OpencodeClient } from "@opencode-ai/sdk";
 import type { PanelLogger } from "./logger.js";
-import type { ServerConnection } from "../server/ServerManager.js";
+import type { ServerConnection } from "../server/serverManager.js";
 import { isRecord } from "../shared/protocol.js";
 import { renderTranscriptMarkdown } from "./exportMarkdown.js";
 import { createSessionService, type SessionClientSource } from "./handlers/sessions.js";
@@ -209,12 +209,12 @@ export function createExportTranscriptCommand(
       const outcome = await deps.run(toExportArgs(rawArgs));
       switch (outcome.kind) {
         case "exported":
-          deps.info(`OpenCode Panel: session transcript exported to ${outcome.path}`);
+          deps.info(`OpenCode Chat Sidebar: session transcript exported to ${outcome.path}`);
           return;
         case "cancelled":
           return;
         case "no-session":
-          deps.info("OpenCode Panel: no session to export");
+          deps.info("OpenCode Chat Sidebar: no session to export");
           return;
         default: {
           const exhaustive: never = outcome;

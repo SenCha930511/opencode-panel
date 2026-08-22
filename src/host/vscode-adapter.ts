@@ -32,7 +32,7 @@ import {
   type ChildExit,
   type ChildSpawner,
   type SpawnError,
-} from "../server/ServerManager.js";
+} from "../server/serverManager.js";
 
 /**
  * Typed config accessor backed by `workspace.getConfiguration("opencodePanel")`
@@ -80,7 +80,7 @@ export function createVscodeSettingsSurface(): SettingsConfigSurface {
 }
 
 /**
- * Logger writing to the "OpenCode Panel" output channel. The returned
+ * Logger writing to the "OpenCode Chat Sidebar" output channel. The returned
  * channel must be pushed onto `context.subscriptions` by the caller so it
  * is disposed with the extension.
  */
@@ -88,7 +88,7 @@ export function createVscodeLogger(debugEnabled: () => boolean): {
   readonly logger: PanelLogger;
   readonly channel: vscode.OutputChannel;
 } {
-  const channel = vscode.window.createOutputChannel("OpenCode Panel");
+  const channel = vscode.window.createOutputChannel("OpenCode Chat Sidebar");
   return { logger: new PanelLogger(channel, debugEnabled), channel };
 }
 

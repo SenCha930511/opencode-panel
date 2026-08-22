@@ -35,7 +35,7 @@ import {
 import { useStrings } from "../../lib/i18n.js";
 import { useApp } from "../app/context.js";
 import { ConfigFilesStore, slotKeyOf } from "./configFilesStore.js";
-import { ConfigFormRenderer } from "./ConfigFormRenderer.js";
+import { ConfigFormRenderer } from "./configFormRenderer.js";
 import { OMO_SPEC, collectDeprecatedKeys, collectUnknownBlockKeys } from "./omoSpec.js";
 import { LegacyNotice, OMO_NOTICE_CLASS, ProfilesNotice } from "./omoSections.js";
 

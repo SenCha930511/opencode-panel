@@ -23,7 +23,7 @@ import {
   latestContextTokens,
   sumAssistantUsage,
 } from "../usageMath.js";
-import { UsageStrip } from "../UsageStrip.js";
+import { UsageStrip } from "../usageStrip.js";
 
 function message(
   id: string,

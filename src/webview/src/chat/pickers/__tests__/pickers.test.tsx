@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 
-import { AgentPicker, ModelPicker } from "../ChatPickers.js";
+import { AgentPicker, ModelPicker } from "../chatPickers.js";
 import type { AgentEntry, ProviderEntry } from "../constants.js";
 
 function render(element: ReactElement): string {

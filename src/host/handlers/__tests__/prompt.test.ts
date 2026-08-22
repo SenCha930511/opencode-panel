@@ -15,7 +15,7 @@
  *   assistant text is in the message list as the reply lands).
  * - QA FAILURE: prompt_async answered 500 ⇒ the error reply preserves the
  *   server's message text (webview toast + draft retention halves live in
- *   src/webview/src/chat/__tests__/Composer.test.tsx; logged in the evidence).
+ *   src/webview/src/chat/__tests__/composer.test.tsx; logged in the evidence).
  * - abort: the webview `abort` request issues `POST /session/:id/abort`.
  */
 
@@ -24,7 +24,7 @@ import { PanelLogger, type OutputChannelLike } from "../../logger.js";
 import { HostMessenger, type HostPort } from "../../messenger.js";
 import { PanelSecrets, type SecretStorage } from "../../secrets.js";
 import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
-import type { ServerConnection } from "../../../server/ServerManager.js";
+import type { ServerConnection } from "../../../server/serverManager.js";
 import type { Capabilities } from "../../../server/capabilities.js";
 import {
   isRecord,

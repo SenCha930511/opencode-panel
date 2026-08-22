@@ -1,5 +1,5 @@
 /**
- * Redacted extension logging for the "OpenCode Panel" output channel.
+ * Redacted extension logging for the "OpenCode Chat Sidebar" output channel.
  *
  * Every line passes through {@link redact} before it is written, so spawned
  * `opencode serve` stdout/stderr and HTTP traces can never leak

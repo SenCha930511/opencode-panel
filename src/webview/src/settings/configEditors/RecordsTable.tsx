@@ -8,7 +8,7 @@ import { useStrings } from "../../../lib/i18n.js";
 import type { StringId } from "../../../../shared/strings.js";
 import { INPUT_CLASS, MaskedInput, NumberInput, Select, TextInput, Toggle } from "../configFields.js";
 import { ADD_BUTTON_CLASS, RemoveButton } from "./common.js";
-import { ModelCombobox } from "./ModelCombobox.js";
+import { ModelCombobox } from "./modelCombobox.js";
 
 export type RecordsColumnKind = "text" | "number" | "toggle" | "select" | "model" | "masked";
 

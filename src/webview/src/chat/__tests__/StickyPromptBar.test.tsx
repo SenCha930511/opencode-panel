@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { stickyUserMessage, StickyPromptBar, type StickyAnchor } from "../StickyPromptBar.js";
+import { stickyUserMessage, StickyPromptBar, type StickyAnchor } from "../stickyPromptBar.js";
 import type { MessageVM, PartVM } from "../types.js";
 
 function textPart(id: string, text: string): PartVM {

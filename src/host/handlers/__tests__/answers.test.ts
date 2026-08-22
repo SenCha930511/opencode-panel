@@ -29,7 +29,7 @@ import { PanelLogger, type OutputChannelLike } from "../../logger.js";
 import { HostMessenger, type HostPort } from "../../messenger.js";
 import { PanelSecrets, type SecretStorage } from "../../secrets.js";
 import { createPanelClient, type ProbeFetch } from "../../../server/clientFactory.js";
-import type { ServerConnection } from "../../../server/ServerManager.js";
+import type { ServerConnection } from "../../../server/serverManager.js";
 import type { Capabilities } from "../../../server/capabilities.js";
 import {
   isRecord,

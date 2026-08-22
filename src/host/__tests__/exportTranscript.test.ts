@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { PanelLogger, type OutputChannelLike } from "../logger.js";
 import { PanelSecrets, type SecretStorage } from "../secrets.js";
 import { createPanelClient } from "../../server/clientFactory.js";
-import type { ServerConnection } from "../../server/ServerManager.js";
+import type { ServerConnection } from "../../server/serverManager.js";
 import type { Capabilities } from "../../server/capabilities.js";
 import { startMockServer, type MockServer } from "../../test/mock-server/index.js";
 import { staticSessionSource } from "../handlers/sessions.js";
@@ -270,7 +270,7 @@ describe("createExportTranscriptCommand", () => {
     expect(seenArgs[0]).toEqual({ sessionId: "ses_1" });
     expect(calls[0]).toEqual({
       level: "info",
-      message: "OpenCode Panel: session transcript exported to /ws/out.md",
+      message: "OpenCode Chat Sidebar: session transcript exported to /ws/out.md",
     });
 
     await command(); // no-session -> honest info

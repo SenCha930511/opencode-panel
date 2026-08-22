@@ -41,7 +41,7 @@ import type { OpencodeClient } from "@opencode-ai/sdk";
 import type { PanelLogger } from "../logger.js";
 import type { RegisterHandler } from "./sessions.js";
 import type { ProbeFetch } from "../../server/clientFactory.js";
-import type { ServerConnection } from "../../server/ServerManager.js";
+import type { ServerConnection } from "../../server/serverManager.js";
 import type {
   FromWebviewResponse,
   PermissionResponse,

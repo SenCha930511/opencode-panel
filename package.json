@@ -1,6 +1,6 @@
 {
-  "name": "opencode-panel",
-  "displayName": "OpenCode Panel",
+  "name": "opencode-chat-panel",
+  "displayName": "OpenCode Chat Sidebar",
   "description": "Sidebar chat panel for your locally installed opencode",
   "version": "1.0.0",
   "publisher": "SenCha930511",
@@ -17,12 +17,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/SenCha930511/opencode-panel.git"
+    "url": "https://github.com/SenCha930511/opencode-chat-panel.git"
   },
   "bugs": {
-    "url": "https://github.com/SenCha930511/opencode-panel/issues"
+    "url": "https://github.com/SenCha930511/opencode-chat-panel/issues"
   },
-  "homepage": "https://github.com/SenCha930511/opencode-panel",
+  "homepage": "https://github.com/SenCha930511/opencode-chat-panel",
   "keywords": [
     "opencode",
     "ai",
@@ -41,7 +41,7 @@
       "activitybar": [
         {
           "id": "opencodePanel",
-          "title": "OpenCode Panel",
+          "title": "OpenCode Chat Sidebar",
           "icon": "media/icon.svg"
         }
       ]
@@ -50,7 +50,7 @@
       "opencodePanel": [
         {
           "id": "opencodePanel.chatView",
-          "name": "OpenCode Panel",
+          "name": "OpenCode Chat Sidebar",
           "type": "webview",
           "icon": "media/icon.svg"
         }
@@ -60,67 +60,67 @@
       {
         "command": "opencodePanel.toggleHistory",
         "title": "歷程記錄",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(history)"
       },
       {
         "command": "opencodePanel.newSession",
         "title": "新對話",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(add)"
       },
       {
         "command": "opencodePanel.openSettings",
         "title": "設定",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(gear)"
       },
       {
         "command": "opencodePanel.startServer",
         "title": "啟動伺服器",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(play)"
       },
       {
         "command": "opencodePanel.stopServer",
         "title": "停止伺服器",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(debug-stop)"
       },
       {
         "command": "opencodePanel.restartServer",
         "title": "重啟伺服器",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(debug-restart)"
       },
       {
         "command": "opencodePanel.openTui",
         "title": "開啟 TUI",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(terminal)"
       },
       {
         "command": "opencodePanel.attachSelection",
         "title": "附加選取內容",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(selection)"
       },
       {
         "command": "opencodePanel.attachFile",
         "title": "附加檔案",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(file)"
       },
       {
         "command": "opencodePanel.exportTranscript",
         "title": "匯出對話紀錄",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(export)"
       },
       {
         "command": "opencodePanel.openLogs",
         "title": "開啟記錄",
-        "category": "OpenCode Panel",
+        "category": "OpenCode Chat Sidebar",
         "icon": "$(output)"
       }
     ],
@@ -175,7 +175,7 @@
       ]
     },
     "configuration": {
-      "title": "OpenCode Panel",
+      "title": "OpenCode Chat Sidebar",
       "properties": {
         "opencodePanel.serverUrl": {
           "type": "string",

@@ -6,8 +6,8 @@ import { AutoScrollPark } from "./autoScroll.js";
 import { ChatActionsProvider, type ChatActions } from "./chatContext.js";
 import { createMessengerEventSource, routeChatEvent, type ChatEventSource } from "./events.js";
 import { MessageStore, type ChatStoreState } from "./messageStore.js";
-import { MessageView } from "./MessageView.js";
-import { stickyUserMessage, StickyPromptBar } from "./StickyPromptBar.js";
+import { MessageView } from "./messageView.js";
+import { stickyUserMessage, StickyPromptBar } from "./stickyPromptBar.js";
 import { useActiveSession } from "./activeSession.js";
 import type { StringId } from "../../../shared/strings.js";
 import type { MessageVM } from "./types.js";
@@ -63,7 +63,7 @@ function SparkleIcon(): ReactNode {
   );
 }
 
-import { RecentSessionsTop } from "../sessions/SessionList.js";
+import { RecentSessionsTop } from "../sessions/sessionList.js";
 
 function OpenCodeWatermark(): ReactNode {
   const { t } = useStrings();

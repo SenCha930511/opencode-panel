@@ -19,9 +19,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 
 import { resetActiveSessionForTest, setActiveSession } from "../../activeSession.js";
-import { ChatCardsDock } from "../ChatCardsDock.js";
-import { PermissionCard, PermissionReplyButtons } from "../PermissionCard.js";
-import { QuestionCard } from "../QuestionCard.js";
+import { ChatCardsDock } from "../chatCardsDock.js";
+import { PermissionCard, PermissionReplyButtons } from "../permissionCard.js";
+import { QuestionCard } from "../questionCard.js";
 import { PendingRequestsStore } from "../pendingRequests.js";
 import type { PermissionCardVM, QuestionCardVM } from "../cardTypes.js";
 

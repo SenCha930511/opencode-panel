@@ -10,7 +10,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { StringsProvider } from "../../../lib/i18n.js";
 import { en } from "../../../../shared/strings.js";
-import { SessionList } from "../SessionList.js";
+import { SessionList } from "../sessionList.js";
 import { SessionsStore } from "../sessionsStore.js";
 import { createLoopback, makeEntry } from "./stubHost.js";
 

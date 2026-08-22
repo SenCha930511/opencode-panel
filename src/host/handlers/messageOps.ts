@@ -50,7 +50,7 @@
 
 import type { Agent, OpencodeClient } from "@opencode-ai/sdk";
 import type { PanelLogger } from "../logger.js";
-import type { ServerConnection } from "../../server/ServerManager.js";
+import type { ServerConnection } from "../../server/serverManager.js";
 import type { FromWebviewResponse } from "../../shared/protocol.js";
 import type {
   RegisterHandler,

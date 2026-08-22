@@ -12,16 +12,16 @@ import * as assert from "node:assert/strict";
 import * as vscode from "vscode";
 import { startMockServer, type MockServer } from "../mock-server/index.js";
 import type { PanelActivationTestApi } from "../../host/testSeam.js";
-import type { ServerManager, ServerManagerState } from "../../server/ServerManager.js";
+import type { ServerManager, ServerManagerState } from "../../server/serverManager.js";
 import { renderServerState } from "../../host/statusBar.js";
-import type { DevProviderTestHooks } from "../../providers/BaseViewProvider.js";
+import type { DevProviderTestHooks } from "../../providers/baseViewProvider.js";
 import { CHAT_VIEW_ID } from "../../providers/registration.js";
 import type { FromWebviewProtocol, HostMessage } from "../../shared/protocol.js";
 import { MODERN_VERSION, OLD_SERVER_VERSION } from "../mock-server/index.js";
 
 export { MODERN_VERSION, OLD_SERVER_VERSION };
 
-export const EXTENSION_ID = "SenCha930511.opencode-panel";
+export const EXTENSION_ID = "SenCha930511.opencode-chat-panel";
 export const DEFAULT_PORT = "4099";
 
 export function testPort(): string {

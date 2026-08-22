@@ -27,7 +27,7 @@ import type * as vscode from "vscode";
 import type { Disposable, Event } from "../host/config.js";
 import type { PanelLogger } from "../host/logger.js";
 import { HostMessenger, type Handler, type HostPort } from "../host/messenger.js";
-import type { ServerManagerState } from "../server/ServerManager.js";
+import type { ServerManagerState } from "../server/serverManager.js";
 import type { FromWebviewProtocol, HostMessage, InitPayload } from "../shared/protocol.js";
 import { buildWebviewHtml, type PanelViewKind } from "./html.js";
 import type { HandlerRegistry } from "./handlers.js";

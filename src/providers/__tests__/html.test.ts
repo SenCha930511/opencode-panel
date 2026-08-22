@@ -10,8 +10,8 @@
 
 import { describe, expect, it } from "vitest";
 import { PanelLogger, type OutputChannelLike } from "../../host/logger.js";
-import type { ServerManagerState } from "../../server/ServerManager.js";
-import { ChatViewProvider } from "../ChatViewProvider";
+import type { ServerManagerState } from "../../server/serverManager.js";
+import { ChatViewProvider } from "../chatViewProvider";
 import { HandlerRegistry } from "../handlers";
 import { buildWebviewHtml, generateNonce, type WebviewShellInput } from "../html";
 import { buildInitStrings } from "../../host/locale.js";

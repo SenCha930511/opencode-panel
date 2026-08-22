@@ -9,10 +9,10 @@ import { describe, expect, it } from "vitest";
 import { PanelLogger, type OutputChannelLike } from "../../host/logger.js";
 import type { HostMessage } from "../../shared/protocol.js";
 import { isRecord } from "../../shared/protocol.js";
-import { ChatViewProvider } from "../ChatViewProvider";
-import { SessionsViewProvider } from "../SessionsViewProvider";
+import { ChatViewProvider } from "../chatViewProvider";
+import { SessionsViewProvider } from "../sessionsViewProvider";
 import { HandlerRegistry } from "../handlers";
-import type { ServerManagerState } from "../../server/ServerManager.js";
+import type { ServerManagerState } from "../../server/serverManager.js";
 import {
   FakeEventSource,
   FakeWebviewView,

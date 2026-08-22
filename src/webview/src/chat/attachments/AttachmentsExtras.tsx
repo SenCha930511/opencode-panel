@@ -46,7 +46,7 @@ import {
   recordMentionPath,
   replaceMentionToken,
 } from "./logic.js";
-import { MentionPalette } from "./MentionPalette.js";
+import { MentionPalette } from "./mentionPalette.js";
 import { createMentionSearch } from "./search.js";
 
 const COPY = {

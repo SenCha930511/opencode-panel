@@ -122,8 +122,8 @@ export const SETTING_FIELDS: readonly SettingField[] = [
     defaultValue: false,
     section: "diagnostics",
     description: {
-      en: "Write verbose debug output (with secret redaction) to the \"OpenCode Panel\" output channel.",
-      zhTW: "將詳細除錯輸出（含密鑰遮蔽）寫入「OpenCode Panel」輸出頻道。",
+      en: "Write verbose debug output (with secret redaction) to the \"OpenCode Chat Sidebar\" output channel.",
+      zhTW: "將詳細除錯輸出（含密鑰遮蔽）寫入「OpenCode Chat Sidebar」輸出頻道。",
     },
   },
   {

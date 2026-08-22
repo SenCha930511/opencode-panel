@@ -22,7 +22,7 @@
  * - T17 attachments: `useAttachments()` chips -> Composers controlled
  *   `attachments`/`onRemoveAttachment` props, `<AttachmentsExtras>` fused
  *   into the T15 extras row per chat/attachments/index.ts's union recipe.
- * - T18 session dock: right-side rail INSIDE this slot (App.tsx mounts this
+ * - T18 session dock: right-side rail INSIDE this slot (app.tsx mounts this
  *   slot full-width in the chat-first shell — the dock rides the section's
  *   own row layout). `todosEnabled` folds the todo-20 capability-flag store
  *   (task-pinned carrier) OR-ed with init.capabilities.todo: the flags store
@@ -31,10 +31,10 @@
  *   per latch episode (info level per the T18 contract).
  * - T19 session menu: header row of this section (its documented "chat
  *   header overflow" mount). The per-message hover menu mounts inside
- *   chat/MessageView.tsx (the T19 documented site).
+ *   chat/messageView.tsx (the T19 documented site).
  * - FIX-D usage strip: `chat/usage` aggregates assistant `info.tokens` over
  *   the same store and renders in the toolbar; hidden when no usage data.
- * - T20 MCP: already mounted by app/Header.tsx (McpPopover + OldServerBanner)
+ * - T20 MCP: already mounted by app/header.tsx (McpPopover + OldServerBanner)
  *   — nothing to do here.
  *
  * Every mount wires the REAL stores/messenger (module singletons the todo-3
@@ -43,17 +43,17 @@
 import { useMemo, type ReactNode } from "react";
 import { useStrings } from "../../lib/i18n.js";
 import { useCapabilityFlags } from "../mcp/index.js";
-import { SessionsPanel } from "../sessions/SessionsPanel.js";
+import { SessionsPanel } from "../sessions/sessionsPanel.js";
 import { AttachmentsExtras, useAttachments } from "../chat/attachments/index.js";
-import { ChatCardsDock } from "../chat/cards/ChatCardsDock.js";
-import { Composer } from "../chat/Composer.js";
+import { ChatCardsDock } from "../chat/cards/chatCardsDock.js";
+import { Composer } from "../chat/composer.js";
 import { DockStore } from "../chat/dock/dockStore.js";
-import { SessionDock } from "../chat/dock/SessionDock.js";
-import { TodoPinnedList } from "../chat/dock/TodoPinnedList.js";
-import { MessageList, useChatStore } from "../chat/MessageList.js";
+import { SessionDock } from "../chat/dock/sessionDock.js";
+import { TodoPinnedList } from "../chat/dock/todoPinnedList.js";
+import { MessageList, useChatStore } from "../chat/messageList.js";
 import { MessageStore } from "../chat/messageStore.js";
-import { SessionMenu } from "../chat/messageOps/SessionMenu.js";
-import { UsageStrip } from "../chat/usage/UsageStrip.js";
+import { SessionMenu } from "../chat/messageOps/sessionMenu.js";
+import { UsageStrip } from "../chat/usage/usageStrip.js";
 import { useActiveSession } from "../chat/activeSession.js";
 import { useComposerPickers } from "../chat/pickers/composerIntegration.js";
 import { buildPromptExtras } from "../chat/composerState.js";

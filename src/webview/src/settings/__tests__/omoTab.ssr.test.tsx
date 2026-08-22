@@ -7,9 +7,9 @@ import { en } from "../../../../shared/strings.js";
 import { StringsProvider } from "../../../lib/i18n.js";
 import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
 import { AppProvider } from "../../app/context.js";
-import { OmoConfigTab, redactPreviewText } from "../OmoConfigTab.js";
+import { OmoConfigTab, redactPreviewText } from "../omoConfigTab.js";
 import { ConfigFilesStore, type ConfigRequester } from "../configFilesStore.js";
-import type { SpecComponentContext } from "../ConfigFormRenderer.js";
+import type { SpecComponentContext } from "../configFormRenderer.js";
 import { OMO_KNOWN_BLOCK_KEYS, OMO_SPEC } from "../omoSpec.js";
 import { SharedBaseSection } from "../omoSections.js";
 

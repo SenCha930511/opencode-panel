@@ -28,7 +28,7 @@ import { isRecord, type InitPayload } from "../../../../shared/protocol.js";
 import { WebviewMessenger, type WebviewPort } from "../../../lib/messenger.js";
 import { StringsProvider } from "../../../lib/i18n.js";
 import { AppProvider } from "../../app/context.js";
-import { Composer, ChatDock } from "../Composer.js";
+import { Composer, ChatDock } from "../composer.js";
 import {
   buildPromptPayload,
   composerDisabled,

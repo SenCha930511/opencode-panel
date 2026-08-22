@@ -1,7 +1,7 @@
 {
-  "opencodePanel.category": "OpenCode Panel",
-  "opencodePanel.viewsContainer.opencodePanel": "OpenCode Panel",
-  "opencodePanel.views.chatView": "OpenCode Panel",
+  "opencodePanel.category": "OpenCode Chat Sidebar",
+  "opencodePanel.viewsContainer.opencodePanel": "OpenCode Chat Sidebar",
+  "opencodePanel.views.chatView": "OpenCode Chat Sidebar",
   "opencodePanel.views.sessionsView": "Sessions",
   "opencodePanel.commands.newSession": "New Session",
   "opencodePanel.commands.openSettings": "Open Settings",
@@ -13,7 +13,7 @@
   "opencodePanel.commands.attachFile": "Attach File to Chat",
   "opencodePanel.commands.exportTranscript": "Export Session Transcript",
   "opencodePanel.commands.openLogs": "Open Logs",
-  "opencodePanel.configuration.title": "OpenCode Panel",
+  "opencodePanel.configuration.title": "OpenCode Chat Sidebar",
   "opencodePanel.config.serverUrl.markdownDescription": "Full URL of an already-running opencode server (e.g. `http://127.0.0.1:4096`). When empty, the extension derives the endpoint from `opencodePanel.hostname` and `opencodePanel.port` and may spawn its own managed server.",
   "opencodePanel.config.port.markdownDescription": "Port for the opencode server the extension connects to (and spawns, when `opencodePanel.autoStartServer` is enabled). Ignored when `opencodePanel.serverUrl` is set.",
   "opencodePanel.config.hostname.markdownDescription": "Hostname for the opencode server the extension connects to (and spawns). Keep `127.0.0.1` unless you know the server binds elsewhere. Ignored when `opencodePanel.serverUrl` is set.",
@@ -21,7 +21,7 @@
   "opencodePanel.config.serverArgs.markdownDescription": "Extra arguments appended to `opencode serve --port <port> --hostname <hostname>` when the extension spawns a managed server.",
   "opencodePanel.config.autoStartServer.markdownDescription": "When enabled, the extension spawns a managed `opencode serve` process if no healthy server is found on the configured endpoint. Foreign (user-started) servers are only ever attached to, never killed.",
   "opencodePanel.config.minimumServerVersion.markdownDescription": "Minimum accepted opencode server version. Servers below this version still run, but the extension shows a warning and hides features the server does not expose. `0.0.0` disables the floor (warn-only).",
-  "opencodePanel.config.debugLogs.markdownDescription": "Write verbose debug output (with secret redaction) to the \"OpenCode Panel\" output channel.",
+  "opencodePanel.config.debugLogs.markdownDescription": "Write verbose debug output (with secret redaction) to the \"OpenCode Chat Sidebar\" output channel.",
   "opencodePanel.config.language.markdownDescription": "Interface language of the panel: `auto` follows VS Code's display language, or pin a locale explicitly. Applies instantly to every open panel.",
   "opencodePanel.config.chatFontFamily.markdownDescription": "Font family for chat message rendering in the panel. Empty inherits the VS Code editor font.",
   "opencodePanel.config.chatFontSize.markdownDescription": "Font size (px) for chat message rendering in the panel. `0` inherits the VS Code default."

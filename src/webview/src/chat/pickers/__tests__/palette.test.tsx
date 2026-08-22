@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 
-import { CommandPalette, runSlashSelection } from "../CommandPalette.js";
+import { CommandPalette, runSlashSelection } from "../commandPalette.js";
 import type { CommandEntry } from "../constants.js";
 
 function render(element: ReactElement): string {

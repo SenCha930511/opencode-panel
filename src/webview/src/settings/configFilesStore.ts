@@ -11,7 +11,7 @@
  * SEND SEAM: loads and saves ride the injected requester — the messenger
  * `request` DIRECTLY, never the toasting `send` — because save must
  * branch on the `[mtime-mismatch]` prefix exactly like `runSecret` in
- * SettingsPage.tsx catches RemoteError. A rejected load keeps the slot
+ * settingsPage.tsx catches RemoteError. A rejected load keeps the slot
  * unloaded and records the message in saveError (the only error surface
  * in the pinned slot contract).
  *
